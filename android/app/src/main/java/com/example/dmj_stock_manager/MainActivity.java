@@ -1,0 +1,6 @@
+package com.example.dmj_stock_manager;
+
+import io.flutter.embedding.android.FlutterActivity;
+
+public class MainActivity extends FlutterActivity {
+}
