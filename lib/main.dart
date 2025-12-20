@@ -3,7 +3,6 @@ import 'package:dmj_stock_manager/res/routes/routes_names.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-
 import 'bindings/initial_binding.dart';
 
 Future<void> main() async {

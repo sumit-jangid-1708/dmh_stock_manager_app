@@ -1,10 +1,14 @@
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
-class AppLists{
-
+class AppLists {
   static final _storage = GetStorage();
-  static const _key = "materials";
+
+  // Storage keys
+  static const _materialKey = "materials";
+  static const _colorKey = "colors";
+  static const _sizeKey = "sizes";
+
   /// Product Unit List
   static const List<String> productUnit = [
     'kg',
@@ -28,8 +32,10 @@ class AppLists{
     'set',
     'unit',
   ];
- /// Basic Colors List
-  static const List<String> colors = [
+
+  // ============ COLORS ============
+  /// Default Colors List
+  static List<String> defaultColors = [
     "Red",
     "Blue",
     "Green",
@@ -49,9 +55,22 @@ class AppLists{
     "Cyan",
   ];
 
+  // Load colors (default + saved)
+  static List<String> get colors {
+    final stored = _storage.read<List>(_colorKey)?.cast<String>() ?? [];
+    return [...defaultColors, ...stored];
+  }
 
-  /// Clothing Sizes
-  static const List<String> sizes = [
+  // Add new color and save it
+  static void addColor(String color) {
+    final stored = _storage.read<List>(_colorKey)?.cast<String>() ?? [];
+    stored.add(color);
+    _storage.write(_colorKey, stored);
+  }
+
+  // ============ SIZES ============
+  /// Default Clothing Sizes
+  static List<String> defaultSizes = [
     "XS",
     "S",
     "M",
@@ -64,8 +83,21 @@ class AppLists{
     "One Size",
   ];
 
-   /// Clothing Materials
-  // Default materials
+  // Load sizes (default + saved)
+  static List<String> get sizes {
+    final stored = _storage.read<List>(_sizeKey)?.cast<String>() ?? [];
+    return [...defaultSizes, ...stored];
+  }
+
+  // Add new size and save it
+  static void addSize(String size) {
+    final stored = _storage.read<List>(_sizeKey)?.cast<String>() ?? [];
+    stored.add(size);
+    _storage.write(_sizeKey, stored);
+  }
+
+  // ============ MATERIALS ============
+  /// Default Clothing Materials
   static List<String> defaultMaterials = [
     "Cotton",
     "Polyester",
@@ -84,16 +116,16 @@ class AppLists{
     "Velvet",
   ];
 
-  // Load materials (saved + default)
+  // Load materials (default + saved)
   static List<String> get materials {
-    final stored = _storage.read<List>(_key)?.cast<String>() ?? [];
+    final stored = _storage.read<List>(_materialKey)?.cast<String>() ?? [];
     return [...defaultMaterials, ...stored];
   }
 
   // Add new material and save it
   static void addMaterial(String material) {
-    final stored = _storage.read<List>(_key)?.cast<String>() ?? [];
+    final stored = _storage.read<List>(_materialKey)?.cast<String>() ?? [];
     stored.add(material);
-    _storage.write(_key, stored);
+    _storage.write(_materialKey, stored);
   }
 }
