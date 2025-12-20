@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:dmj_stock_manager/model/hsn_model.dart';
 import 'package:dmj_stock_manager/model/product_model.dart';
 import 'package:dmj_stock_manager/view_models/services/items_service%20.dart';
 import 'package:flutter/foundation.dart';
@@ -36,12 +37,14 @@ class ItemController extends GetxController {
   final searchBar = TextEditingController();
   var selectedProducts = <ProductModel>[].obs;
 
+  final hsnList = <HsnGstModel>[].obs;
   Rx<ProductModel?> selectedProduct = Rx<ProductModel?>(null);
 
   @override
   void onInit() {
     super.onInit();
     getProducts();
+    getHsnList();
     filteredProducts.assignAll(products);
 
     // Search listener
@@ -85,6 +88,7 @@ class ItemController extends GetxController {
   void clearAll() {
     selectedImage.clear();
   }
+
   Future<void> printBarcode(Uint8List imageBytes, {int quantity = 1}) async {
     try {
       final pdf = pw.Document();
@@ -200,7 +204,6 @@ class ItemController extends GetxController {
     }
   }
 
-
   /// Add product api
   Future<void> addProduct(
     String vendorId,
@@ -209,7 +212,7 @@ class ItemController extends GetxController {
     String material,
     String purchasePrice,
     List<File> images, // ⬅️ accept List<File>
-      String hsn,
+    String hsn,
   ) async {
     Map<String, String> fields = {
       "vendor": vendorId,
@@ -219,7 +222,7 @@ class ItemController extends GetxController {
       "color": color,
       "material": material,
       "unit_purchase_price": purchasePrice,
-      "hsn": hsnCode.value.text
+      "hsn": hsnCode.value.text,
     };
 
     try {
@@ -235,12 +238,13 @@ class ItemController extends GetxController {
       await getProducts();
 
       Get.snackbar("Success", "Product added successfully");
-    }on AppExceptions catch (e) {
+    } on AppExceptions catch (e) {
       if (kDebugMode) {
         print("❌ Exception Details: $e"); // full stack ya raw details
       }
       Get.snackbar(
-        "Error",e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+        "Error",
+        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
         duration: const Duration(seconds: 1),
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red,
@@ -248,7 +252,9 @@ class ItemController extends GetxController {
       );
     } catch (e) {
       if (kDebugMode) {
-        print("🚩 Add product Error ❌ Exception Details: $e"); // full stack ya raw details
+        print(
+          "🚩 Add product Error ❌ Exception Details: $e",
+        ); // full stack ya raw details
       }
       Get.snackbar('Error', 'Failed to add Product');
     } finally {
@@ -302,12 +308,13 @@ class ItemController extends GetxController {
         snackPosition: SnackPosition.TOP,
         duration: const Duration(seconds: 3),
       );
-    }on AppExceptions catch (e) {
+    } on AppExceptions catch (e) {
       if (kDebugMode) {
         print("❌ Exception Details: $e"); // full stack ya raw details
       }
       Get.snackbar(
-        "Error", e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+        "Error",
+        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
         duration: const Duration(seconds: 1),
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red,
@@ -348,7 +355,114 @@ class ItemController extends GetxController {
   //     materials.add(newMaterial);
   //   }
   // }
+
+  Future<void> getHsnList() async {
+    try {
+      isLoading.value = true;
+      final response = await itemService.hsnCodeList();
+      if (response is! List) {
+        throw Exception("Invalid HSN response format");
+      }
+      hsnList.assignAll(
+        response.map<HsnGstModel>(
+              (e) => HsnGstModel.fromJson(e),
+        ).toList(),
+      );
+      if (kDebugMode) {
+        print("✅ HSN List fetched: ${hsnList.length}");
+      }
+    } on AppExceptions catch (e) {
+      if (kDebugMode) {
+        print("❌ HSN API Exception: $e");
+      }
+      Get.snackbar(
+        "Error",
+        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print("❌ HSN Error: $e");
+      }
+
+      Get.snackbar(
+        "Error",
+        "Failed to load HSN list",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+
+  Future<void> addHsn(String hsnCode, double gstPercentage) async {
+    Map<String, dynamic> data = {
+      "hsn_code": hsnCode,
+      "gst_percentage": gstPercentage,
+    };
+
+    try {
+      isLoading.value = true;
+
+      final response = await itemService.addHsn(data);
+
+      // Parse response and add to hsnList
+      final newHsn = HsnGstModel.fromJson(response);
+      hsnList.add(newHsn);
+
+      // Refresh HSN list from server
+      await getHsnList();
+
+      Get.snackbar(
+        "Success",
+        "HSN code added successfully",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+
+      if (kDebugMode) {
+        print("✅ HSN added: $hsnCode with GST: $gstPercentage%");
+      }
+    } on AppExceptions catch (e) {
+      if (kDebugMode) {
+        print("❌ Add HSN Exception: $e");
+      }
+      Get.snackbar(
+        "Error",
+        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print("❌ Add HSN Error: $e");
+      }
+      Get.snackbar(
+        "Error",
+        "Failed to add HSN code",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
 }
+
 // Future<void> addProduct(
 //   String vendorId,
 //   String color,

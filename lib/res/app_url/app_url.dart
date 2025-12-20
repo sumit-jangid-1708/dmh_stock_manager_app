@@ -21,4 +21,5 @@ class AppUrl {
   static const String allBills = "$baseUrl/all-bills";
   static const String barcodeScan = "$baseUrl/scan-barcode-product";
   static const String barcodeGenerate = "$baseUrl/genrate-barcode";
+  static const String hsnCode = "$localUrl/hsn/";
 }

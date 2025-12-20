@@ -23,6 +23,7 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
   String? _selectedColor;
   String? _selectedSize;
   String? _selectedMaterial;
+  String? _selectedHsnCode;
 
   // GetX controllers
   final VendorController vendorController = Get.find<VendorController>();
@@ -146,7 +147,7 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                 ],
               ),
 
-              // Color and Size Row with Add Buttons
+              // Color Row with Add Button
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -179,6 +180,8 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                   ),
                 ],
               ),
+
+              // Size Row with Add Button
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -212,11 +215,39 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                 ],
               ),
 
-              _buildTextField(
-                label: 'HSN/SAC',
-                hint: 'Enter HSN/SAC code',
-                addProductController: itemController.hsnCode.value,
+              // HSN/SAC Row with Add Button
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Obx(() {
+                      final hsnList = itemController.hsnList
+                          .map((e) => e.hsnCode ?? "")
+                          .where((code) => code.isNotEmpty)
+                          .toList();
+
+                      return _buildDropdownField(
+                        label: 'HSN/SAC',
+                        items: hsnList,
+                        value: _selectedHsnCode,
+                        onChanged: (val) => setState(() => _selectedHsnCode = val),
+                      );
+                    }),
+                  ),
+                  const SizedBox(width: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: TextButton.icon(
+                      onPressed: () {
+                        _showAddHsnDialog(context);
+                      },
+                      icon: const Icon(Icons.add),
+                      label: const Text("Add"),
+                    ),
+                  ),
+                ],
               ),
+
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
@@ -236,7 +267,7 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                       _selectedMaterial!,
                       itemController.purchasePrice.value.text,
                       _selectedImages,
-                      itemController.hsnCode.value.text,
+                      _selectedHsnCode ?? "",
                     );
                     Get.back();
                   },
@@ -391,6 +422,105 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                   onAdd(controller.text.trim());
                 }
                 Get.back();
+              },
+              child: const Text(
+                "Add",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ✅ HSN Code Add Dialog (with HSN Code + GST Percentage)
+  void _showAddHsnDialog(BuildContext context) {
+    final TextEditingController hsnController = TextEditingController();
+    final TextEditingController gstController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Add New HSN Code"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: hsnController,
+                decoration: InputDecoration(
+                  labelText: "HSN Code",
+                  hintText: "Enter HSN code",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: gstController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: "GST Percentage",
+                  hintText: "Enter GST %",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1A1A4F),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: () async {
+                final hsnCode = hsnController.text.trim();
+                final gstText = gstController.text.trim();
+
+                if (hsnCode.isEmpty || gstText.isEmpty) {
+                  Get.snackbar(
+                    "Error",
+                    "Please fill both fields",
+                    snackPosition: SnackPosition.TOP,
+                    backgroundColor: Colors.red,
+                    colorText: Colors.white,
+                  );
+                  return;
+                }
+
+                final gstPercentage = double.tryParse(gstText);
+                if (gstPercentage == null) {
+                  Get.snackbar(
+                    "Error",
+                    "Invalid GST percentage",
+                    snackPosition: SnackPosition.TOP,
+                    backgroundColor: Colors.red,
+                    colorText: Colors.white,
+                  );
+                  return;
+                }
+
+                Get.back(); // Close dialog first
+
+                // Call controller method to add HSN
+                await itemController.addHsn(hsnCode, gstPercentage);
+
+                // Set the newly added HSN as selected
+                setState(() {
+                  _selectedHsnCode = hsnCode;
+                });
               },
               child: const Text(
                 "Add",

@@ -13,7 +13,6 @@ class ItemService {
     return response;
   }
 
-
   Future<dynamic> addProductApi({
     required Map<String, String> fields,
     required List<File> images,
@@ -47,4 +46,14 @@ class ItemService {
   //   dynamic response = await _apiServices.postApi(data, AppUrl.product);
   //   return response;
   // }
+
+  Future<dynamic> hsnCodeList() async{
+    dynamic response = await _apiServices.getApi(AppUrl.hsnCode);
+    return response;
+  }
+
+  Future<dynamic> addHsn(data)async{
+    dynamic response = await _apiServices.postApi(data, AppUrl.hsnCode);
+    return response;
+  }
 }
