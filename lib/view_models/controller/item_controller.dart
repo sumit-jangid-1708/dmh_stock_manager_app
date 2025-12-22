@@ -262,6 +262,22 @@ class ItemController extends GetxController {
     }
   }
 
+  /// Add this method in ItemController class
+  void clearAddProductForm() {
+    productName.value.clear();
+    skuCode.value.clear();
+    purchasePrice.value.clear();
+    lowStockLimit.value.clear();
+    hsnCode.value.clear();
+
+    // Optional: अगर आप चाहते हो कि selected images भी clear हो जाएं
+    selectedImage.clear();
+
+    if (kDebugMode) {
+      print("✅ Add product form cleared");
+    }
+  }
+
   Future<void> exportProductListToExcel() async {
     try {
       var status = await Permission.storage.request();

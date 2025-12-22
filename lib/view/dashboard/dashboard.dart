@@ -11,16 +11,12 @@ import '../auth/auth_screen.dart';
 import '../orders/order_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
-  final DashboardController dashboardController = Get.put(
-    DashboardController(),
-    permanent: true,
-  );
+  final DashboardController dashboardController = Get.find<DashboardController>(); // पहले से put है
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
   final List<IconData> icons = [
     Icons.home_filled,
     Icons.shopping_bag,
-    // Icons.inventory_2_outlined,
     Icons.person,
     Icons.shopping_cart_rounded,
   ];
@@ -33,8 +29,7 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<Widget> screens = [
       HomeScreen(),
-      ItemsScreen( ),
-      // StockScreen(),
+      ItemsScreen(),
       VendorScreen(),
       OrderScreen(),
     ];
@@ -43,14 +38,12 @@ class DashboardScreen extends StatelessWidget {
       return Scaffold(
         key: scaffoldKey,
         drawer: Drawer(
-          child:Sidebar(
+          child: Sidebar(
             onItemTap: (key) {
               if (key == "logout") {
-                // User logout → वापस AuthScreen
                 Get.offAll(() => AuthScreen());
               } else if (key == "setting") {
                 // Setting logic
-                // Get.toNamed(RouteName.settingsScreen);
               }
             },
           ),
@@ -59,15 +52,10 @@ class DashboardScreen extends StatelessWidget {
         bottomNavigationBar: customBottomBar(),
         body: Stack(
           children: [
-            // Active Screen Content (with padding so it's not hidden under header)
             Padding(
-              padding: const EdgeInsets.only(
-                top: 70,
-              ), // adjust to header height
+              padding: const EdgeInsets.only(top: 70),
               child: screens[dashboardController.currentIndex.value],
             ),
-
-            // Fixed App Header on top
             Positioned(
               top: 25,
               left: 0,
@@ -75,47 +63,39 @@ class DashboardScreen extends StatelessWidget {
               child: Column(
                 children: [
                   AppHeader(scaffoldKey: scaffoldKey),
-                   const Divider(height: 2, color: Color.fromARGB(255, 188, 188, 188)),
+                  const Divider(height: 2, color: Color.fromARGB(255, 188, 188, 188)),
                 ],
               ),
             ),
-
-            // Floating Add Button -> only on item screen
-            if(dashboardController.currentIndex.value == 1)
-            Positioned(
-              bottom: 20,
-              right: 20,
-              child: GestureDetector(
-                onTap: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(20),
+            if (dashboardController.currentIndex.value == 1)
+              Positioned(
+                bottom: 20,
+                right: 20,
+                child: GestureDetector(
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                       ),
+                      builder: (_) => AddItemFormBottomSheet(),
+                    );
+                  },
+                  child: Container(
+                    width: 70,
+                    height: 70,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFF1A1A4F),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 4)),
+                      ],
                     ),
-                    builder: (_) =>  AddItemFormBottomSheet(),
-                  );
-                },
-                child: Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: const Color(0xFF1A1A4F),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                    child: const Icon(Icons.add, color: Colors.white, size: 32),
                   ),
-                  child: const Icon(Icons.add, color: Colors.white, size: 32),
                 ),
               ),
-            ),
           ],
         ),
       );
@@ -128,16 +108,12 @@ class DashboardScreen extends StatelessWidget {
       padding: const EdgeInsets.only(top: 10),
       decoration: const BoxDecoration(
         color: Color(0xFFF5F5F5),
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(0),
-          topRight: Radius.circular(0),
-        ),
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(0), topRight: Radius.circular(0)),
       ),
       child: Obx(() => Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(icons.length, (index) {
           final isSelected = dashboardController.currentIndex.value == index;
-
           return GestureDetector(
             onTap: () => dashboardController.changeTab(index),
             child: Column(
@@ -148,9 +124,7 @@ class DashboardScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: isSelected ? Colors.blueAccent.withOpacity(0.2) : Colors.transparent,
-                    border: isSelected
-                        ? Border.all(color:const Color(0xFF1A1A4F), width: 2)
-                        : null,
+                    border: isSelected ? Border.all(color: const Color(0xFF1A1A4F), width: 2) : null,
                   ),
                   child: Icon(
                     icons[index],
@@ -162,7 +136,7 @@ class DashboardScreen extends StatelessWidget {
                 Text(
                   labels[index],
                   style: TextStyle(
-                    color: isSelected ? const Color(0xFF1A1A4F): Colors.black,
+                    color: isSelected ? const Color(0xFF1A1A4F) : Colors.black,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     fontSize: 14,
                   ),
@@ -174,5 +148,4 @@ class DashboardScreen extends StatelessWidget {
       )),
     );
   }
-
 }

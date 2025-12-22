@@ -5,7 +5,7 @@ class AppUrl {
   static const String localUrl = "http://192.168.1.28:8000/api";
 
   static const String addVendor = "$baseUrl/vendors/";
-  static const String product = "$localUrl/products/";
+  static const String product = "$baseUrl/products/";
   static const String channels = "$baseUrl/channels/";
   static const String orders = "$baseUrl/orders/";
   static const String wpsReturn = "$baseUrl/wps-return/";
@@ -21,5 +21,6 @@ class AppUrl {
   static const String allBills = "$baseUrl/all-bills";
   static const String barcodeScan = "$baseUrl/scan-barcode-product";
   static const String barcodeGenerate = "$baseUrl/genrate-barcode";
-  static const String hsnCode = "$localUrl/hsn/";
+  static const String hsnCode = "$baseUrl/hsn/";
+  static const String lowStock = "$baseUrl/low-stock-products/";
 }
