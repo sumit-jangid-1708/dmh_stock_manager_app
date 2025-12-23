@@ -1,6 +1,7 @@
 import 'package:dmj_stock_manager/res/components/widgets/add_vendor_form.dart';
 import 'package:dmj_stock_manager/res/components/widgets/vedor_card.dart';
 import 'package:dmj_stock_manager/res/routes/routes_names.dart';
+import 'package:dmj_stock_manager/view/vendors/vendor_detail_screen.dart';
 import 'package:dmj_stock_manager/view_models/controller/vendor_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -129,7 +130,8 @@ class VendorScreen extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         child: InkWell(
                           onTap: (){
-                            Get.toNamed(RouteName.vendorDetailScreen);
+                            // Get.toNamed(RouteName.vendorDetailScreen);
+                            Get.to(() => VendorDetailScreen(vendorId: vendor.id));
                           },
                           child: VendorCard(
                             initials: vendor.vendorName.isNotEmpty

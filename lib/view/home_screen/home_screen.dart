@@ -172,8 +172,11 @@ class HomeScreen extends StatelessWidget {
                     return const Center(child: Text("No products found"));
                   }
 
+                  final displayCount = itemController.products.length > 5
+                      ? 5
+                      : itemController.products.length;
                   return ListView.builder(
-                    itemCount: 5,
+                    itemCount: displayCount,
                     shrinkWrap: true, // 👈 yeh important hai
                     physics:
                         const NeverScrollableScrollPhysics(), // scroll ka clash avoid karega

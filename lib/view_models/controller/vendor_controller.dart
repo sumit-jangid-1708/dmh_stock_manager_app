@@ -5,17 +5,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../model/vender_overview_model.dart';
+
 class VendorController extends GetxController {
   var expandedList = <bool>[].obs;
   final vendors = <VendorModel>[].obs; // Store vendors
-
-  // store all vendors
-  // Hardcoded vendor list
-
-  // store filtered vendors
   var filteredVendors = <VendorModel>[].obs;
   final searchBar = TextEditingController();
 
+  Rx<VendorOverviewModel?> vendorOverview = Rx<VendorOverviewModel?>(null);
   //fields
   final vendorNameController = TextEditingController().obs;
   // final phoneNumberController = TextEditingController().obs;
@@ -126,7 +124,7 @@ class VendorController extends GetxController {
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red,
         colorText: Colors.white,
-      );    
+      );
     } finally {
       isLoading.value = false;
     }
@@ -211,5 +209,51 @@ class VendorController extends GetxController {
       isLoading.value = false;
     }
   }
+
+
+  Future<void> getVendorDetails(int vendorId) async {
+    try {
+      isLoading.value = true;
+
+      final response = await _vendorService.vendorDetails(vendorId);
+
+      // Parse the response into VendorOverviewModel
+      vendorOverview.value = VendorOverviewModel.fromJson(response);
+
+      if (kDebugMode) {
+        print("✅ Vendor details fetched for ID: $vendorId");
+        print("Vendor: ${vendorOverview.value?.vendor.name}");
+        print("Supplied Products: ${vendorOverview.value?.suppliedProducts.length}");
+        print("Past Orders: ${vendorOverview.value?.pastOrders.length}");
+      }
+    } on AppExceptions catch (e) {
+      if (kDebugMode) {
+        print("❌ Vendor Details Exception: $e");
+      }
+      Get.snackbar(
+        "Error",
+        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print("❌ Vendor Details Error: $e");
+      }
+      Get.snackbar(
+        "Error",
+        "Failed to load vendor details",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+
 }
-  

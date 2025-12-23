@@ -47,11 +47,11 @@ class AppRoutes {
         page: ()=> VendorScreen(),
         binding: VendorBinding(),
     ),
-    GetPage(
-        name: RouteName.vendorDetailScreen,
-        page: ()=> VendorDetailScreen(),
-        binding: VendorBinding()
-    ),
+    // GetPage(
+    //     name: RouteName.vendorDetailScreen,
+    //     page: ()=> VendorDetailScreen(),
+    //     binding: VendorBinding()
+    // ),
     GetPage(
         name: RouteName.historyScreen,
         page: ()=> HistoryScreen(),

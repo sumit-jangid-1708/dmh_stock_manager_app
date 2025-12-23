@@ -23,4 +23,5 @@ class AppUrl {
   static const String barcodeGenerate = "$baseUrl/genrate-barcode";
   static const String hsnCode = "$baseUrl/hsn/";
   static const String lowStock = "$baseUrl/low-stock-products/";
+  static const String vendorDetails = "$baseUrl/vendor-dashboard/";
 }

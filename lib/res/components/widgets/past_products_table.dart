@@ -1,97 +1,180 @@
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../../../model/vender_overview_model.dart';
 
 class PastProductsTable extends StatelessWidget {
-  final List<Map<String, String>> pastProducts;
-  const PastProductsTable({super.key, required this.pastProducts});
+  final List<PastOrderModel> pastProducts;
 
-   @override
+  const PastProductsTable({
+    super.key,
+    required this.pastProducts,
+  });
+
+  // Helper to get status color
+  Color getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'delivered':
+        return Colors.green;
+      case 'pending':
+        return Colors.orange;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(top: 16),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color:  Color(0xfff8f8f8),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(width: 1, color: Colors.grey.shade300),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "Past Products",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-            ),
-          ),
-          const SizedBox(height: 12,),
-           // Table Header
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A1A4F),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Row(
-              children: [
-                Expanded(flex: 3, child: Text("PO-#", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Colors.white))),
-                Expanded(flex: 3, child: Text("Date", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Colors.white))),
-                Expanded(flex: 2, child: Text("items", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Colors.white))),
-                Expanded(flex: 2, child: Text("Total", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Colors.white))),
-                Expanded(flex: 3, child: Text("Status", style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Colors.white))),
-              ],
-            ),
-          ),
-          const SizedBox(height: 6),
+    final width = Get.width;
+    final height = Get.height;
 
-          // Table Rows
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount:pastProducts.length,
-            itemBuilder: (context, index) {
-              final product = pastProducts[index];
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
-                child: Row(
-                   children: [
-                    Expanded(flex: 3, child: Text(product["po"] ?? "",style: TextStyle(fontSize: 10))),
-                    Expanded(flex: 3, child: Text(product["date"] ?? "",style: TextStyle(fontSize: 10))),
-                    Expanded(flex: 2, child: Text(product["items"] ?? "",style: TextStyle(fontSize: 10))),
-                    Expanded(flex: 2, child: Text(product["total"] ?? "",style: TextStyle(fontSize: 10))),
-                    Expanded(
-                      flex: 3,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade100,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          product["status"] ?? "",
-                          style: const TextStyle(
-                            color: Colors.green,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 10
-                          ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Past Orders",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        SizedBox(height: height * 0.015),
+
+        // Show message if no orders
+        if (pastProducts.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.all(width * 0.04),
+            decoration: BoxDecoration(
+              color: const Color(0xfff8f8f8),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(width: 1, color: Colors.grey.shade300),
+            ),
+            child: const Center(
+              child: Text(
+                "No past orders yet",
+                style: TextStyle(
+                  color: Colors.black54,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          )
+        else
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: const Color(0xfff8f8f8),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(width: 1, color: Colors.grey.shade300),
+            ),
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: width * 0.04,
+                    vertical: height * 0.012,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                    ),
+                  ),
+                  child: Row(
+                    children: const [
+                      Expanded(flex: 2, child: Text("PO", style: TextStyle(fontWeight: FontWeight.w600))),
+                      Expanded(flex: 2, child: Text("Date", style: TextStyle(fontWeight: FontWeight.w600))),
+                      Expanded(flex: 2, child: Text("Items", style: TextStyle(fontWeight: FontWeight.w600), textAlign: TextAlign.center)),
+                      Expanded(flex: 2, child: Text("Total", style: TextStyle(fontWeight: FontWeight.w600), textAlign: TextAlign.right)),
+                      Expanded(flex: 2, child: Text("Status", style: TextStyle(fontWeight: FontWeight.w600), textAlign: TextAlign.center)),
+                    ],
+                  ),
+                ),
+
+                // Data Rows
+                ...pastProducts.map((order) {
+                  return Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: width * 0.04,
+                      vertical: height * 0.015,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          width: 0.5,
+                          color: Colors.grey.shade300,
                         ),
                       ),
                     ),
-                  ],
-                ),
-              );
-            },
-          )
-        ],
-      ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            order.poNumber,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            order.date,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            order.items.toString(),
+                            style: const TextStyle(fontSize: 13),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            "₹${order.totalAmount.toStringAsFixed(0)}",
+                            style: const TextStyle(fontSize: 13),
+                            textAlign: TextAlign.right,
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: getStatusColor(order.status).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              order.status,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: getStatusColor(order.status),
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+        SizedBox(height: height * 0.02),
+      ],
     );
   }
 }

@@ -222,7 +222,7 @@ class ItemController extends GetxController {
       "color": color,
       "material": material,
       "unit_purchase_price": purchasePrice,
-      "hsn": hsnCode.value.text,
+      "hsn": hsn,
     };
 
     try {
@@ -419,6 +419,17 @@ class ItemController extends GetxController {
 
 
   Future<void> addHsn(String hsnCode, double gstPercentage) async {
+    final alreadyExistsLocally = hsnList.any((e) => e.hsnCode == hsnCode);
+    if (alreadyExistsLocally) {
+      Get.snackbar(
+        "Info",
+        "This HSN code already exists in the list",
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
     Map<String, dynamic> data = {
       "hsn_code": hsnCode,
       "gst_percentage": gstPercentage,
@@ -429,12 +440,10 @@ class ItemController extends GetxController {
 
       final response = await itemService.addHsn(data);
 
-      // Parse response and add to hsnList
       final newHsn = HsnGstModel.fromJson(response);
-      hsnList.add(newHsn);
 
-      // Refresh HSN list from server
-      await getHsnList();
+
+      hsnList.add(newHsn);
 
       Get.snackbar(
         "Success",
@@ -449,28 +458,20 @@ class ItemController extends GetxController {
         print("✅ HSN added: $hsnCode with GST: $gstPercentage%");
       }
     } on AppExceptions catch (e) {
-      if (kDebugMode) {
-        print("❌ Add HSN Exception: $e");
-      }
       Get.snackbar(
         "Error",
         e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red,
         colorText: Colors.white,
-        duration: const Duration(seconds: 2),
       );
     } catch (e) {
-      if (kDebugMode) {
-        print("❌ Add HSN Error: $e");
-      }
       Get.snackbar(
         "Error",
-        "Failed to add HSN code",
+        "Failed to add HSN code: $e",
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red,
         colorText: Colors.white,
-        duration: const Duration(seconds: 2),
       );
     } finally {
       isLoading.value = false;

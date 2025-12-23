@@ -224,8 +224,8 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                       final hsnList = itemController.hsnList
                           .map((e) => e.hsnCode ?? "")
                           .where((code) => code.isNotEmpty)
+                          .toSet()
                           .toList();
-
                       return _buildDropdownField(
                         label: 'HSN/SAC',
                         items: hsnList,
@@ -488,6 +488,11 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
               onPressed: () async {
                 final hsnCode = hsnController.text.trim();
                 final gstText = gstController.text.trim();
+
+                if (itemController.hsnList.any((e) => e.hsnCode == hsnCode)) {
+                  Get.snackbar("Info", "This HSN code already exists");
+                  return;
+                }
 
                 if (hsnCode.isEmpty || gstText.isEmpty) {
                   Get.snackbar(
