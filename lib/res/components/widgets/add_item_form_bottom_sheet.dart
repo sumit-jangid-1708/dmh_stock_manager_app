@@ -28,7 +28,7 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
   // GetX controllers
   final VendorController vendorController = Get.find<VendorController>();
   final DashboardController dashboardController =
-  Get.find<DashboardController>();
+      Get.find<DashboardController>();
   final ItemController itemController = Get.find<ItemController>();
 
   // Local selection state for the dropdown UI
@@ -122,7 +122,8 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                       label: 'Material',
                       items: AppLists.materials,
                       value: _selectedMaterial,
-                      onChanged: (val) => setState(() => _selectedMaterial = val),
+                      onChanged: (val) =>
+                          setState(() => _selectedMaterial = val),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -230,7 +231,8 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                         label: 'HSN/SAC',
                         items: hsnList,
                         value: _selectedHsnCode,
-                        onChanged: (val) => setState(() => _selectedHsnCode = val),
+                        onChanged: (val) =>
+                            setState(() => _selectedHsnCode = val),
                       );
                     }),
                   ),
@@ -401,7 +403,9 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
             controller: controller,
             decoration: InputDecoration(
               hintText: hint,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12),
             ),
           ),
@@ -423,10 +427,7 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                 }
                 Get.back();
               },
-              child: const Text(
-                "Add",
-                style: TextStyle(color: Colors.white),
-              ),
+              child: const Text("Add", style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -518,19 +519,14 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                 }
 
                 Get.back(); // Close dialog first
-
                 // Call controller method to add HSN
                 await itemController.addHsn(hsnCode, gstPercentage);
-
                 // Set the newly added HSN as selected
                 setState(() {
                   _selectedHsnCode = hsnCode;
                 });
               },
-              child: const Text(
-                "Add",
-                style: TextStyle(color: Colors.white),
-              ),
+              child: const Text("Add", style: TextStyle(color: Colors.white)),
             ),
           ],
         );

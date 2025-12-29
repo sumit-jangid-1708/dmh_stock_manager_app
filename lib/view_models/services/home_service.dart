@@ -5,19 +5,22 @@ class HomeService {
   final NetworkApiServices _apiServices = NetworkApiServices();
 
   Future<dynamic> addChannelApi(data) async {
-    dynamic response = _apiServices.postApi(data, AppUrl.channels);
+    dynamic response = await _apiServices.postApi(AppUrl.channels, data);
     return response;
   }
 
   Future<dynamic> getChannelApi() async {
-    dynamic response = _apiServices.getApi(AppUrl.channels);
+    dynamic response = await _apiServices.getApi(AppUrl.channels);
     return response;
   }
 
   Future<dynamic> stockDetailsApi() async {
-    dynamic response = _apiServices.getApi(AppUrl.stockDetails);
+    dynamic response = await _apiServices.getApi(AppUrl.stockDetails);
     return response;
   }
-
-
+  
+  Future<dynamic> bestSellingProductsApi ({int limit = 5})async{
+    dynamic response = await _apiServices.getApi("${AppUrl.bestSellingProducts}/?best_selling=true&limit=$limit");
+    return response ;
+  }
 }

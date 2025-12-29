@@ -1,3 +1,4 @@
+import 'package:dmj_stock_manager/model/bestselling_products_model.dart';
 import 'package:dmj_stock_manager/model/channel_model.dart';
 import 'package:dmj_stock_manager/view_models/services/home_service.dart';
 import 'package:flutter/foundation.dart';
@@ -9,6 +10,7 @@ import '../../model/stock_details_model.dart';
 
 class HomeController extends GetxController {
   final HomeService _homeService = HomeService();
+
   var totalStock = 0.obs;
   var lowStock = 0.obs;
   var outOfStock = 0.obs;
@@ -19,6 +21,10 @@ class HomeController extends GetxController {
   var stockResponseModel = <StockResponseModel>[].obs;
   var stockDetails = <StockDetail>[].obs;
 
+  var bestSellingProducts = <BestSellingProductModel>[].obs;
+var selectedLowStockFilter = "all".obs;
+var bestSellingLimit = 5.obs;
+  var selectedStockSource = "stock".obs;
 
   @override
   void onInit() {
@@ -26,6 +32,7 @@ class HomeController extends GetxController {
     fetchStats();
     getChannels();
     getStockDetail();
+    getBestSellingProducts();
   }
 
   void fetchStats() {
@@ -161,5 +168,72 @@ class HomeController extends GetxController {
   }
 
 
+  Future<void> getBestSellingProducts({int? limit})async {
+    try {
+      isLoading.value = true;
+       final response = await  _homeService.bestSellingProductsApi(limit: limit ?? bestSellingLimit.value);
 
+       if (kDebugMode){
+         print("✅Best Selling Response: $response");
+       }
+
+      final result = BestSellingProductsResponseModel.fromJson(response);
+      bestSellingProducts.value = result.results;
+
+      // Update low stock count based on best selling products
+      final lowStockCount = result.results
+          .where((p) => p.quantity > 0 && p.quantity <= p.threshold)
+          .length;
+
+      final outOfStockCount = result.results
+          .where((p) => p.quantity == 0)
+          .length;
+
+      lowStock.value = lowStockCount;
+      outOfStock.value = outOfStockCount;
+
+      if (kDebugMode) {
+        print("✅ Best Selling Products Count: ${result.count}");
+        print("✅ Low Stock: $lowStockCount, Out of Stock: $outOfStockCount");
+      }
+      
+    }on AppExceptions catch(e){
+      if(kDebugMode){
+        print("❌ Exception: $e");
+      }
+      Get.snackbar(
+        "Error",
+        "Failed to fetch best selling products",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }catch (e) {
+      if (kDebugMode) {
+        print("❌ Error: $e");
+      }
+      Get.snackbar(
+        "Error",
+        "Error fetching products: ${e.toString()}",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+  // ✅ NEW: Change limit dynamically
+  void changeBestSellingLimit(int newLimit) {
+    bestSellingLimit.value = newLimit;
+    getBestSellingProducts(limit: newLimit);
+  }
+
+  // ✅ NEW: Refresh all data
+  Future<void> refreshAllData() async {
+    await Future.wait([
+      getChannels(),
+      getStockDetail(),
+      getBestSellingProducts(),
+    ]);
+    fetchStats();
+  }
 }

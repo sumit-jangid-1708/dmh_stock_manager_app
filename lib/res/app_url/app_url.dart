@@ -24,4 +24,5 @@ class AppUrl {
   static const String hsnCode = "$baseUrl/hsn/";
   static const String lowStock = "$baseUrl/low-stock-products/";
   static const String vendorDetails = "$baseUrl/vendor-dashboard/";
+  static const String bestSellingProducts = "$baseUrl/product-list";
 }
