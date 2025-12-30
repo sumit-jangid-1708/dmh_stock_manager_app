@@ -234,10 +234,12 @@ class ItemController extends GetxController {
       );
 
       final product = ProductModel.fromJson(response);
-      products.add(product);
+      // products.add(product);
       await getProducts();
 
       Get.snackbar("Success", "Product added successfully");
+
+      clearAddProductForm();
     } on AppExceptions catch (e) {
       if (kDebugMode) {
         print("❌ Exception Details: $e"); // full stack ya raw details

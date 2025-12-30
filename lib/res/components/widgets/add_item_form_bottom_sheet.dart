@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:dmj_stock_manager/model/hsn_model.dart';
 import 'package:dmj_stock_manager/model/vendor_model.dart';
 import 'package:dmj_stock_manager/res/components/widgets/multi_image_picker_widget.dart';
 import 'package:dmj_stock_manager/utils/app_lists.dart';
@@ -24,6 +25,7 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
   String? _selectedSize;
   String? _selectedMaterial;
   String? _selectedHsnCode;
+  int? _selectedHsnId;
 
   // GetX controllers
   final VendorController vendorController = Get.find<VendorController>();
@@ -120,7 +122,7 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                   Expanded(
                     child: _buildDropdownField(
                       label: 'Material',
-                      items: AppLists.materials,
+                      items: List<String>.from(AppLists.materials),
                       value: _selectedMaterial,
                       onChanged: (val) =>
                           setState(() => _selectedMaterial = val),
@@ -155,7 +157,7 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                   Expanded(
                     child: _buildDropdownField(
                       label: 'Colour',
-                      items: AppLists.colors,
+                      items: List<String>.from(AppLists.colors),
                       value: _selectedColor,
                       onChanged: (val) => setState(() => _selectedColor = val),
                     ),
@@ -189,7 +191,7 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                   Expanded(
                     child: _buildDropdownField(
                       label: 'Size',
-                      items: AppLists.sizes,
+                      items: List<String>.from(AppLists.sizes),
                       value: _selectedSize,
                       onChanged: (val) => setState(() => _selectedSize = val),
                     ),
@@ -222,17 +224,29 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                 children: [
                   Expanded(
                     child: Obx(() {
-                      final hsnList = itemController.hsnList
-                          .map((e) => e.hsnCode ?? "")
-                          .where((code) => code.isNotEmpty)
-                          .toSet()
-                          .toList();
+                      final hsnList = List<HsnGstModel>.from(itemController.hsnList);
+                      // final hsnList = itemController.hsnList
+                      //     .map((e) => e.hsnCode ?? "")
+                      //     .where((code) => code.isNotEmpty)
+                      //     .toSet()
+                      //     .toList();
                       return _buildDropdownField(
                         label: 'HSN/SAC',
-                        items: hsnList,
+                        items:hsnList.map((e) => e.hsnCode ?? "").toList(),
+
                         value: _selectedHsnCode,
-                        onChanged: (val) =>
-                            setState(() => _selectedHsnCode = val),
+                        onChanged: (selectedCode) {
+                          if (selectedCode != null) {
+                            final selectedHsn = hsnList
+                                .firstWhere(
+                                  (hsn) => hsn.hsnCode == selectedCode,
+                                );
+                            setState(() {
+                              _selectedHsnCode = selectedCode;
+                              _selectedHsnId = selectedHsn.id; // ← ID स्टोर करो
+                            });
+                          }
+                        },
                       );
                     }),
                   ),
@@ -262,15 +276,28 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                     ),
                   ),
                   onPressed: () {
-                    itemController.addProduct(
+                    final imagesCopy = List<File>.from(_selectedImages);
+                     itemController.addProduct(
                       _selectedVendorId!,
                       _selectedColor!,
                       _selectedSize!,
                       _selectedMaterial!,
                       itemController.purchasePrice.value.text,
-                      _selectedImages,
-                      _selectedHsnCode ?? "",
+                      imagesCopy,
+                      _selectedHsnId.toString(),
                     );
+
+                    // itemController.clearAddProductForm();
+                    // setState(() {
+                    //   _selectedImages.clear();
+                    //   _selectedColor = null;
+                    //   _selectedSize = null;
+                    //   _selectedMaterial = null;
+                    //   _selectedHsnCode = null;
+                    //   _selectedHsnId = null;
+                    //   _selectedVendorName = null;
+                    //   _selectedVendorId = null;
+                    // });
                     Get.back();
                   },
                   child: const Text(
@@ -522,8 +549,10 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                 // Call controller method to add HSN
                 await itemController.addHsn(hsnCode, gstPercentage);
                 // Set the newly added HSN as selected
+                final newHsn = itemController.hsnList.lastWhere((e) => e.hsnCode == hsnCode);
                 setState(() {
                   _selectedHsnCode = hsnCode;
+                  _selectedHsnId = newHsn.id;
                 });
               },
               child: const Text("Add", style: TextStyle(color: Colors.white)),

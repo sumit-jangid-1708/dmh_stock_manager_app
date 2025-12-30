@@ -12,7 +12,7 @@ class ProductModel {
   final String barcodeImage;
   final List<String> productImageVariants;
   final String unitPurchasePrice;
-  final String? hsnCode; // ✅ nullable because API sends null
+  final int? hsnId; // ✅ nullable because API sends null
 
   // Convenience getter (fine to keep)
   String get purchasePrice => unitPurchasePrice;
@@ -31,7 +31,7 @@ class ProductModel {
     required this.barcodeImage,
     required this.productImageVariants,
     required this.unitPurchasePrice,
-    this.hsnCode,
+    this.hsnId,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
@@ -54,7 +54,7 @@ class ProductModel {
           .toList() ??
           [],
       unitPurchasePrice: json['unit_purchase_price']?.toString() ?? '0.00',
-      hsnCode: json['hsn'].toString(), // ✅ null-safe
+      hsnId: json['hsn'], // ✅ null-safe
     );
   }
 }
