@@ -22,8 +22,8 @@ class HomeController extends GetxController {
   var stockDetails = <StockDetail>[].obs;
 
   var bestSellingProducts = <BestSellingProductModel>[].obs;
-var selectedLowStockFilter = "all".obs;
-var bestSellingLimit = 5.obs;
+  var selectedLowStockFilter = "all".obs;
+  var bestSellingLimit = 5.obs;
   var selectedStockSource = "stock".obs;
 
   @override
@@ -53,13 +53,14 @@ var bestSellingLimit = 5.obs;
         print("❌ Exception Details: $e"); // full stack ya raw details
       }
       Get.snackbar(
-        "Error", e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+        "Error",
+        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
         duration: const Duration(seconds: 1),
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
-    }catch (e) {
+    } catch (e) {
       print("Error fetching Channels: $e");
       Get.snackbar(
         "Error",
@@ -70,56 +71,61 @@ var bestSellingLimit = 5.obs;
   }
 
   /// 🟢 Helper: to get channel name by id
-  String getChannelNameById(int id){
-    final channel = channels.firstWhereOrNull((c)=> c.id == id);
+  String getChannelNameById(int id) {
+    final channel = channels.firstWhereOrNull((c) => c.id == id);
     return channel?.name ?? "Unknown channel";
   }
 
   Future<void> addChannels() async {
-    Map data = {"name": nameController.text};
+    // ❌ Empty validation
+    if (nameController.text.trim().isEmpty) {
+      Get.snackbar(
+        "Error",
+        "Please enter channel name",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+    // ✅ Payload
+    Map data = {"name": nameController.text.trim()};
     try {
       isLoading.value = true;
-      final response = await _homeService.addChannelApi(data);
-      // ✅ Check if response contains an error message
-      if (response is Map && response.containsKey("name")) {
-        String errorMessage = response["name"][0]; // take the first error
-        Get.snackbar(
-          "Error",
-          errorMessage,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-        return; // stop further execution
-      }
+      final response = await _homeService.addChannelApi(data);// ✅ API Call
+      final channel = ChannelModel.fromJson(response);// ✅ Parse response
+      channels.add(channel); // ✅ Update list
+      nameController.clear();// ✅ Cleanup
+      Get.back();
 
-      final channel = ChannelModel.fromJson(response);
-      channels.add(channel);
-      await getChannels(); // fetching the Channels
-      nameController.clear();
       Get.snackbar(
         "Success",
         "Channel added successfully",
+        duration: const Duration(seconds: 1),
+        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.green,
+        colorText: Colors.white,
       );
     } on AppExceptions catch (e) {
       if (kDebugMode) {
-        print("❌ Exception Details: $e"); // full stack ya raw details
+        print("❌ Channel API Error: $e"); // ✅ Backend / API errors
       }
       Get.snackbar(
-        "Error", e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+        "Error",
+        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
         duration: const Duration(seconds: 1),
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
-    }catch (e) {
+    } catch (e) {
       if (kDebugMode) {
-        print("❌ Exception Details: $e"); // full stack ya raw details
+        print("❌ Channel Unexpected Error: $e");// ❌ Unexpected crash
       }
       Get.snackbar(
         "Error",
-        "Error in adding Channels",
-        backgroundColor: Colors.red,
+        "Something went wrong",
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
       );
     } finally {
       isLoading.value = false;
@@ -139,14 +145,16 @@ var bestSellingLimit = 5.obs;
       totalStockValue.value = stockResponse.data!.totalStockValue as double;
 
       print("🦄 Total Stock Count: ${stockResponse.data?.stockCount}");
-      print("🦄 First Product: ${stockDetails.isNotEmpty ? stockDetails.first.name : 'No Data'}");
-
-    }on AppExceptions catch (e) {
+      print(
+        "🦄 First Product: ${stockDetails.isNotEmpty ? stockDetails.first.name : 'No Data'}",
+      );
+    } on AppExceptions catch (e) {
       if (kDebugMode) {
         print("❌ Exception Details: $e"); // full stack ya raw details
       }
       Get.snackbar(
-        "Error", e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+        "Error",
+        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
         duration: const Duration(seconds: 1),
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red,
@@ -167,15 +175,16 @@ var bestSellingLimit = 5.obs;
     }
   }
 
-
-  Future<void> getBestSellingProducts({int? limit})async {
+  Future<void> getBestSellingProducts({int? limit}) async {
     try {
       isLoading.value = true;
-       final response = await  _homeService.bestSellingProductsApi(limit: limit ?? bestSellingLimit.value);
+      final response = await _homeService.bestSellingProductsApi(
+        limit: limit ?? bestSellingLimit.value,
+      );
 
-       if (kDebugMode){
-         print("✅Best Selling Response: $response");
-       }
+      if (kDebugMode) {
+        print("✅Best Selling Response: $response");
+      }
 
       final result = BestSellingProductsResponseModel.fromJson(response);
       bestSellingProducts.value = result.results;
@@ -196,9 +205,8 @@ var bestSellingLimit = 5.obs;
         print("✅ Best Selling Products Count: ${result.count}");
         print("✅ Low Stock: $lowStockCount, Out of Stock: $outOfStockCount");
       }
-      
-    }on AppExceptions catch(e){
-      if(kDebugMode){
+    } on AppExceptions catch (e) {
+      if (kDebugMode) {
         print("❌ Exception: $e");
       }
       Get.snackbar(
@@ -207,7 +215,7 @@ var bestSellingLimit = 5.obs;
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
-    }catch (e) {
+    } catch (e) {
       if (kDebugMode) {
         print("❌ Error: $e");
       }
@@ -221,6 +229,7 @@ var bestSellingLimit = 5.obs;
       isLoading.value = false;
     }
   }
+
   // ✅ NEW: Change limit dynamically
   void changeBestSellingLimit(int newLimit) {
     bestSellingLimit.value = newLimit;

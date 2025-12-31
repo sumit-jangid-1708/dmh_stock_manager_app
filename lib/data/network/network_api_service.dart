@@ -15,12 +15,13 @@ class NetworkApiServices extends BaseApiServices {
   final storage = GetStorage();
 
   /// 🔥 Build Headers with Token
-  Future<Map<String, String>> _getHeaders(String url, {Map<String, String>? extra}) async {
+  Future<Map<String, String>> _getHeaders(
+    String url, {
+    Map<String, String>? extra,
+  }) async {
     final token = storage.read("access_token") ?? "";
 
-    final headers = {
-      'Content-Type': 'application/json',
-    };
+    final headers = {'Content-Type': 'application/json'};
 
     // ❌ Don't add token for login API
     if (!url.contains(AppUrl.loginOtp)) {
@@ -36,7 +37,6 @@ class NetworkApiServices extends BaseApiServices {
 
     return headers;
   }
-
 
   @override
   Future<dynamic> getApi(String url) async {
@@ -59,10 +59,10 @@ class NetworkApiServices extends BaseApiServices {
 
   @override
   Future<dynamic> postApi(
-      dynamic data,
-      String url, {
-        Map<String, String>? headers,
-      }) async {
+    dynamic data,
+    String url, {
+    Map<String, String>? headers,
+  }) async {
     if (kDebugMode) {
       print('🌐 POST Request URL: $url');
       print('🌐 POST Request Body: $data');
@@ -73,11 +73,8 @@ class NetworkApiServices extends BaseApiServices {
       final mergedHeaders = await _getHeaders(url, extra: headers);
 
       final response = await http
-          .post(
-        Uri.parse(url),
-        body: jsonEncode(data),
-        headers: mergedHeaders,
-      ).timeout(const Duration(seconds: 30));
+          .post(Uri.parse(url), body: jsonEncode(data), headers: mergedHeaders)
+          .timeout(const Duration(seconds: 30));
 
       final contentType = response.headers['content-type'];
 
@@ -93,7 +90,6 @@ class NetworkApiServices extends BaseApiServices {
       }
 
       return jsonDecode(response.body);
-
     } on SocketException {
       throw InternetExceptions('No Internet Connection');
     } on RequestTimeOut {
@@ -139,8 +135,6 @@ class NetworkApiServices extends BaseApiServices {
     }
   }
 }
-
-
 
 // // Function to handle HTTP responses and throw custom exceptions
 // dynamic returnResponse(http.Response response) {

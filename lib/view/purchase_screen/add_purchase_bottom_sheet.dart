@@ -3,6 +3,7 @@ import 'package:dmj_stock_manager/view_models/controller/vendor_controller.dart'
 import 'package:drop_down_list/model/selected_list_item.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:dmj_stock_manager/model/product_model.dart';
 import 'package:dmj_stock_manager/model/vendor_model.dart';
@@ -13,31 +14,35 @@ class AddPurchaseBottomSheet extends StatelessWidget {
 
   final PurchaseController purchaseController = Get.put(PurchaseController());
   final VendorController vendorController = Get.find<VendorController>();
-  final ItemController itemController =  Get.find<ItemController>();
+  final ItemController itemController = Get.find<ItemController>();
 
   final Rx<DateTime?> billDate = Rx<DateTime?>(DateTime.now());
   final Rx<DateTime?> dueDate = Rx<DateTime?>(null);
+  final Rx<DateTime?> paidDate = Rx<DateTime?>(null);
 
-  final TextEditingController billNumberController =
-  TextEditingController(text: "PO-2026");
-  final TextEditingController billAmountController =
-  TextEditingController(text: "₹0.00");
+  final TextEditingController billNumberController = TextEditingController(
+    text: "PO-2026",
+  );
+  final TextEditingController billAmountController = TextEditingController(
+    text: "₹0.00",
+  );
   final TextEditingController descriptionController = TextEditingController();
+  final TextEditingController paidAmountController = TextEditingController();
 
   final RxString selectedVendor = "".obs;
+  final RxString paymentStatus = "UNPAID".obs; // Payment Status
 
-  final List<String> vendors = [
-    "Vendor A",
-    "Vendor B",
-    "Vendor C",
-  ];
+  final List<String> vendors = ["Vendor A", "Vendor B", "Vendor C"];
   //
   // List<SelectedListItem<VendorModel>> get _vendorListItems => vendorController
   //     .vendors
   //     .map((v) => SelectedListItem<VendorModel>(data: v)) // ⬅️ pass full object
   //     .toList();
 
-  Future<void> _selectDate(BuildContext context, Rx<DateTime?> dateController) async {
+  Future<void> _selectDate(
+    BuildContext context,
+    Rx<DateTime?> dateController,
+  ) async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: dateController.value ?? DateTime.now(),
@@ -85,18 +90,21 @@ class AddPurchaseBottomSheet extends StatelessWidget {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Create Purchase Bill",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              "Create Purchase Bill",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
 
             // Vendor Dropdown
@@ -116,7 +124,7 @@ class AddPurchaseBottomSheet extends StatelessWidget {
                 Expanded(
                   child: TextField(
                     controller: billNumberController,
-                    readOnly: true,
+                    // readOnly: true,
                     decoration: InputDecoration(
                       labelText: "Bill Number*",
                       border: OutlineInputBorder(
@@ -133,8 +141,9 @@ class AddPurchaseBottomSheet extends StatelessWidget {
                       child: AbsorbPointer(
                         child: TextField(
                           controller: TextEditingController(
-                            text: DateFormat('d/MM/yyyy')
-                                .format(billDate.value ?? DateTime.now()),
+                            text: DateFormat(
+                              'd/MM/yyyy',
+                            ).format(billDate.value ?? DateTime.now()),
                           ),
                           decoration: InputDecoration(
                             labelText: "Bill Date*",
@@ -153,14 +162,15 @@ class AddPurchaseBottomSheet extends StatelessWidget {
             const SizedBox(height: 12),
 
             // Items Section
-            const Text("Items",
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            const Text(
+              "Items",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 8),
 
             Obx(() {
               return Column(
-                children:
-                purchaseController.items.asMap().entries.map((entry) {
+                children: purchaseController.items.asMap().entries.map((entry) {
                   int index = entry.key;
                   var item = entry.value;
                   return Padding(
@@ -172,7 +182,8 @@ class AddPurchaseBottomSheet extends StatelessWidget {
                           label: "Product",
                           items: itemController.products,
                           value: itemController.selectedProduct.value,
-                          onChanged: (v) => itemController.selectedProduct.value = v,
+                          onChanged: (v) =>
+                              itemController.selectedProduct.value = v,
                           labelBuilder: (v) => v.name ?? "Unknown",
                         ),
                         Row(
@@ -203,7 +214,10 @@ class AddPurchaseBottomSheet extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.white),
+                              icon: const Icon(
+                                Icons.delete,
+                                color: Colors.white,
+                              ),
                               style: IconButton.styleFrom(
                                 backgroundColor: const Color(0xFF1A1A4F),
                                 shape: RoundedRectangleBorder(
@@ -227,12 +241,15 @@ class AddPurchaseBottomSheet extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1A1A4F),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               onPressed: purchaseController.addItemRow,
               icon: const Icon(Icons.add, color: Colors.white),
-              label:
-              const Text("Add Item", style: TextStyle(color: Colors.white)),
+              label: const Text(
+                "Add Item",
+                style: TextStyle(color: Colors.white),
+              ),
             ),
 
             const SizedBox(height: 16),
@@ -246,6 +263,62 @@ class AddPurchaseBottomSheet extends StatelessWidget {
               ),
               maxLines: 1,
             ),
+
+            const SizedBox(height: 16),
+            const Text(
+              "Payment Details",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 12),
+
+            Obx(() {
+              return GestureDetector(
+                onTap: () => _selectDate(
+                  context,
+                  paidDate,
+                ), // reuse existing date selector
+                child: AbsorbPointer(
+                  child: TextField(
+                    controller: TextEditingController(
+                      text: paidDate.value == null
+                          ? ""
+                          : DateFormat('d/mm/yyyy').format(paidDate.value!),
+                    ),
+                    decoration: InputDecoration(
+                      labelText: "Paid Date",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      suffixIcon: const Icon(Icons.calendar_today),
+                    ),
+                  ),
+                ),
+              );
+            }),
+
+            const SizedBox(height: 12),
+            TextField(
+              controller: paidAmountController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: "Paid Amount",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            Obx(() {
+              return _buildDropdown<String>(
+                label: "Payment Status",
+                items: const ["PAID", "UNPAID", " PARTIAL PAID"],
+                value: paymentStatus.value,
+                onChanged: (v) => paymentStatus.value = v ?? "UNPAID",
+                labelBuilder: (v) => v,
+              );
+            }),
 
             const SizedBox(height: 20),
             Row(
@@ -266,8 +339,10 @@ class AddPurchaseBottomSheet extends StatelessWidget {
                       // Save or Submit logic here
                       Get.back();
                     },
-                    child: const Text("Create",
-                        style: TextStyle(color: Colors.white)),
+                    child: const Text(
+                      "Create",
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ),
               ],

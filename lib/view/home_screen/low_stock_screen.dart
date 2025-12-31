@@ -34,7 +34,7 @@ class LowStockScreen extends StatelessWidget {
                         ),
                         child: IconButton(
                           icon: const Icon(Icons.arrow_back, size: 20),
-                          onPressed: () => Get.back(),
+                          onPressed: () => Get.back(closeOverlays: false),
                           padding: EdgeInsets.zero,
                         ),
                       ),
