@@ -7,6 +7,5 @@ class BillingBinding extends Bindings{
   @override
   void dependencies(){
     Get.lazyPut(()=> PurchaseController());
-    Get.lazyPut(()=> UtilController());
   }
 }

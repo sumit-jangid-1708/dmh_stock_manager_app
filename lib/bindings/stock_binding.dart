@@ -6,6 +6,5 @@ class StockBinding extends Bindings{
   @override
   void dependencies (){
     Get.lazyPut(()=> StockController());
-    Get.lazyPut(()=> UtilController());
   }
 }

@@ -16,7 +16,6 @@ class DashboardBinding extends Bindings{
     Get.lazyPut(()=> VendorController());
     Get.lazyPut(()=> ItemController());
     Get.lazyPut(()=> StockController());
-    Get.lazyPut(()=> UtilController());
 
   }
 }

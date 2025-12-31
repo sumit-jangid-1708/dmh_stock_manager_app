@@ -7,6 +7,5 @@ class ItemBinding extends Bindings{
   @override
   void dependencies(){
     Get.lazyPut(()=> ItemController());
-    Get.lazyPut(()=> UtilController());
   }
 }

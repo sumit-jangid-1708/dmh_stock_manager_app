@@ -8,6 +8,6 @@ class InitialBinding extends Bindings{
   @override
   void dependencies(){
     Get.put(AuthController(), permanent: true);
-    Get.lazyPut(()=> UtilController());
+    Get.put(UtilController(), permanent: true);
   }
 }

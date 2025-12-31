@@ -10,6 +10,5 @@ class OrderBinding extends Bindings{
     Get.lazyPut(()=> OrderController());
     Get.lazyPut(()=> ItemController());
     Get.lazyPut(()=> VendorController());
-    Get.lazyPut(()=> UtilController());
   }
 }

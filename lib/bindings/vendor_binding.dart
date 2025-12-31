@@ -6,6 +6,5 @@ class VendorBinding extends Bindings{
   @override
   void dependencies(){
     Get.lazyPut(()=> VendorController());
-    Get.lazyPut(()=> UtilController());
   }
 }
