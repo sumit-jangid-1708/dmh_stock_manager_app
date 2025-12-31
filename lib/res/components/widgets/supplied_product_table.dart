@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -142,13 +141,6 @@ class SuppliedProductTable extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
-
-
 
 
 // import 'package:flutter/material.dart';
