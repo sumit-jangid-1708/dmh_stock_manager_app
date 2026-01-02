@@ -1,5 +1,7 @@
 import 'package:dmj_stock_manager/model/create_bill_model.dart';
 import 'package:dmj_stock_manager/model/order_model.dart';
+import 'package:dmj_stock_manager/view/billings/billing_screen.dart';
+import 'package:dmj_stock_manager/view_models/controller/billing_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
 import 'package:dmj_stock_manager/view_models/services/order_service.dart';
 import 'package:flutter/foundation.dart';
@@ -13,6 +15,8 @@ import '../../model/return_order_history_model.dart';
 
 class OrderController extends GetxController {
   final OrderService orderService = OrderService();
+  final BillingController billingController = Get.find<BillingController>();
+
   var orders = <OrderDetailModel>[].obs;
   var isLoading = false.obs;
   var scannedSku = "".obs;
@@ -47,6 +51,7 @@ class OrderController extends GetxController {
   void clearForm() {
     selectedChannel.value = null;
     customerNameController.clear();
+    channelOrderId.clear();
     remarkController.clear();
     items.clear();
   }
@@ -385,7 +390,7 @@ class OrderController extends GetxController {
         debugPrint("✅ Dialog closed");
       }
 
-      await Future.delayed(const Duration(milliseconds: 300));
+      // await Future.delayed(const Duration(milliseconds: 300));
 
       Get.snackbar(
         "Success",
@@ -395,13 +400,15 @@ class OrderController extends GetxController {
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.green,
         colorText: Colors.white,
-        duration: const Duration(seconds: 2),
+        // duration: const Duration(seconds: 2),
       );
       debugPrint("✅ Snackbar shown");
-
       // ✅ Refresh order list
       await getOrderList();
       debugPrint("✅ Order list refreshed");
+
+      Get.to(()=> BillingScreen());
+      billingController.refreshBills();
     } on AppExceptions catch (e) {
       if (kDebugMode) print("❌ API Error: $e");
 

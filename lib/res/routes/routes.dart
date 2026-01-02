@@ -69,7 +69,7 @@ class AppRoutes {
     ),
     GetPage(
       name:RouteName.billDetail,
-      page: () => const BillDetailScreen(),
+      page: () =>  BillDetailScreen(),
       transition: Transition.rightToLeft,
     ),
   ];

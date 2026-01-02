@@ -34,123 +34,123 @@ class ItemsScreen extends StatelessWidget {
           child: Column(
             children: [
               /// TOP ROW — Summary cards with space for circular icon button
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 15.0,
-                  vertical: 12.0,
-                ),
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F5F5),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: const Color(0xFFE0E0E0),
-                      width: 1,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      /// Top Row with arrow and action buttons
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          top: 12.0,
-                          left: 12.0,
-                          right: 12.0,
-                          bottom: 12.0,
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: Color(0xFF1A1A4F),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(
-                                Icons.filter_alt,
-                                size: 18,
-                                color: Colors.white,
-                              ),
-                            ),
-                            // Spacer so scroll area gets more space
-                            Expanded(child: SizedBox()),
-                            // Action buttons (Download + Filter)
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: Color(0xFF1A1A4F),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(
-                                    Icons.upload,
-                                    size: 18,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                InkWell(
-                                  onTap: () =>
-                                      itemController.exportProductListToExcel(),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: Color(0xFF1A1A4F),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: const Icon(
-                                      Icons.download,
-                                      size: 18,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      /// Scrollable summary cards
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(
-                          20,
-                        ), // Match parent container
-                        child: Container(
-                          height: 100,
-                          color: Color(
-                            0xFFF5F5F5,
-                          ), // Same background as outer container
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12.0,
-                            ),
-                            children: const [
-                              SummaryCard(
-                                title: "Total Listed Item",
-                                count: "23",
-                              ),
-                              SizedBox(width: 12),
-                              SummaryCard(title: "Total Purchase", count: "23"),
-                              SizedBox(width: 12),
-                              SummaryCard(title: "Total sales ", count: "23"),
-                              SizedBox(width: 12),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 12), // Add bottom spacing
-                    ],
-                  ),
-                ),
-              ),
+              // Padding(
+              //   padding: const EdgeInsets.symmetric(
+              //     horizontal: 15.0,
+              //     vertical: 12.0,
+              //   ),
+              //   child: Container(
+              //     width: double.infinity,
+              //     decoration: BoxDecoration(
+              //       color: const Color(0xFFF5F5F5),
+              //       borderRadius: BorderRadius.circular(20),
+              //       border: Border.all(
+              //         color: const Color(0xFFE0E0E0),
+              //         width: 1,
+              //       ),
+              //     ),
+              //     child: Column(
+              //       crossAxisAlignment: CrossAxisAlignment.start,
+              //       children: [
+              //         /// Top Row with arrow and action buttons
+              //         Padding(
+              //           padding: const EdgeInsets.only(
+              //             top: 12.0,
+              //             left: 12.0,
+              //             right: 12.0,
+              //             bottom: 12.0,
+              //           ),
+              //           child: Row(
+              //             children: [
+              //               Container(
+              //                 padding: const EdgeInsets.all(6),
+              //                 decoration: BoxDecoration(
+              //                   color: Color(0xFF1A1A4F),
+              //                   borderRadius: BorderRadius.circular(8),
+              //                 ),
+              //                 child: const Icon(
+              //                   Icons.filter_alt,
+              //                   size: 18,
+              //                   color: Colors.white,
+              //                 ),
+              //               ),
+              //               // Spacer so scroll area gets more space
+              //               Expanded(child: SizedBox()),
+              //               // Action buttons (Download + Filter)
+              //               Row(
+              //                 children: [
+              //                   Container(
+              //                     padding: const EdgeInsets.all(6),
+              //                     decoration: BoxDecoration(
+              //                       color: Color(0xFF1A1A4F),
+              //                       borderRadius: BorderRadius.circular(8),
+              //                     ),
+              //                     child: const Icon(
+              //                       Icons.upload,
+              //                       size: 18,
+              //                       color: Colors.white,
+              //                     ),
+              //                   ),
+              //                   const SizedBox(width: 8),
+              //                   InkWell(
+              //                     onTap: () =>
+              //                         itemController.exportProductListToExcel(),
+              //                     child: Container(
+              //                       padding: const EdgeInsets.all(6),
+              //                       decoration: BoxDecoration(
+              //                         color: Color(0xFF1A1A4F),
+              //                         borderRadius: BorderRadius.circular(8),
+              //                       ),
+              //                       child: const Icon(
+              //                         Icons.download,
+              //                         size: 18,
+              //                         color: Colors.white,
+              //                       ),
+              //                     ),
+              //                   ),
+              //                 ],
+              //               ),
+              //             ],
+              //           ),
+              //         ),
+              //
+              //         const SizedBox(height: 10),
+              //
+              //         /// Scrollable summary cards
+              //         ClipRRect(
+              //           borderRadius: BorderRadius.circular(
+              //             20,
+              //           ), // Match parent container
+              //           child: Container(
+              //             height: 100,
+              //             color: Color(
+              //               0xFFF5F5F5,
+              //             ), // Same background as outer container
+              //             child: ListView(
+              //               scrollDirection: Axis.horizontal,
+              //               padding: const EdgeInsets.symmetric(
+              //                 horizontal: 12.0,
+              //               ),
+              //               children: const [
+              //                 SummaryCard(
+              //                   title: "Total Listed Item",
+              //                   count: "23",
+              //                 ),
+              //                 SizedBox(width: 12),
+              //                 SummaryCard(title: "Total Purchase", count: "23"),
+              //                 SizedBox(width: 12),
+              //                 SummaryCard(title: "Total sales ", count: "23"),
+              //                 SizedBox(width: 12),
+              //               ],
+              //             ),
+              //           ),
+              //         ),
+              //
+              //         const SizedBox(height: 12), // Add bottom spacing
+              //       ],
+              //     ),
+              //   ),
+              // ),
 
               // ⬇️ Ye purana Padding hata kar naya Row use karein
               Padding(
