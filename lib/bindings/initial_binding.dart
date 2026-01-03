@@ -10,6 +10,6 @@ class InitialBinding extends Bindings{
   void dependencies(){
     Get.put(AuthController(), permanent: true);
     Get.put(UtilController(), permanent: true);
-    Get.put(BillingController(), permanent: true);
+    // Get.put(BillingController(), permanent: true);
   }
 }

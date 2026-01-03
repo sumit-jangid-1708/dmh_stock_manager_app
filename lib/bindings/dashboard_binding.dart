@@ -4,6 +4,7 @@ import 'package:dmj_stock_manager/view_models/controller/util_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/vendor_controller.dart';
 import 'package:get/get.dart';
 
+import '../view_models/controller/billing_controller.dart';
 import '../view_models/controller/dashboard_controller.dart';
 import '../view_models/controller/home_controller.dart';
 
@@ -16,6 +17,7 @@ class DashboardBinding extends Bindings{
     Get.lazyPut(()=> VendorController());
     Get.lazyPut(()=> ItemController());
     Get.lazyPut(()=> StockController());
+    Get.put(BillingController(), permanent: true);
 
   }
 }

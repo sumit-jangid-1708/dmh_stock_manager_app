@@ -44,7 +44,7 @@ class OrderCreateBottomSheet extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      // padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -318,8 +318,8 @@ class OrderCreateBottomSheet extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
+          // Icon(icon, size: 12, color: color),
+          // const SizedBox(width: 4),
           Text(
             text,
             style: TextStyle(

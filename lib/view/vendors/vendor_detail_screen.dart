@@ -81,7 +81,7 @@ class _VendorDetailScreenState extends State<VendorDetailScreen> {
 
           return SingleChildScrollView(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: width * 0.05),
+              padding: EdgeInsets.symmetric(horizontal: width * 0.05, vertical: height * 0.02),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
