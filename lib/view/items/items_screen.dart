@@ -156,7 +156,7 @@ class ItemsScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
-                  vertical: 10,
+                  vertical: 25,
                 ),
                 child: Row(
                   children: [

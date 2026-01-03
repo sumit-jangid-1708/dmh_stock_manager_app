@@ -8,7 +8,6 @@ import '../view_models/controller/billing_controller.dart';
 import '../view_models/controller/dashboard_controller.dart';
 import '../view_models/controller/home_controller.dart';
 
-
 class DashboardBinding extends Bindings{
   @override
   void dependencies(){

@@ -24,14 +24,14 @@ class OrderScreen extends StatelessWidget {
           children: [
             // --- Minimalist Text Header ---
             const Padding(
-              padding: EdgeInsets.fromLTRB(24, 0, 24, 20),
+              padding: EdgeInsets.fromLTRB(24, 20, 24, 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     "Orders",
                     style: TextStyle(
-                      fontSize: 32,
+                      fontSize: 25,
                       fontWeight: FontWeight.w900,
                       color: Color(0xFF1A1A4F),
                       letterSpacing: -1,
@@ -40,7 +40,7 @@ class OrderScreen extends StatelessWidget {
                   Text(
                     "View and manage your recent transactions",
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 10,
                       color: Colors.grey,
                       fontWeight: FontWeight.w400,
                     ),

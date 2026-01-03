@@ -46,74 +46,76 @@ void showCreateBillDialog(BuildContext context, int orderId) {
 
         return SizedBox(
           width: isTablet ? screenWidth * 0.4 : screenWidth * 0.8,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Payment Method
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text("Payment Method",
-                    style: TextStyle(fontWeight: FontWeight.w600)),
-              ),
-              Column(
-                children: [
-                  _paymentRadio(controller, "NET_BANKING", "Net Banking"),
-                  _paymentRadio(controller, "UPI", "UPI"),
-                  _paymentRadio(controller, "CASH", "Cash"),
-                ],
-              ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Payment Method
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text("Payment Method",
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                ),
+                Column(
+                  children: [
+                    _paymentRadio(controller, "NET_BANKING", "Net Banking"),
+                    _paymentRadio(controller, "UPI", "UPI"),
+                    _paymentRadio(controller, "CASH", "Cash"),
+                  ],
+                ),
 
-              const SizedBox(height: 10),
+                const SizedBox(height: 8),
 
-              // Payment Date Picker
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(
-                  onPressed: () async {
-                    final pickedDate = await showDatePicker(
-                      context: context,
-                      initialDate: controller.paymentDate.value,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                    );
-                    if (pickedDate != null) {
-                      controller.paymentDate.value = pickedDate;
-                    }
-                  },
-                  child: Text(
-                    "Select Date: ${DateFormat('yyyy-MM-dd').format(controller.paymentDate.value)}",
-                    style: const TextStyle(color: Colors.blue),
+                // Payment Date Picker
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton(
+                    onPressed: () async {
+                      final pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: controller.paymentDate.value,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (pickedDate != null) {
+                        controller.paymentDate.value = pickedDate;
+                      }
+                    },
+                    child: Text(
+                      "Select Date: ${DateFormat('yyyy-MM-dd').format(controller.paymentDate.value)}",
+                      style: const TextStyle(color: Colors.blue),
+                    ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 10),
+                const SizedBox(height: 10),
 
-              // Paid Status
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text("Paid Status",
-                    style: TextStyle(fontWeight: FontWeight.w600)),
-              ),
-              Column(
-                children: [
-                  _statusRadio(controller, "PAID", "Paid"),
-                  _statusRadio(controller, "UNPAID", "Unpaid"),
-                ],
-              ),
-
-              const SizedBox(height: 10),
-
-              // Transaction ID (Optional)
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: "Transaction ID (Optional)",
-                  border: OutlineInputBorder(),
-                  hintText: "Enter transaction ID",
+                // Paid Status
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text("Paid Status",
+                      style: TextStyle(fontWeight: FontWeight.w600)),
                 ),
-                onChanged: (value) => controller.transactionId.value = value,
-              ),
-            ],
+                Column(
+                  children: [
+                    _statusRadio(controller, "PAID", "Paid"),
+                    _statusRadio(controller, "UNPAID", "Unpaid"),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                // Transaction ID (Optional)
+                TextField(
+                  decoration: const InputDecoration(
+                    labelText: "Transaction ID (Optional)",
+                    border: OutlineInputBorder(),
+                    hintText: "Enter transaction ID",
+                  ),
+                  onChanged: (value) => controller.transactionId.value = value,
+                ),
+              ],
+            ),
           ),
         );
       }),
