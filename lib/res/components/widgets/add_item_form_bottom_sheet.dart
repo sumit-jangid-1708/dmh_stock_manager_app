@@ -181,7 +181,6 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                     ),
                   ),
                   _buildHsnDropdown(),
-
                   const SizedBox(height: 32),
                   _buildSubmitButton(),
                   const SizedBox(height: 12),
@@ -195,7 +194,6 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
   }
 
   // --- Custom UI Components ---
-
   Widget _buildDragHandle() {
     return Center(
       child: Container(

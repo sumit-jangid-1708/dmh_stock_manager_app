@@ -6,13 +6,14 @@ import 'order_create_bottom_sheet.dart';
 
 class OrderScreen extends StatelessWidget {
   final OrderController orderController = Get.put(OrderController());
+  final TextEditingController searchController = TextEditingController(); // Search ke liye controller
+
   OrderScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
-      // Using a Floating Action Button to keep the top of the screen completely clean
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF1A1A4F),
         onPressed: () => _showCreateOrderSheet(context),
@@ -22,13 +23,13 @@ class OrderScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- Minimalist Text Header ---
-            const Padding(
-              padding: EdgeInsets.fromLTRB(24, 20, 24, 20),
+            // --- Header Section ---
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     "Orders",
                     style: TextStyle(
                       fontSize: 25,
@@ -41,10 +42,65 @@ class OrderScreen extends StatelessWidget {
                     "View and manage your recent transactions",
                     style: TextStyle(
                       fontSize: 10,
-                      color: Colors.grey,
+                      color: Colors.grey.shade500,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
+                ],
+              ),
+            ),
+
+            // --- Modern Search Bar ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: TextField(
+                        controller: searchController,
+                        onChanged: (value) {
+                          // Yaha aap orderController ka search logic call kar sakte hain
+                          orderController.filterOrders(value);
+                        },
+                        decoration: InputDecoration(
+                          hintText: "Search by ID or customer name...",
+                          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                          prefixIcon: const Icon(Icons.search, color: Color(0xFF1A1A4F), size: 20),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Filter Button
+                  // Container(
+                  //   height: 50,
+                  //   width: 50,
+                  //   decoration: BoxDecoration(
+                  //     color: const Color(0xFF1A1A4F),
+                  //     borderRadius: BorderRadius.circular(12),
+                  //   ),
+                  //   child: IconButton(
+                  //     icon: const Icon(Icons.tune_rounded, color: Colors.white, size: 22),
+                  //     onPressed: () {
+                  //       // Filter logic
+                  //     },
+                  //   ),
+                  // ),
                 ],
               ),
             ),
@@ -64,10 +120,10 @@ class OrderScreen extends StatelessWidget {
                   }
 
                   return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    itemCount: orderController.orders.length,
+                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 80), // Bottom padding for FAB
+                    itemCount: orderController.filteredOrders.length,
                     itemBuilder: (context, index) {
-                      final order = orderController.orders[index];
+                      final order = orderController.filteredOrders[index];
                       return _buildOrderCard(order);
                     },
                   );

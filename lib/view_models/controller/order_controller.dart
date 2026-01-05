@@ -26,6 +26,7 @@ class OrderController extends GetxController {
   final Rx<ChannelModel?> selectedChannel = Rx<ChannelModel?>(null);
   final TextEditingController customerNameController = TextEditingController();
   final TextEditingController channelOrderId = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   final TextEditingController remarkController = TextEditingController();
   final RxList<Map<String, dynamic>> items = <Map<String, dynamic>>[].obs;
   // Return Orders
@@ -38,6 +39,8 @@ class OrderController extends GetxController {
   var paidStatus = "UNPAID".obs;
   var transactionId = "".obs;
   final billStatus = <CreateBillModel>[].obs;
+
+  var filteredOrders = <OrderDetailModel>[].obs;
 
   // Form Logic Methods
   void addItemRow() {
@@ -102,6 +105,8 @@ class OrderController extends GetxController {
       orders.value = data
           .map((item) => OrderDetailModel.fromJson(item))
           .toList();
+
+      filteredOrders.assignAll(orders);
     } on AppExceptions catch (e) {
       if (kDebugMode) {
         print("❌ Exception Details: $e"); // full stack ya raw details
@@ -356,13 +361,11 @@ class OrderController extends GetxController {
   Future<void> createOrderBill(int orderId) async {
     // ✅ Convert DateTime to ISO 8601 string format (YYYY-MM-DD)
     String formattedDate = DateFormat('yyyy-MM-dd').format(paymentDate.value);
-
     Map<String, dynamic> data = {
       "payment_method": selectedMethod.value,
       "payment_date": formattedDate,
       "paid_status": paidStatus.value,
     };
-
     // ✅ Only add transaction_id if it's not empty
     if (transactionId.value.isNotEmpty) {
       data["transaction_id"] = transactionId.value;
@@ -370,28 +373,22 @@ class OrderController extends GetxController {
 
     try {
       isLoading.value = true;
-
       debugPrint("🚀 Starting API call for order: $orderId");
       final response = await orderService.createBill(data, orderId);
       debugPrint("✅ API Response received: $response");
-
       // ✅ Check if response is valid
       if (response == null) {
         throw Exception("Empty response from server");
       }
-
       // ✅ Response single object hai, list nahi
       final apiResponse = CreateBillModel.fromJson(response);
       debugPrint("✅ Parsed response: ${apiResponse.message}");
-
       // ✅ First close dialog, then show success
       if (Get.isDialogOpen ?? false) {
         Get.back();
         debugPrint("✅ Dialog closed");
       }
-
       // await Future.delayed(const Duration(milliseconds: 300));
-
       Get.snackbar(
         "Success",
         apiResponse.message.isNotEmpty
@@ -406,19 +403,15 @@ class OrderController extends GetxController {
       // ✅ Refresh order list
       await getOrderList();
       debugPrint("✅ Order list refreshed");
-
       Get.to(()=> BillingScreen());
       billingController.refreshBills();
     } on AppExceptions catch (e) {
       if (kDebugMode) print("❌ API Error: $e");
-
       // ✅ Close dialog first
       if (Get.isDialogOpen ?? false) {
         Get.back();
       }
-
       await Future.delayed(const Duration(milliseconds: 300));
-
       Get.snackbar(
         "Error",
         e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
@@ -430,14 +423,11 @@ class OrderController extends GetxController {
     } catch (e) {
       if (kDebugMode) print("❌ Unexpected Error: $e");
       if (kDebugMode) print("❌ Error Type: ${e.runtimeType}");
-
       // ✅ Close dialog first
       if (Get.isDialogOpen ?? false) {
         Get.back();
       }
-
       await Future.delayed(const Duration(milliseconds: 300));
-
       Get.snackbar(
         "Error",
         "Failed to create bill: ${e.toString()}",
@@ -448,6 +438,20 @@ class OrderController extends GetxController {
       );
     } finally {
       isLoading.value = false;
+    }
+  }
+  void filterOrders(String query) {
+    if (query.isEmpty) {
+      filteredOrders.assignAll(orders);
+    } else {
+      filteredOrders.assignAll(
+        orders.where((order) {
+          final name = order.customerName?.toLowerCase() ?? "";
+          final id = order.id.toString();
+          final searchLower = query.toLowerCase();
+          return name.contains(searchLower) || id.contains(searchLower);
+        }).toList(),
+      );
     }
   }
 }

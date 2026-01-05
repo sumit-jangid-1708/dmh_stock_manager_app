@@ -85,6 +85,11 @@ class OrderCreateBottomSheet extends StatelessWidget {
                     decoration: _getInputDecoration("Customer Name", Icons.person_outline),
                   ),
                   const SizedBox(height: 12),
+                  TextField(
+                    controller: orderController.emailController,
+                    decoration: _getInputDecoration("Email", Icons.email),
+                  ),
+                  const SizedBox(height: 12),
                   _buildPhoneField(),
                   const SizedBox(height: 12),
                   TextField(
@@ -226,10 +231,11 @@ class OrderCreateBottomSheet extends StatelessWidget {
                       if (product != null)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 10),
-                          child: Row(
+                          child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               _buildInfoTag("SKU: ${product.sku ?? 'N/A'}", Icons.qr_code, Colors.blueGrey),
+                              SizedBox(height: 2,),
                               _buildInfoTag("Cost: ₹${product.purchasePrice ?? '0'}", Icons.account_balance_wallet, Colors.green),
                             ],
                           ),
@@ -274,32 +280,42 @@ class OrderCreateBottomSheet extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 // --- Quantity and Sale Price Inputs ---
-                Row(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      flex: 2,
-                      child: _buildSmallField(item["quantity"], "Qty", Icons.numbers),
+                    _buildSmallField(
+                      item["quantity"],
+                      "Qty",
+                      Icons.numbers,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      flex: 3,
-                      child: _buildSmallField(item["unitPrice"], "Sale Price", Icons.payments_outlined),
-                    ),
-                    const SizedBox(width: 8),
+                    const SizedBox(height: 8),
 
-                    // Delete Button
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade50,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: IconButton(
-                        onPressed: () => orderController.removeItemRow(index),
-                        icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                    _buildSmallField(
+                      item["unitPrice"],
+                      "Sale Price",
+                      Icons.payments_outlined,
+                    ),
+                    const SizedBox(height: 8),
+
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: IconButton(
+                          onPressed: () => orderController.removeItemRow(index),
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.redAccent,
+                          ),
+                        ),
                       ),
                     ),
                   ],
-                ),
+                )
+
               ],
             ),
           );
