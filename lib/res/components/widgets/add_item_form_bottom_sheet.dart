@@ -117,27 +117,24 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                     Icons.account_balance_wallet_outlined,
                   ),
                   const SizedBox(height: 12),
-                  Row(
+                  Column(
+                    // <--- Row ki jagah Column kar diya
                     children: [
-                      Expanded(
-                        child: TextField(
-                          controller: itemController.purchasePrice.value,
-                          keyboardType: TextInputType.number,
-                          decoration: _getDecoration(
-                            "Purchase Price",
-                            Icons.payments_outlined,
-                          ),
+                      TextField(
+                        controller: itemController.purchasePrice.value,
+                        keyboardType: TextInputType.number,
+                        decoration: _getDecoration(
+                          "Purchase Price",
+                          Icons.payments_outlined,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextField(
-                          controller: itemController.lowStockLimit.value,
-                          keyboardType: TextInputType.number,
-                          decoration: _getDecoration(
-                            "Low Stock Limit",
-                            Icons.warning_amber_rounded,
-                          ),
+                      const SizedBox(height: 12), // Vertical spacing add ki
+                      TextField(
+                        controller: itemController.lowStockLimit.value,
+                        keyboardType: TextInputType.number,
+                        decoration: _getDecoration(
+                          "Low Stock Limit",
+                          Icons.warning_amber_rounded,
                         ),
                       ),
                     ],
@@ -469,8 +466,11 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
   void _showAddHsnDialog(BuildContext context) {
     final hsnController = TextEditingController();
     final gstController = TextEditingController();
+
     Get.defaultDialog(
       title: "New HSN Code",
+      backgroundColor: Colors.white,
+      radius: 16,
       content: Column(
         children: [
           TextField(
@@ -485,591 +485,53 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
           ),
         ],
       ),
-      confirm: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF1A1A4F),
+      confirm: Container(
+        width: 100,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1A1A4F), Color(0xFF2D2D7F)],
+          ),
+          borderRadius: BorderRadius.circular(10),
         ),
-        onPressed: () async {
-          final code = hsnController.text;
-          final gst = double.tryParse(gstController.text) ?? 0.0;
-          await itemController.addHsn(code, gst);
-          final newHsn = itemController.hsnList.lastWhere(
-            (e) => e.hsnCode == code,
-          );
-          setState(() {
-            _selectedHsnCode = code;
-            _selectedHsnId = newHsn.id;
-          });
-          Get.back();
-        },
-        child: const Text("Save", style: TextStyle(color: Colors.white)),
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+          ),
+          onPressed: () async {
+            final code = hsnController.text.trim();
+            final gstText = gstController.text.trim();
+            if (code.isEmpty || gstText.isEmpty) {
+              Get.snackbar(
+                "Required",
+                "All fields are mandatory",
+                backgroundColor: Colors.red,
+                colorText: Colors.white,
+              );
+              return;
+            }
+            final gst = double.tryParse(gstText) ?? 0.0;
+            await itemController.addHsn(code, gst);
+            final newHsn = itemController.hsnList.firstWhereOrNull(
+              (e) => e.hsnCode == code,
+            );
+            if (newHsn != null) {
+              setState(() {
+                _selectedHsnCode = newHsn.hsnCode;
+                _selectedHsnId = newHsn.id;
+              });
+              if (context.mounted) {
+                Navigator.of(context).pop();
+              }
+            }
+          },
+          child: const Text("Save", style: TextStyle(color: Colors.white)),
+        ),
+      ),
+      cancel: TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
       ),
     );
   }
 }
-
-// import 'dart:io';
-// import 'package:dmj_stock_manager/model/hsn_model.dart';
-// import 'package:dmj_stock_manager/model/vendor_model.dart';
-// import 'package:dmj_stock_manager/res/components/widgets/multi_image_picker_widget.dart';
-// import 'package:dmj_stock_manager/utils/app_lists.dart';
-// import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
-// import 'package:dmj_stock_manager/view_models/controller/vendor_controller.dart';
-// import 'package:dmj_stock_manager/view_models/controller/dashboard_controller.dart';
-// import 'package:drop_down_list/drop_down_list.dart';
-// import 'package:drop_down_list/model/selected_list_item.dart';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import 'package:image_picker/image_picker.dart';
-//
-// class AddItemFormBottomSheet extends StatefulWidget {
-//   const AddItemFormBottomSheet({super.key});
-//
-//   @override
-//   State<AddItemFormBottomSheet> createState() => _AddItemFormBottomSheetState();
-// }
-//
-// class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
-//   List<File> _selectedImages = [];
-//   String? _selectedColor;
-//   String? _selectedSize;
-//   String? _selectedMaterial;
-//   String? _selectedHsnCode;
-//   int? _selectedHsnId;
-//
-//   // GetX controllers
-//   final VendorController vendorController = Get.find<VendorController>();
-//   final DashboardController dashboardController =
-//       Get.find<DashboardController>();
-//   final ItemController itemController = Get.find<ItemController>();
-//
-//   // Local selection state for the dropdown UI
-//   String? _selectedVendorName;
-//   String? _selectedVendorId;
-//   List<SelectedListItem<VendorModel>> get _vendorListItems => vendorController
-//       .vendors
-//       .map((v) => SelectedListItem<VendorModel>(data: v))
-//       .toList();
-//
-//   void _openVendorPicker() {
-//     if (vendorController.isLoading.value) return;
-//
-//     if (vendorController.vendors.isEmpty) {
-//       vendorController.getVendors();
-//       return;
-//     }
-//
-//     DropDownState(
-//       dropDown: DropDown(
-//         data: _vendorListItems,
-//         onSelected: (selected) {
-//           if (selected.isNotEmpty) {
-//             final v = selected.first.data;
-//             setState(() {
-//               _selectedVendorName = v.vendorName;
-//               _selectedVendorId = v.id.toString();
-//             });
-//             dashboardController.setSelectedVendor(
-//               _selectedVendorId!,
-//               _selectedVendorName!,
-//             );
-//           }
-//         },
-//       ),
-//     ).showModal(context);
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Padding(
-//       padding: EdgeInsets.only(
-//         left: 16,
-//         right: 16,
-//         top: 20,
-//         bottom: MediaQuery.of(context).viewInsets.bottom,
-//       ),
-//       child: SafeArea(
-//         child: SingleChildScrollView(
-//           child: Column(
-//             mainAxisSize: MainAxisSize.min,
-//             crossAxisAlignment: CrossAxisAlignment.start,
-//             children: [
-//               MultiImagePickerWidget(
-//                 onImagesSelected: (files) {
-//                   setState(() {
-//                     _selectedImages = files;
-//                   });
-//                 },
-//               ),
-//               const SizedBox(height: 20),
-//
-//               _buildVendorDropdown(label: 'Vendor Name*'),
-//               _buildTextField(
-//                 label: 'Item Name',
-//                 hint: 'Enter your Item',
-//                 addProductController: itemController.productName.value,
-//               ),
-//               _buildTextField(
-//                 label: 'SKU',
-//                 hint: 'Enter your SKU',
-//                 addProductController: itemController.skuCode.value,
-//               ),
-//               _buildTextField(
-//                 label: 'Purchase Price',
-//                 hint: 'Enter purchase price',
-//                 addProductController: itemController.purchasePrice.value,
-//               ),
-//               _buildTextField(
-//                 label: 'Set Low Stock',
-//                 hint: 'Enter low stock limit',
-//                 addProductController: itemController.lowStockLimit.value,
-//               ),
-//
-//               // Material Row with Add Button
-//               Row(
-//                 crossAxisAlignment: CrossAxisAlignment.end,
-//                 children: [
-//                   Expanded(
-//                     child: _buildDropdownField(
-//                       label: 'Material',
-//                       items: List<String>.from(AppLists.materials),
-//                       value: _selectedMaterial,
-//                       onChanged: (val) =>
-//                           setState(() => _selectedMaterial = val),
-//                     ),
-//                   ),
-//                   const SizedBox(width: 8),
-//                   Padding(
-//                     padding: const EdgeInsets.only(bottom: 12),
-//                     child: TextButton.icon(
-//                       onPressed: () {
-//                         _showAddDialog(
-//                           context: context,
-//                           title: "Add New Material",
-//                           hint: "Enter material name",
-//                           onAdd: (value) {
-//                             AppLists.addMaterial(value);
-//                             setState(() => _selectedMaterial = value);
-//                           },
-//                         );
-//                       },
-//                       icon: const Icon(Icons.add),
-//                       label: const Text("Add"),
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//
-//               // Color Row with Add Button
-//               Row(
-//                 crossAxisAlignment: CrossAxisAlignment.end,
-//                 children: [
-//                   Expanded(
-//                     child: _buildDropdownField(
-//                       label: 'Colour',
-//                       items: List<String>.from(AppLists.colors),
-//                       value: _selectedColor,
-//                       onChanged: (val) => setState(() => _selectedColor = val),
-//                     ),
-//                   ),
-//                   const SizedBox(width: 8),
-//                   Padding(
-//                     padding: const EdgeInsets.only(bottom: 12),
-//                     child: TextButton.icon(
-//                       onPressed: () {
-//                         _showAddDialog(
-//                           context: context,
-//                           title: "Add New Color",
-//                           hint: "Enter color name",
-//                           onAdd: (value) {
-//                             AppLists.addColor(value);
-//                             setState(() => _selectedColor = value);
-//                           },
-//                         );
-//                       },
-//                       icon: const Icon(Icons.add),
-//                       label: const Text("Add"),
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//
-//               // Size Row with Add Button
-//               Row(
-//                 crossAxisAlignment: CrossAxisAlignment.end,
-//                 children: [
-//                   Expanded(
-//                     child: _buildDropdownField(
-//                       label: 'Size',
-//                       items: List<String>.from(AppLists.sizes),
-//                       value: _selectedSize,
-//                       onChanged: (val) => setState(() => _selectedSize = val),
-//                     ),
-//                   ),
-//                   const SizedBox(width: 8),
-//                   Padding(
-//                     padding: const EdgeInsets.only(bottom: 12),
-//                     child: TextButton.icon(
-//                       onPressed: () {
-//                         _showAddDialog(
-//                           context: context,
-//                           title: "Add New Size",
-//                           hint: "Enter size",
-//                           onAdd: (value) {
-//                             AppLists.addSize(value);
-//                             setState(() => _selectedSize = value);
-//                           },
-//                         );
-//                       },
-//                       icon: const Icon(Icons.add),
-//                       label: const Text("Add"),
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//
-//               // HSN/SAC Row with Add Button
-//               Row(
-//                 crossAxisAlignment: CrossAxisAlignment.end,
-//                 children: [
-//                   Expanded(
-//                     child: Obx(() {
-//                       final hsnList = List<HsnGstModel>.from(itemController.hsnList);
-//                       // final hsnList = itemController.hsnList
-//                       //     .map((e) => e.hsnCode ?? "")
-//                       //     .where((code) => code.isNotEmpty)
-//                       //     .toSet()
-//                       //     .toList();
-//                       return _buildDropdownField(
-//                         label: 'HSN/SAC',
-//                         items:hsnList.map((e) => e.hsnCode ?? "").toList(),
-//
-//                         value: _selectedHsnCode,
-//                         onChanged: (selectedCode) {
-//                           if (selectedCode != null) {
-//                             final selectedHsn = hsnList
-//                                 .firstWhere(
-//                                   (hsn) => hsn.hsnCode == selectedCode,
-//                                 );
-//                             setState(() {
-//                               _selectedHsnCode = selectedCode;
-//                               _selectedHsnId = selectedHsn.id; // ← ID स्टोर करो
-//                             });
-//                           }
-//                         },
-//                       );
-//                     }),
-//                   ),
-//                   const SizedBox(width: 8),
-//                   Padding(
-//                     padding: const EdgeInsets.only(bottom: 12),
-//                     child: TextButton.icon(
-//                       onPressed: () {
-//                         _showAddHsnDialog(context);
-//                       },
-//                       icon: const Icon(Icons.add),
-//                       label: const Text("Add"),
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//
-//               const SizedBox(height: 20),
-//               SizedBox(
-//                 width: double.infinity,
-//                 height: 48,
-//                 child: ElevatedButton(
-//                   style: ElevatedButton.styleFrom(
-//                     backgroundColor: const Color(0xFF1A1A4F),
-//                     shape: RoundedRectangleBorder(
-//                       borderRadius: BorderRadius.circular(10),
-//                     ),
-//                   ),
-//                   onPressed: () {
-//                     final imagesCopy = List<File>.from(_selectedImages);
-//                      itemController.addProduct(
-//                       _selectedVendorId!,
-//                       _selectedColor!,
-//                       _selectedSize!,
-//                       _selectedMaterial!,
-//                       itemController.purchasePrice.value.text,
-//                       imagesCopy,
-//                       _selectedHsnId.toString(),
-//                     );
-//
-//                     // itemController.clearAddProductForm();
-//                     // setState(() {
-//                     //   _selectedImages.clear();
-//                     //   _selectedColor = null;
-//                     //   _selectedSize = null;
-//                     //   _selectedMaterial = null;
-//                     //   _selectedHsnCode = null;
-//                     //   _selectedHsnId = null;
-//                     //   _selectedVendorName = null;
-//                     //   _selectedVendorId = null;
-//                     // });
-//                     Get.back();
-//                   },
-//                   child: const Text(
-//                     'Submit',
-//                     style: TextStyle(color: Colors.white),
-//                   ),
-//                 ),
-//               ),
-//               const SizedBox(height: 20),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-//
-//   // ------- UI helpers -------
-//
-//   Widget _buildTextField({
-//     required String label,
-//     required String hint,
-//     TextEditingController? addProductController,
-//   }) {
-//     return Column(
-//       crossAxisAlignment: CrossAxisAlignment.start,
-//       children: [
-//         Text(label),
-//         const SizedBox(height: 6),
-//         TextField(
-//           controller: addProductController,
-//           decoration: InputDecoration(
-//             hintText: hint,
-//             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-//             contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-//           ),
-//         ),
-//         const SizedBox(height: 12),
-//       ],
-//     );
-//   }
-//
-//   Widget _buildDropdownField({
-//     required String label,
-//     required List<String> items,
-//     required String? value,
-//     required ValueChanged<String?> onChanged,
-//   }) {
-//     return Column(
-//       crossAxisAlignment: CrossAxisAlignment.start,
-//       children: [
-//         Text(label),
-//         const SizedBox(height: 6),
-//         DropdownButtonFormField<String>(
-//           value: value,
-//           items: items
-//               .map((item) => DropdownMenuItem(value: item, child: Text(item)))
-//               .toList(),
-//           onChanged: onChanged,
-//           decoration: InputDecoration(
-//             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-//             contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-//           ),
-//         ),
-//         const SizedBox(height: 12),
-//       ],
-//     );
-//   }
-//
-//   Widget _buildVendorDropdown({required String label}) {
-//     return Obx(() {
-//       final isLoading = vendorController.isLoading.value;
-//       final hasData = vendorController.vendors.isNotEmpty;
-//
-//       return Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Text(label),
-//           const SizedBox(height: 6),
-//           InkWell(
-//             onTap: isLoading ? null : _openVendorPicker,
-//             child: Container(
-//               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-//               decoration: BoxDecoration(
-//                 color: isLoading ? Colors.grey.shade100 : null,
-//                 border: Border.all(width: 1),
-//                 borderRadius: BorderRadius.circular(8),
-//               ),
-//               child: Row(
-//                 children: [
-//                   Expanded(
-//                     child: Text(
-//                       _selectedVendorName ??
-//                           (isLoading
-//                               ? "Loading vendors…"
-//                               : hasData
-//                               ? "Select Vendor"
-//                               : "No vendors found"),
-//                       style: TextStyle(
-//                         color: _selectedVendorName == null
-//                             ? const Color.fromARGB(255, 109, 109, 109)
-//                             : Colors.black,
-//                       ),
-//                     ),
-//                   ),
-//                   const Icon(Icons.keyboard_arrow_down),
-//                 ],
-//               ),
-//             ),
-//           ),
-//           const SizedBox(height: 12),
-//         ],
-//       );
-//     });
-//   }
-//
-//   // ✅ Generic dialog for adding Material, Color, or Size
-//   void _showAddDialog({
-//     required BuildContext context,
-//     required String title,
-//     required String hint,
-//     required Function(String) onAdd,
-//   }) {
-//     final TextEditingController controller = TextEditingController();
-//     showDialog(
-//       context: context,
-//       builder: (context) {
-//         return AlertDialog(
-//           title: Text(title),
-//           content: TextField(
-//             controller: controller,
-//             decoration: InputDecoration(
-//               hintText: hint,
-//               border: OutlineInputBorder(
-//                 borderRadius: BorderRadius.circular(8),
-//               ),
-//               contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-//             ),
-//           ),
-//           actions: [
-//             TextButton(
-//               onPressed: () => Get.back(),
-//               child: const Text("Cancel"),
-//             ),
-//             ElevatedButton(
-//               style: ElevatedButton.styleFrom(
-//                 backgroundColor: const Color(0xFF1A1A4F),
-//                 shape: RoundedRectangleBorder(
-//                   borderRadius: BorderRadius.circular(12),
-//                 ),
-//               ),
-//               onPressed: () {
-//                 if (controller.text.trim().isNotEmpty) {
-//                   onAdd(controller.text.trim());
-//                 }
-//                 Get.back();
-//               },
-//               child: const Text("Add", style: TextStyle(color: Colors.white)),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
-//
-//   // ✅ HSN Code Add Dialog (with HSN Code + GST Percentage)
-//   void _showAddHsnDialog(BuildContext context) {
-//     final TextEditingController hsnController = TextEditingController();
-//     final TextEditingController gstController = TextEditingController();
-//
-//     showDialog(
-//       context: context,
-//       builder: (context) {
-//         return AlertDialog(
-//           title: const Text("Add New HSN Code"),
-//           content: Column(
-//             mainAxisSize: MainAxisSize.min,
-//             children: [
-//               TextField(
-//                 controller: hsnController,
-//                 decoration: InputDecoration(
-//                   labelText: "HSN Code",
-//                   hintText: "Enter HSN code",
-//                   border: OutlineInputBorder(
-//                     borderRadius: BorderRadius.circular(8),
-//                   ),
-//                   contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-//                 ),
-//               ),
-//               const SizedBox(height: 12),
-//               TextField(
-//                 controller: gstController,
-//                 keyboardType: TextInputType.number,
-//                 decoration: InputDecoration(
-//                   labelText: "GST Percentage",
-//                   hintText: "Enter GST %",
-//                   border: OutlineInputBorder(
-//                     borderRadius: BorderRadius.circular(8),
-//                   ),
-//                   contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-//                 ),
-//               ),
-//             ],
-//           ),
-//           actions: [
-//             TextButton(
-//               onPressed: () => Get.back(),
-//               child: const Text("Cancel"),
-//             ),
-//             ElevatedButton(
-//               style: ElevatedButton.styleFrom(
-//                 backgroundColor: const Color(0xFF1A1A4F),
-//                 shape: RoundedRectangleBorder(
-//                   borderRadius: BorderRadius.circular(12),
-//                 ),
-//               ),
-//               onPressed: () async {
-//                 final hsnCode = hsnController.text.trim();
-//                 final gstText = gstController.text.trim();
-//
-//                 if (itemController.hsnList.any((e) => e.hsnCode == hsnCode)) {
-//                   Get.snackbar("Info", "This HSN code already exists");
-//                   return;
-//                 }
-//
-//                 if (hsnCode.isEmpty || gstText.isEmpty) {
-//                   Get.snackbar(
-//                     "Error",
-//                     "Please fill both fields",
-//                     snackPosition: SnackPosition.TOP,
-//                     backgroundColor: Colors.red,
-//                     colorText: Colors.white,
-//                   );
-//                   return;
-//                 }
-//
-//                 final gstPercentage = double.tryParse(gstText);
-//                 if (gstPercentage == null) {
-//                   Get.snackbar(
-//                     "Error",
-//                     "Invalid GST percentage",
-//                     snackPosition: SnackPosition.TOP,
-//                     backgroundColor: Colors.red,
-//                     colorText: Colors.white,
-//                   );
-//                   return;
-//                 }
-//
-//                 Get.back(); // Close dialog first
-//                 // Call controller method to add HSN
-//                 await itemController.addHsn(hsnCode, gstPercentage);
-//                 // Set the newly added HSN as selected
-//                 final newHsn = itemController.hsnList.lastWhere((e) => e.hsnCode == hsnCode);
-//                 setState(() {
-//                   _selectedHsnCode = hsnCode;
-//                   _selectedHsnId = newHsn.id;
-//                 });
-//               },
-//               child: const Text("Add", style: TextStyle(color: Colors.white)),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
-// }

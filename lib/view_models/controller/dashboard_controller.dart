@@ -75,13 +75,6 @@ class DashboardController extends GetxController with WidgetsBindingObserver {
       if (kDebugMode) {
         print("✅ Low Stock Items fetched: ${lowStockItems.length}");
       }
-
-      // 🔐 HARD GUARD
-      if (lowStockItems.isNotEmpty &&
-          !isLowStockDialogOpen.value &&
-          Get.context != null) {
-        _showLowStockDialog();
-      }
     } on AppExceptions catch (e) {
       Get.snackbar(
         "Error",
@@ -105,54 +98,103 @@ class DashboardController extends GetxController with WidgetsBindingObserver {
   }
 
   void _showLowStockDialog() {
-    // 🛑 Extra safety
     if (Get.isDialogOpen == true) return;
 
     isLowStockDialogOpen.value = true;
 
     Get.dialog(
-      WillPopScope(
-        onWillPop: () async {
-          isLowStockDialogOpen.value = false;
-          return true;
+      PopScope(
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) isLowStockDialogOpen.value = false;
         },
         child: AlertDialog(
           backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: const Row(
+          surfaceTintColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          title: Column(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.red),
-              SizedBox(width: 8),
-              Text(
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 30),
+              ),
+              const SizedBox(height: 12),
+              const Text(
                 "Low Stock Alert",
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1A1A4F), fontSize: 18),
+              ),
+              const Text(
+                "The following items need attention",
+                style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.normal),
               ),
             ],
           ),
           content: SizedBox(
             width: double.maxFinite,
             child: Obx(() {
-              return ListView.builder(
+              return ListView.separated(
                 shrinkWrap: true,
                 itemCount: lowStockItems.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
                 itemBuilder: (_, index) {
                   final item = lowStockItems[index];
-                  return ListTile(
-                    title: Text(
-                      item.name,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
+                  return Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade100),
                     ),
-                    subtitle: Text("SKU: ${item.sku}"),
-                    trailing: Text(
-                      item.quantity.toString(),
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
+                    child: IntrinsicHeight(
+                      child: Row(
+                        children: [
+                          // Left Warning Accent
+                          Container(
+                            width: 4,
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(12),
+                                bottomLeft: Radius.circular(12),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.name,
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1A1A4F)),
+                                      ),
+                                      Text(
+                                        "SKU: ${item.sku}",
+                                        style: const TextStyle(color: Colors.grey, fontSize: 11),
+                                      ),
+                                    ],
+                                  ),
+                                  Column(
+                                    children: [
+                                      Text(
+                                        item.quantity.toString(),
+                                        style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w900, fontSize: 16),
+                                      ),
+                                      const Text("STOCK", style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.grey)),
+                                    ],
+                                  )
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   );
@@ -160,24 +202,40 @@ class DashboardController extends GetxController with WidgetsBindingObserver {
               );
             }),
           ),
+          actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           actions: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1A1A4F),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+            // --- Gradient Button ---
+            Container(
+              width: double.infinity,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF1A1A4F), Color(0xFF2D2D7F)],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
                 ),
-                elevation: 0,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF1A1A4F).withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  )
+                ],
               ),
-              onPressed: () {
-                isLowStockDialogOpen.value = false;
-                Get.back();
-              },
-              child: const Text(
-                "Close",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  isLowStockDialogOpen.value = false;
+                  Get.back();
+                },
+                child: const Text(
+                  "Close Alert",
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -186,7 +244,6 @@ class DashboardController extends GetxController with WidgetsBindingObserver {
       ),
       barrierDismissible: true,
     ).then((_) {
-      // 🔁 SAFETY RESET
       isLowStockDialogOpen.value = false;
     });
   }
@@ -194,142 +251,17 @@ class DashboardController extends GetxController with WidgetsBindingObserver {
   void _startPolling() {
     _pollingTimer?.cancel();
     _pollingTimer = Timer.periodic(
-      const Duration(minutes: 2),
+      const Duration(minutes: 10),
       (_) => getLowStock(),
     );
   }
 
-  // void _showLowStockDialog() {
-  //
-  //   // 🛑 Extra safety
-  //   if (Get.isDialogOpen == true) return;
-  //
-  //   isLowStockDialogOpen.value = true;
-  //
-  //   Get.dialog(
-  //     AlertDialog(
-  //       backgroundColor: Colors.white,
-  //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-  //       titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-  //       title: const Row(
-  //         children: [
-  //           Icon(Icons.warning_amber_rounded, color: Colors.red, size: 24),
-  //           SizedBox(width: 8),
-  //           Text(
-  //             "Low Stock Alert",
-  //             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-  //           ),
-  //         ],
-  //       ),
-  //       content: SizedBox(
-  //         width: double.maxFinite,
-  //         child: Obx(() {
-  //           if (lowStockItems.isEmpty) {
-  //             return const Padding(
-  //               padding: EdgeInsets.symmetric(vertical: 20),
-  //               child: Text(
-  //                 "No items below threshold.",
-  //                 textAlign: TextAlign.center,
-  //               ),
-  //             );
-  //           }
-  //
-  //           return ListView.separated(
-  //             shrinkWrap: true,
-  //             itemCount: lowStockItems.length,
-  //             separatorBuilder: (_, __) => const SizedBox(height: 10),
-  //             itemBuilder: (context, index) {
-  //               final item = lowStockItems[index];
-  //               return Container(
-  //                 padding: const EdgeInsets.all(12),
-  //                 decoration: BoxDecoration(
-  //                   color: Colors.grey.shade50,
-  //                   borderRadius: BorderRadius.circular(12),
-  //                   border: Border.all(color: Colors.grey.shade200),
-  //                 ),
-  //                 child: Row(
-  //                   children: [
-  //                     Expanded(
-  //                       child: Column(
-  //                         crossAxisAlignment: CrossAxisAlignment.start,
-  //                         children: [
-  //                           Text(
-  //                             item.name,
-  //                             style: const TextStyle(
-  //                               fontWeight: FontWeight.bold,
-  //                               fontSize: 14,
-  //                             ),
-  //                           ),
-  //                           Text(
-  //                             "SKU: ${item.sku}",
-  //                             style: const TextStyle(
-  //                               color: Colors.grey,
-  //                               fontSize: 12,
-  //                             ),
-  //                           ),
-  //                         ],
-  //                       ),
-  //                     ),
-  //                     Column(
-  //                       crossAxisAlignment: CrossAxisAlignment.end,
-  //                       children: [
-  //                         Text(
-  //                           "${item.quantity}",
-  //                           style: const TextStyle(
-  //                             color: Colors.red,
-  //                             fontWeight: FontWeight.bold,
-  //                             fontSize: 16,
-  //                           ),
-  //                         ),
-  //                         const Text(
-  //                           "IN STOCK",
-  //                           style: TextStyle(
-  //                             color: Colors.grey,
-  //                             fontSize: 9,
-  //                             fontWeight: FontWeight.bold,
-  //                           ),
-  //                         ),
-  //                       ],
-  //                     ),
-  //                   ],
-  //                 ),
-  //               );
-  //             },
-  //           );
-  //         }),
-  //       ),
-  //       actions: [
-  //         SizedBox(
-  //           width: double.infinity,
-  //           child: ElevatedButton(
-  //             style: ElevatedButton.styleFrom(
-  //               backgroundColor: const Color(0xFF1A1A4F),
-  //               shape: RoundedRectangleBorder(
-  //                 borderRadius: BorderRadius.circular(12),
-  //               ),
-  //               elevation: 0,
-  //             ),
-  //             onPressed: () => Get.back(),
-  //             child: const Text(
-  //               "Close",
-  //               style: TextStyle(
-  //                 color: Colors.white,
-  //                 fontWeight: FontWeight.bold,
-  //               ),
-  //             ),
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
+  void openLowStockDialog() {
+    if (lowStockItems.isEmpty) return;
+    if (Get.isDialogOpen == true) return;
 
-  // void _startPolling() {
-  //   _pollingTimer?.cancel();
-  //   _pollingTimer = Timer.periodic(const Duration(minutes: 2), (timer) {
-  //     getLowStock();
-  //   });
-  // }
+    _showLowStockDialog();
+  }
 
   void refreshLowStock() {
     hasShownDialog.value = false;
@@ -337,75 +269,3 @@ class DashboardController extends GetxController with WidgetsBindingObserver {
   }
 }
 
-// void _showLowStockDialog() {
-//   Get.dialog(
-//     AlertDialog(
-//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-//       title: const Row(
-//         children: [
-//           Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
-//           SizedBox(width: 12),
-//           Text(
-//             "Low Stock Alert ⚠️",
-//             style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
-//           ),
-//         ],
-//       ),
-//       content: SizedBox(
-//         width: double.maxFinite,
-//         height: 420,
-//         child: Obx(() {
-//           if (lowStockItems.isEmpty) {
-//             return const Center(child: Text("No low stock items."));
-//           }
-//
-//           return ListView.builder(
-//             itemCount: lowStockItems.length,
-//             itemBuilder: (context, index) {
-//               final item = lowStockItems[index];
-//
-//               return Card(
-//                 margin: const EdgeInsets.symmetric(vertical: 6),
-//                 elevation: 3,
-//                 child: ListTile(
-//                   leading: CircleAvatar(
-//                     backgroundColor: item.popular ? Colors.green.shade100 : Colors.orange.shade100,
-//                     child: Icon(
-//                       item.popular ? Icons.star : Icons.inventory_2_outlined,
-//                       color: item.popular ? Colors.green : Colors.orange,
-//                     ),
-//                   ),
-//                   title: Text(
-//                     item.name,
-//                     style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-//                   ),
-//                   subtitle: Column(
-//                     crossAxisAlignment: CrossAxisAlignment.start,
-//                     children: [
-//                       Text("SKU: ${item.sku}"),
-//                       Text("Current Stock: ${item.quantity}"),
-//                       Text("Threshold: ${item.threshold}", style: TextStyle(color: Colors.red.shade700)),
-//                     ],
-//                   ),
-//                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-//                   isThreeLine: true,
-//                 ),
-//               );
-//             },
-//           );
-//         }),
-//       ),
-//       actions: [
-//         TextButton(
-//           onPressed: () {
-//             Get.back();
-//             // अगर दोबारा दिखाना चाहते हो तो false करें
-//             // hasShownDialog.value = false;
-//           },
-//           child: const Text("OK", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-//         ),
-//       ],
-//     ),
-//     barrierDismissible: false,
-//   );
-// }12

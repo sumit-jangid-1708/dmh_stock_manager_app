@@ -382,9 +382,7 @@ class ItemController extends GetxController {
         throw Exception("Invalid HSN response format");
       }
       hsnList.assignAll(
-        response.map<HsnGstModel>(
-              (e) => HsnGstModel.fromJson(e),
-        ).toList(),
+        response.map<HsnGstModel>((e) => HsnGstModel.fromJson(e)).toList(),
       );
       if (kDebugMode) {
         print("✅ HSN List fetched: ${hsnList.length}");
@@ -419,7 +417,6 @@ class ItemController extends GetxController {
     }
   }
 
-
   Future<void> addHsn(String hsnCode, double gstPercentage) async {
     final alreadyExistsLocally = hsnList.any((e) => e.hsnCode == hsnCode);
     if (alreadyExistsLocally) {
@@ -444,7 +441,6 @@ class ItemController extends GetxController {
 
       final newHsn = HsnGstModel.fromJson(response);
 
-
       hsnList.add(newHsn);
 
       Get.snackbar(
@@ -453,9 +449,8 @@ class ItemController extends GetxController {
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.green,
         colorText: Colors.white,
-        duration: const Duration(seconds: 2),
+        duration: const Duration(seconds: 1),
       );
-
       if (kDebugMode) {
         print("✅ HSN added: $hsnCode with GST: $gstPercentage%");
       }
@@ -479,7 +474,6 @@ class ItemController extends GetxController {
       isLoading.value = false;
     }
   }
-
 }
 
 // Future<void> addProduct(
