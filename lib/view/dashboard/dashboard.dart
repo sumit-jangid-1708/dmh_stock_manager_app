@@ -116,10 +116,11 @@ class DashboardScreen extends StatelessWidget {
                     );
                   },
                   child: Container(
-                    width: 64,
-                    height: 64,
+                    width: 60,
+                    height: 60,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
+                      // shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(15),
                       gradient: LinearGradient(
                         colors: [Color(0xFF1A1A4F), Color(0xFF2D2D7F)],
                         begin: Alignment.topLeft,

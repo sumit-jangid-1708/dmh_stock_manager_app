@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import '../../model/product_model.dart';
+import '../../res/components/widgets/custom_searchable_dropdown.dart';
 
 class OrderCreateBottomSheet extends StatelessWidget {
   OrderCreateBottomSheet({super.key});
@@ -44,7 +45,6 @@ class OrderCreateBottomSheet extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      // padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -71,18 +71,41 @@ class OrderCreateBottomSheet extends StatelessWidget {
                   const SizedBox(height: 24),
 
                   // SECTION: CUSTOMER INFO
-                  _buildSectionTitle("Order Details", Icons.assignment_outlined),
+                  _buildSectionTitle(
+                    "Order Details",
+                    Icons.assignment_outlined,
+                  ),
                   const SizedBox(height: 12),
-                  _buildChannelDropdown(),
+
+                  // Channel Dropdown with Search
+                  CustomSearchableDropdown<ChannelModel>(
+                    items: homeController.channels,
+                    selectedItem: orderController.selectedChannel,
+                    itemAsString: (channel) => channel.name,
+                    hintText: "Select Channel",
+                    prefixIcon: Icons.store_outlined,
+                    enableSearch: true,
+                    searchHint: "Search channels...",
+                    onChanged: (val) {
+                      orderController.selectedChannel.value = val;
+                    },
+                  ),
+
                   const SizedBox(height: 12),
                   TextField(
                     controller: orderController.channelOrderId,
-                    decoration: _getInputDecoration("Channel Order ID", Icons.tag),
+                    decoration: _getInputDecoration(
+                      "Channel Order ID",
+                      Icons.tag,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
                     controller: orderController.customerNameController,
-                    decoration: _getInputDecoration("Customer Name", Icons.person_outline),
+                    decoration: _getInputDecoration(
+                      "Customer Name",
+                      Icons.person_outline,
+                    ),
                   ),
                   const SizedBox(height: 12),
                   TextField(
@@ -94,7 +117,10 @@ class OrderCreateBottomSheet extends StatelessWidget {
                   const SizedBox(height: 12),
                   TextField(
                     controller: orderController.remarkController,
-                    decoration: _getInputDecoration("Remarks / Notes", Icons.notes),
+                    decoration: _getInputDecoration(
+                      "Remarks / Notes",
+                      Icons.notes,
+                    ),
                   ),
 
                   const SizedBox(height: 32),
@@ -103,12 +129,17 @@ class OrderCreateBottomSheet extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildSectionTitle("Product Items", Icons.shopping_bag_outlined),
+                      _buildSectionTitle(
+                        "Product Items",
+                        Icons.shopping_bag_outlined,
+                      ),
                       TextButton.icon(
                         onPressed: orderController.addItemRow,
                         icon: const Icon(Icons.add_circle_outline, size: 20),
                         label: const Text("Add Item"),
-                        style: TextButton.styleFrom(foregroundColor: const Color(0xFF1A1A4F)),
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF1A1A4F),
+                        ),
                       ),
                     ],
                   ),
@@ -137,14 +168,23 @@ class OrderCreateBottomSheet extends StatelessWidget {
             color: const Color(0xFF1A1A4F).withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(Icons.create_new_folder_outlined, color: Color(0xFF1A1A4F)),
+          child: const Icon(
+            Icons.create_new_folder_outlined,
+            color: Color(0xFF1A1A4F),
+          ),
         ),
         const SizedBox(width: 16),
         const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Create Order", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            Text("Enter transaction and customer info", style: TextStyle(fontSize: 12, color: Colors.grey)),
+            Text(
+              "Create Order",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              "Enter transaction and customer info",
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
           ],
         ),
       ],
@@ -158,38 +198,22 @@ class OrderCreateBottomSheet extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           title,
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey.shade700),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey.shade700,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildChannelDropdown() {
-    return Obx(() => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<ChannelModel>(
-          value: orderController.selectedChannel.value,
-          hint: const Text("Select Channel"),
-          isExpanded: true,
-          icon: const Icon(Icons.keyboard_arrow_down),
-          items: homeController.channels.map((channel) {
-            return DropdownMenuItem(value: channel, child: Text(channel.name));
-          }).toList(),
-          onChanged: (val) => orderController.selectedChannel.value = val,
-        ),
-      ),
-    ));
-  }
-
   Widget _buildPhoneField() {
     return IntlPhoneField(
-      decoration: _getInputDecoration("Phone Number", Icons.phone_android_outlined),
+      decoration: _getInputDecoration(
+        "Phone Number",
+        Icons.phone_android_outlined,
+      ),
       initialCountryCode: 'IN',
       onChanged: (phone) {
         orderController.countryCode.value = phone.countryCode;
@@ -232,47 +256,67 @@ class OrderCreateBottomSheet extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.only(bottom: 10),
                           child: Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              _buildInfoTag("SKU: ${product.sku ?? 'N/A'}", Icons.qr_code, Colors.blueGrey),
-                              SizedBox(height: 2,),
-                              _buildInfoTag("Cost: ₹${product.purchasePrice ?? '0'}", Icons.account_balance_wallet, Colors.green),
+                              _buildInfoTag(
+                                "SKU: ${product.sku ?? 'N/A'}",
+                                Icons.qr_code,
+                                Colors.blueGrey,
+                              ),
+                              const SizedBox(height: 2),
+                              _buildInfoTag(
+                                "Cost: ₹${product.purchasePrice ?? '0'}",
+                                Icons.account_balance_wallet,
+                                Colors.green,
+                              ),
                             ],
                           ),
                         ),
 
-                      // --- Product Dropdown ---
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade200),
+                      // --- Product Dropdown with Search ---
+                      CustomSearchableDropdown<ProductModel>(
+                        items: itemController.products,
+                        selectedItem: item["product"] as Rx<ProductModel?>,
+                        itemAsString: (product) =>
+                        "${product.name} | ${product.size} | ${product.color}",
+                        hintText: "Choose Product",
+                        prefixIcon: Icons.inventory_2_outlined,
+                        enableSearch: true,
+                        searchHint: "Search products...",
+                        customItemBuilder: (product) => Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              product.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              "${product.size} | ${product.color} | SKU: ${product.sku ?? 'N/A'}",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
                         ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<ProductModel>(
-                            value: product,
-                            hint: const Text("Choose Product"),
-                            isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down),
-                            items: itemController.products.map((p) {
-                              return DropdownMenuItem(
-                                  value: p,
-                                  child: Text(
-                                    "${p.name} | ${p.size} | ${p.color}",
-                                    style: const TextStyle(fontSize: 14),
-                                  )
-                              );
-                            }).toList(),
-                            onChanged: (val) {
-                              (item["product"] as Rx<ProductModel?>).value = val;
-                              if (val != null) {
-                                item["purchasePrice"].text = val.purchasePrice?.toString() ?? "";
-                                item["skuId"].text = val.sku ?? "";
-                              }
-                            },
-                          ),
-                        ),
+                        onChanged: (val) {
+                          (item["product"] as Rx<ProductModel?>).value = val;
+                          if (val == null) return;
+                          final priceController =
+                          item["purchasePrice"] as TextEditingController?;
+                          final skuController =
+                          item["skuId"] as TextEditingController?;
+                          if (priceController != null) {
+                            priceController.text =
+                                val.purchasePrice.toString();
+                          }
+                          if (skuController != null) {
+                            skuController.text = val.sku ?? "";
+                          }
+                        },
                       ),
                     ],
                   );
@@ -283,20 +327,14 @@ class OrderCreateBottomSheet extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildSmallField(
-                      item["quantity"],
-                      "Qty",
-                      Icons.numbers,
-                    ),
+                    _buildSmallField(item["quantity"], "Qty", Icons.numbers),
                     const SizedBox(height: 8),
-
                     _buildSmallField(
                       item["unitPrice"],
                       "Sale Price",
                       Icons.payments_outlined,
                     ),
                     const SizedBox(height: 8),
-
                     Align(
                       alignment: Alignment.centerRight,
                       child: Container(
@@ -314,8 +352,7 @@ class OrderCreateBottomSheet extends StatelessWidget {
                       ),
                     ),
                   ],
-                )
-
+                ),
               ],
             ),
           );
@@ -324,7 +361,7 @@ class OrderCreateBottomSheet extends StatelessWidget {
     });
   }
 
-// Helper widget to build the SKU and Purchase Price tags
+  // Helper widget to build the SKU and Purchase Price tags
   Widget _buildInfoTag(String text, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -334,8 +371,6 @@ class OrderCreateBottomSheet extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Icon(icon, size: 12, color: color),
-          // const SizedBox(width: 4),
           Text(
             text,
             style: TextStyle(
@@ -348,7 +383,12 @@ class OrderCreateBottomSheet extends StatelessWidget {
       ),
     );
   }
-  Widget _buildSmallField(TextEditingController ctrl, String label, IconData icon) {
+
+  Widget _buildSmallField(
+      TextEditingController ctrl,
+      String label,
+      IconData icon,
+      ) {
     return TextField(
       controller: ctrl,
       keyboardType: TextInputType.number,
@@ -357,7 +397,10 @@ class OrderCreateBottomSheet extends StatelessWidget {
         prefixIcon: Icon(icon, size: 16),
         filled: true,
         fillColor: Colors.grey.shade50,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide.none,
+        ),
       ),
     );
   }
@@ -370,7 +413,9 @@ class OrderCreateBottomSheet extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 15),
               side: BorderSide(color: Colors.grey.shade300),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             onPressed: () => orderController.clearForm(),
             child: const Text("Clear", style: TextStyle(color: Colors.black54)),
@@ -383,58 +428,25 @@ class OrderCreateBottomSheet extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 15),
               backgroundColor: const Color(0xFF1A1A4F),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               elevation: 0,
             ),
             onPressed: () {
               orderController.createOrder();
               Get.back();
             },
-            child: const Text("Submit Order", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            child: const Text(
+              "Submit Order",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ),
       ],
     );
   }
 }
-
-
-// Widget _buildDropdown<T>({
-//   required String label,
-//   required List<T> items,
-//   required T? value,
-//   required String Function(T) itemAsString,
-//   required void Function(T?) onChanged,
-// }) {
-//   return Column(
-//     crossAxisAlignment: CrossAxisAlignment.start,
-//     children: [
-//       Text(label),
-//       const SizedBox(height: 6),
-//       Container(
-//         padding: const EdgeInsets.symmetric(horizontal: 12),
-//         decoration: BoxDecoration(
-//           border: Border.all(width: 1),
-//           borderRadius: BorderRadius.circular(8),
-//         ),
-//         child: DropdownButtonHideUnderline(
-//           child: DropdownButton<T>(
-//             value: value,
-//             hint: Text("Select $label"),
-//             isExpanded: true,
-//             items: items
-//                 .map(
-//                   (e) => DropdownMenuItem(
-//                     value: e,
-//                     child: Text(itemAsString(e)),
-//                   ),
-//                 )
-//                 .toList(),
-//             onChanged: onChanged,
-//           ),
-//         ),
-//       ),
-//       const SizedBox(height: 12),
-//     ],
-//   );
-// }

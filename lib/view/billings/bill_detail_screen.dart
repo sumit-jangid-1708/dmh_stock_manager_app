@@ -1,3 +1,4 @@
+import 'package:dmj_stock_manager/view/billings/pdf_invoice_helper.dart';
 import 'package:dmj_stock_manager/view_models/controller/billing_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
 import 'package:flutter/material.dart';
@@ -121,14 +122,14 @@ class BillDetailScreen extends StatelessWidget {
                         ),
                         IconButton(
                           icon: const Icon(Icons.share, color: Colors.white),
-                          onPressed: () {
-                            // TODO: Share functionality
+                          onPressed: () async {
+                            await PdfInvoiceHelper.generateAndShare(bill);
                           },
                         ),
                         IconButton(
                           icon: const Icon(Icons.download, color: Colors.white),
-                          onPressed: () {
-                            // TODO: Download PDF
+                          onPressed: () async {
+                            await PdfInvoiceHelper.generateAndDownload(bill);
                           },
                         ),
                       ],
@@ -782,32 +783,6 @@ class BillDetailScreen extends StatelessWidget {
     );
   }
 
-  // Widget _buildAttributeChip(String label, IconData icon, Color color) {
-  //   return Container(
-  //     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-  //     decoration: BoxDecoration(
-  //       color: color.withOpacity(0.1),
-  //       borderRadius: BorderRadius.circular(6),
-  //       border: Border.all(color: color.withOpacity(0.3)),
-  //     ),
-  //     child: Row(
-  //       mainAxisSize: MainAxisSize.min,
-  //       children: [
-  //         Icon(icon, size: 10, color: color),
-  //         SizedBox(width: 4),
-  //         Text(
-  //           label,
-  //           style: TextStyle(
-  //             fontSize: 10,
-  //             fontWeight: FontWeight.w600,
-  //             color: color,
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
   String _formatPaymentMethod(String method) {
     switch (method.toLowerCase()) {
       case 'cash':
@@ -832,6 +807,32 @@ class BillDetailScreen extends StatelessWidget {
     }
   }
 }
+
+// Widget _buildAttributeChip(String label, IconData icon, Color color) {
+//   return Container(
+//     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+//     decoration: BoxDecoration(
+//       color: color.withOpacity(0.1),
+//       borderRadius: BorderRadius.circular(6),
+//       border: Border.all(color: color.withOpacity(0.3)),
+//     ),
+//     child: Row(
+//       mainAxisSize: MainAxisSize.min,
+//       children: [
+//         Icon(icon, size: 10, color: color),
+//         SizedBox(width: 4),
+//         Text(
+//           label,
+//           style: TextStyle(
+//             fontSize: 10,
+//             fontWeight: FontWeight.w600,
+//             color: color,
+//           ),
+//         ),
+//       ],
+//     ),
+//   );
+// }
 
 // import 'package:flutter/material.dart';
 // import 'package:get/get.dart';

@@ -1,5 +1,6 @@
 import 'package:dmj_stock_manager/view_models/controller/vendor_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:country_state_city_pro/country_state_city_pro.dart';
@@ -147,9 +148,15 @@ class AddVendorFormBottomSheet extends StatelessWidget {
                                   controller: vendorController.gstNumberController.value,
                                   textCapitalization: TextCapitalization.characters,
                                   maxLength: 15,
+                                  // Add formatters for better UX
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.allow(RegExp(r'[0-9A-Z]')), // Only allow valid GST chars
+                                    // UpperCaseTextFormatter(), // Custom formatter to force uppercase
+                                  ],
                                   decoration: _getDecoration("GST Number", Icons.verified_user_outlined).copyWith(counterText: ""),
                                   validator: (value) {
                                     if (value == null || value.trim().isEmpty) return "GST Number required";
+                                    // The regex you wrote is accurate
                                     final gstRegex = RegExp(r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$');
                                     if (!gstRegex.hasMatch(value.trim())) return "Invalid GST Format";
                                     return null;

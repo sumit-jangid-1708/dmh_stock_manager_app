@@ -403,7 +403,7 @@ class OrderController extends GetxController {
       // ✅ Refresh order list
       await getOrderList();
       debugPrint("✅ Order list refreshed");
-      Get.to(()=> BillingScreen());
+      Get.to(() => BillingScreen());
       billingController.refreshBills();
     } on AppExceptions catch (e) {
       if (kDebugMode) print("❌ API Error: $e");
@@ -440,13 +440,14 @@ class OrderController extends GetxController {
       isLoading.value = false;
     }
   }
+
   void filterOrders(String query) {
     if (query.isEmpty) {
       filteredOrders.assignAll(orders);
     } else {
       filteredOrders.assignAll(
         orders.where((order) {
-          final name = order.customerName?.toLowerCase() ?? "";
+          final name = order.customerName.toLowerCase() ?? "";
           final id = order.id.toString();
           final searchLower = query.toLowerCase();
           return name.contains(searchLower) || id.contains(searchLower);

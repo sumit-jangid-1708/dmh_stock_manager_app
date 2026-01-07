@@ -137,13 +137,13 @@ class TotalStockScreen extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(12.0),
         child: Row(
           children: [
             // Product Icon Container
             Container(
-              height: 54,
-              width: 54,
+              height: 50,
+              width: 50,
               decoration: BoxDecoration(
                 color: const Color(0xFF1A1A4F).withOpacity(0.05),
                 borderRadius: BorderRadius.circular(14),
@@ -154,7 +154,7 @@ class TotalStockScreen extends StatelessWidget {
                 size: 26,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
 
             // Item Details
             Expanded(
@@ -172,10 +172,10 @@ class TotalStockScreen extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  Row(
+                  Column(
                     children: [
                       _buildMiniInfo(Icons.qr_code, sku),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 5),
                       _buildMiniInfo(Icons.straighten, size),
                     ],
                   ),
