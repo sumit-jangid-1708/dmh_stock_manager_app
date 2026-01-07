@@ -123,8 +123,8 @@ class VendorScreen extends StatelessWidget {
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(15),
+                        // border: Border.all(color: Colors.grey.shade300),
                       ),
                       child: TextFormField(
                         controller: vendorController.searchBar,
@@ -139,7 +139,20 @@ class VendorScreen extends StatelessWidget {
                             },
                             icon: Icon(Icons.close, color: Colors.grey),
                           ),
-                          border: InputBorder.none,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF1A1A4F),
+                            ),
+                          ),
                           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                           hintText: "Search vendors...",
                           hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),

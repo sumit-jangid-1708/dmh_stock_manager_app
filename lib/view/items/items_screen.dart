@@ -33,126 +33,6 @@ class ItemsScreen extends StatelessWidget {
           },
           child: Column(
             children: [
-              /// TOP ROW — Summary cards with space for circular icon button
-              // Padding(
-              //   padding: const EdgeInsets.symmetric(
-              //     horizontal: 15.0,
-              //     vertical: 12.0,
-              //   ),
-              //   child: Container(
-              //     width: double.infinity,
-              //     decoration: BoxDecoration(
-              //       color: const Color(0xFFF5F5F5),
-              //       borderRadius: BorderRadius.circular(20),
-              //       border: Border.all(
-              //         color: const Color(0xFFE0E0E0),
-              //         width: 1,
-              //       ),
-              //     ),
-              //     child: Column(
-              //       crossAxisAlignment: CrossAxisAlignment.start,
-              //       children: [
-              //         /// Top Row with arrow and action buttons
-              //         Padding(
-              //           padding: const EdgeInsets.only(
-              //             top: 12.0,
-              //             left: 12.0,
-              //             right: 12.0,
-              //             bottom: 12.0,
-              //           ),
-              //           child: Row(
-              //             children: [
-              //               Container(
-              //                 padding: const EdgeInsets.all(6),
-              //                 decoration: BoxDecoration(
-              //                   color: Color(0xFF1A1A4F),
-              //                   borderRadius: BorderRadius.circular(8),
-              //                 ),
-              //                 child: const Icon(
-              //                   Icons.filter_alt,
-              //                   size: 18,
-              //                   color: Colors.white,
-              //                 ),
-              //               ),
-              //               // Spacer so scroll area gets more space
-              //               Expanded(child: SizedBox()),
-              //               // Action buttons (Download + Filter)
-              //               Row(
-              //                 children: [
-              //                   Container(
-              //                     padding: const EdgeInsets.all(6),
-              //                     decoration: BoxDecoration(
-              //                       color: Color(0xFF1A1A4F),
-              //                       borderRadius: BorderRadius.circular(8),
-              //                     ),
-              //                     child: const Icon(
-              //                       Icons.upload,
-              //                       size: 18,
-              //                       color: Colors.white,
-              //                     ),
-              //                   ),
-              //                   const SizedBox(width: 8),
-              //                   InkWell(
-              //                     onTap: () =>
-              //                         itemController.exportProductListToExcel(),
-              //                     child: Container(
-              //                       padding: const EdgeInsets.all(6),
-              //                       decoration: BoxDecoration(
-              //                         color: Color(0xFF1A1A4F),
-              //                         borderRadius: BorderRadius.circular(8),
-              //                       ),
-              //                       child: const Icon(
-              //                         Icons.download,
-              //                         size: 18,
-              //                         color: Colors.white,
-              //                       ),
-              //                     ),
-              //                   ),
-              //                 ],
-              //               ),
-              //             ],
-              //           ),
-              //         ),
-              //
-              //         const SizedBox(height: 10),
-              //
-              //         /// Scrollable summary cards
-              //         ClipRRect(
-              //           borderRadius: BorderRadius.circular(
-              //             20,
-              //           ), // Match parent container
-              //           child: Container(
-              //             height: 100,
-              //             color: Color(
-              //               0xFFF5F5F5,
-              //             ), // Same background as outer container
-              //             child: ListView(
-              //               scrollDirection: Axis.horizontal,
-              //               padding: const EdgeInsets.symmetric(
-              //                 horizontal: 12.0,
-              //               ),
-              //               children: const [
-              //                 SummaryCard(
-              //                   title: "Total Listed Item",
-              //                   count: "23",
-              //                 ),
-              //                 SizedBox(width: 12),
-              //                 SummaryCard(title: "Total Purchase", count: "23"),
-              //                 SizedBox(width: 12),
-              //                 SummaryCard(title: "Total sales ", count: "23"),
-              //                 SizedBox(width: 12),
-              //               ],
-              //             ),
-              //           ),
-              //         ),
-              //
-              //         const SizedBox(height: 12), // Add bottom spacing
-              //       ],
-              //     ),
-              //   ),
-              // ),
-
-              // ⬇️ Ye purana Padding hata kar naya Row use karein
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
@@ -178,8 +58,23 @@ class ItemsScreen extends StatelessWidget {
                           filled: true,
                           fillColor: Colors.grey.withOpacity(0.1),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF1A1A4F),
+                              width: 1,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
                           ),
                           hintText: "Search products...",
                         ),
@@ -317,7 +212,9 @@ Future<void> showProductSelectionDialog(BuildContext context) async {
                             selectAll = false;
                           } else {
                             selectedIds.clear();
-                            for (var p in products) selectedIds.add(p.id);
+                            for (var p in products) {
+                              selectedIds.add(p.id);
+                            }
                             selectAll = true;
                           }
                         });
@@ -341,10 +238,11 @@ Future<void> showProductSelectionDialog(BuildContext context) async {
                                   "${p.size ?? ''} • ${p.color ?? ''} • ${p.sku ?? ''}",
                                 ),
                                 onChanged: (v) => setState(() {
-                                  if (v == true)
+                                  if (v == true) {
                                     selectedIds.add(p.id);
-                                  else
+                                  } else {
                                     selectedIds.remove(p.id);
+                                  }
                                   selectAll =
                                       selectedIds.length == products.length;
                                 }),
@@ -533,7 +431,7 @@ void showAddInventoryDialog(ProductModel product, Function(int qty) onAdd) {
                   ),
                   padding: EdgeInsets.zero, // Taaki button square rahe
                 ),
-                onPressed: () async{
+                onPressed: () async {
                   if (qtyController.text.isNotEmpty) {
                     int qty = int.tryParse(qtyController.text) ?? 0;
                     onAdd(qty);
@@ -646,7 +544,7 @@ void showAdjustInventoryDialog(String sku) {
                     note: noteController.text,
                   );
                   Get.back();
-                 await Get.to(StockScreen());
+                  await Get.to(StockScreen());
                 },
                 child: const Text(
                   "Submit",
@@ -661,84 +559,138 @@ void showAdjustInventoryDialog(String sku) {
   );
 }
 
-void handleInventoryAction(ProductModel product){
+void handleInventoryAction(ProductModel product) {
   final stockController = Get.find<StockController>();
-  final bool isInInventory = stockController.inventoryList
-      .any((item)=> item.product == product.id);
+  final bool isInInventory = stockController.inventoryList.any(
+    (item) => item.product == product.id,
+  );
 
-
-  if(isInInventory){
+  if (isInInventory) {
     // Already exists -> Adjust dialog
     showAdjustInventoryDialog(product.sku);
-  }else{
+  } else {
     //Not in Inventory -> Add dialog
-    showAddInventoryDialog(product, (qty){
+    showAddInventoryDialog(product, (qty) {
       stockController.addInventory(productId: product.id, quantity: qty);
     });
   }
 }
 
-
-
-
-
-
-
-// Scaffold(
-//   backgroundColor: Colors.white,
-//   body: SafeArea(
+/// TOP ROW — Summary cards with space for circular icon button
+// Padding(
+//   padding: const EdgeInsets.symmetric(
+//     horizontal: 15.0,
+//     vertical: 12.0,
+//   ),
+//   child: Container(
+//     width: double.infinity,
+//     decoration: BoxDecoration(
+//       color: const Color(0xFFF5F5F5),
+//       borderRadius: BorderRadius.circular(20),
+//       border: Border.all(
+//         color: const Color(0xFFE0E0E0),
+//         width: 1,
+//       ),
+//     ),
 //     child: Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
 //       children: [
-//         AppHeader(),
-//         const Divider(height: 2, color: Color.fromARGB(255, 188, 188, 188)),
+//         /// Top Row with arrow and action buttons
 //         Padding(
-//           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+//           padding: const EdgeInsets.only(
+//             top: 12.0,
+//             left: 12.0,
+//             right: 12.0,
+//             bottom: 12.0,
+//           ),
 //           child: Row(
-//             mainAxisAlignment: MainAxisAlignment.spaceBetween,
 //             children: [
-//               Text(
-//                 "Add Stock",
-//                 style: const TextStyle(
-//                   fontSize: 20,
-//                   fontWeight: FontWeight.bold,
+//               Container(
+//                 padding: const EdgeInsets.all(6),
+//                 decoration: BoxDecoration(
+//                   color: Color(0xFF1A1A4F),
+//                   borderRadius: BorderRadius.circular(8),
+//                 ),
+//                 child: const Icon(
+//                   Icons.filter_alt,
+//                   size: 18,
+//                   color: Colors.white,
 //                 ),
 //               ),
-
-//               ElevatedButton(
-//                 style: ElevatedButton.styleFrom(
-//                   backgroundColor: const Color(0xFF1A1A4F),
-//                   foregroundColor: Colors.white,
-//                   fixedSize: Size(130, 40),
-//                   shape: RoundedRectangleBorder(
-//                     borderRadius: BorderRadius.circular(10),
+//               // Spacer so scroll area gets more space
+//               Expanded(child: SizedBox()),
+//               // Action buttons (Download + Filter)
+//               Row(
+//                 children: [
+//                   Container(
+//                     padding: const EdgeInsets.all(6),
+//                     decoration: BoxDecoration(
+//                       color: Color(0xFF1A1A4F),
+//                       borderRadius: BorderRadius.circular(8),
+//                     ),
+//                     child: const Icon(
+//                       Icons.upload,
+//                       size: 18,
+//                       color: Colors.white,
+//                     ),
 //                   ),
-//                 ),
-//                 onPressed: () {},
-//                 child: Text("+ Add Item"),
+//                   const SizedBox(width: 8),
+//                   InkWell(
+//                     onTap: () =>
+//                         itemController.exportProductListToExcel(),
+//                     child: Container(
+//                       padding: const EdgeInsets.all(6),
+//                       decoration: BoxDecoration(
+//                         color: Color(0xFF1A1A4F),
+//                         borderRadius: BorderRadius.circular(8),
+//                       ),
+//                       child: const Icon(
+//                         Icons.download,
+//                         size: 18,
+//                         color: Colors.white,
+//                       ),
+//                     ),
+//                   ),
+//                 ],
 //               ),
 //             ],
 //           ),
 //         ),
-
-//         //Search bar
-//         Padding(
-//           padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-//           child: TextFormField(
-//             decoration: InputDecoration(
-//               prefixIcon: Icon(Icons.search),
-//               suffixIcon: IconButton(
-//                 onPressed: () {},
-//                 icon: Icon(Icons.close),
+//
+//         const SizedBox(height: 10),
+//
+//         /// Scrollable summary cards
+//         ClipRRect(
+//           borderRadius: BorderRadius.circular(
+//             20,
+//           ), // Match parent container
+//           child: Container(
+//             height: 100,
+//             color: Color(
+//               0xFFF5F5F5,
+//             ), // Same background as outer container
+//             child: ListView(
+//               scrollDirection: Axis.horizontal,
+//               padding: const EdgeInsets.symmetric(
+//                 horizontal: 12.0,
 //               ),
-//               border: OutlineInputBorder(
-//                 borderSide: BorderSide(width: 0),
-//                 borderRadius: BorderRadius.circular(10),
-//               ),
-//               hintText: "Search",
+//               children: const [
+//                 SummaryCard(
+//                   title: "Total Listed Item",
+//                   count: "23",
+//                 ),
+//                 SizedBox(width: 12),
+//                 SummaryCard(title: "Total Purchase", count: "23"),
+//                 SizedBox(width: 12),
+//                 SummaryCard(title: "Total sales ", count: "23"),
+//                 SizedBox(width: 12),
+//               ],
 //             ),
 //           ),
 //         ),
+//
+//         const SizedBox(height: 12), // Add bottom spacing
 //       ],
 //     ),
 //   ),
-// );
+// ),

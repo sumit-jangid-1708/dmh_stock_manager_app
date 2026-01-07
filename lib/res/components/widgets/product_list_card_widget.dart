@@ -24,7 +24,6 @@ class ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final itemController = Get.find<ItemController>();
     final imageList = product.productImageVariants;
-
     // HSN Code निकालो ID से
     String hsnDisplay = "N/A";
     if (product.hsnId != null) {
@@ -33,7 +32,6 @@ class ProductCard extends StatelessWidget {
       );
       hsnDisplay = hsnModel?.hsnCode ?? "HSN ID: ${product.hsnId}";
     }
-
     return Card(
       color: Colors.white,
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),

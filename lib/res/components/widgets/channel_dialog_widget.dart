@@ -9,8 +9,16 @@ class ChannelDialogWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      title: const Text("Manage Channels"),
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      title: const Text(
+        "Manage Channels",
+        style: TextStyle(
+          fontSize: 25,
+          color: Color(0xFF1A1A4F),
+          fontWeight: FontWeight.bold,
+        ),
+      ),
       content: SizedBox(
         width: 300,
         height: 300,
@@ -28,7 +36,11 @@ class ChannelDialogWidget extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final channel = homeController.channels[index];
                     return ListTile(
-                      leading: Icon(Icons.circle, color:  Color(0xFF1A1A4F), size: 15,),
+                      leading: Icon(
+                        Icons.circle,
+                        color: Color(0xFF1A1A4F),
+                        size: 15,
+                      ),
                       title: Text(channel.name),
                     );
                   },
@@ -42,10 +54,31 @@ class ChannelDialogWidget extends StatelessWidget {
               controller: homeController.nameController,
               decoration: InputDecoration(
                 hintText: "Channel Name",
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                // prefixIcon: Icon(Icons.),
+                filled: true,
+                fillColor: Colors.grey.shade50,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade200),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF1A1A4F),
+                    width: 1,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
             ),
+            const SizedBox(height: 10),
           ],
         ),
       ),
@@ -54,25 +87,46 @@ class ChannelDialogWidget extends StatelessWidget {
           onPressed: () {
             Get.back();
             homeController.nameController.clear();
-
           },
           child: const Text(
             "Cancel",
-            style: TextStyle(color: Color(0xFF1A1A4F)),
+            style: TextStyle(fontSize: 15, color: Color(0xFF1A1A4F)),
           ),
         ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Color(0xFF1A1A4F),
-            fixedSize: Size(90, 40),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
+        Container(
+          width: 90,
+          height: 40,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF1A1A4F), Color(0xFF4A4ABF)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0xFF1A1A4F).withOpacity(0.3),
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
+            ],
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+            ),
+            onPressed: () {
+              homeController.addChannels();
+            },
+            child: const Text(
+              "Add",
+              style: TextStyle(fontSize: 15, color: Colors.white),
             ),
           ),
-          onPressed: () {
-            homeController.addChannels();
-          },
-          child: const Text("Add", style: TextStyle(color: Colors.white)),
         ),
       ],
     );

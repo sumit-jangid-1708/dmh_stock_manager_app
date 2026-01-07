@@ -309,6 +309,7 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 }
+
 //
 // double calculateTotalAmount(OrderDetailModel order) {
 //   double total = 0;
