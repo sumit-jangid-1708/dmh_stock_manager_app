@@ -1,4 +1,3 @@
-// import 'dart:nativewrappers/_internal/vm/lib/typed_data_patch.dart';
 import 'dart:typed_data';
 
 import 'package:dmj_stock_manager/res/components/barcode_dialog.dart';
@@ -83,9 +82,24 @@ class ItemsScreen extends StatelessWidget {
 
                     const SizedBox(width: 10),
                     // 🖨️ Print Button (Square)
-                    SizedBox(
+                    Container(
                       height: 48,
                       width: 48,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF1A1A4F), Color(0xFF4A4ABF)],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0xFF1A1A4F).withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: Offset(0, 4),
+                          ),
+                        ],
+                        borderRadius: BorderRadius.circular(15),
+                      ),
                       child: ElevatedButton(
                         onPressed: () {
                           showProductSelectionDialog(
@@ -93,13 +107,13 @@ class ItemsScreen extends StatelessWidget {
                           ); // 👈 Dialog open hoga
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1A1A4F),
+                          backgroundColor: Colors.transparent,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(
-                              8,
+                              15,
                             ), // Square shape
                           ),
-                          padding: EdgeInsets.zero, // Taaki button square rahe
+                          padding: EdgeInsets.zero,
                         ),
                         child: const Icon(
                           Icons.print,
@@ -134,34 +148,27 @@ class ItemsScreen extends StatelessWidget {
                       // final reversedIndex = itemController.filteredProducts.length - 1 - index;
                       final product = itemController
                           .filteredProducts[index]; // ✅ use filtered list
-                      return InkWell(
-                        onTap: () {
-                          handleInventoryAction(product);
-                          // showAddInventoryDialog(product, (qty) {
-                          //   stockController.addInventory(
-                          //     productId: product.id,
-                          //     quantity: qty,
-                          //   );
-                          // });
+
+                      return ProductCard(
+                        count: index + 1,
+                        product: product, // 👈 pass full ProductModel
+                        onShare: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => ImageShareDialog(product: product),
+                          );
                         },
-                        child: ProductCard(
-                          count: index + 1,
-                          product: product, // 👈 pass full ProductModel
-                          onShare: () {
-                            showDialog(
-                              context: context,
-                              builder: (_) =>
-                                  ImageShareDialog(product: product),
-                            );
-                          },
-                          onView: () {
-                            showBarcodeDialog(
-                              context,
-                              product.barcode,
-                              product.barcodeImage,
-                            );
-                          },
-                        ),
+                        onView: () {
+                          showBarcodeDialog(
+                            context,
+                            product.barcode,
+                            product.barcodeImage,
+                          );
+                        },
+                        // ✅ ADD button functionality - same as card tap
+                        onAdd: () {
+                          handleInventoryAction(product);
+                        },
                       );
                     },
                   );
@@ -191,6 +198,7 @@ Future<void> showProductSelectionDialog(BuildContext context) async {
       return StatefulBuilder(
         builder: (context, setState) {
           return Dialog(
+            backgroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -382,6 +390,7 @@ void showAddInventoryDialog(ProductModel product, Function(int qty) onAdd) {
 
   Get.dialog(
     Dialog(
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -460,6 +469,7 @@ void showAdjustInventoryDialog(String sku) {
 
   Get.dialog(
     Dialog(
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -575,122 +585,3 @@ void handleInventoryAction(ProductModel product) {
     });
   }
 }
-
-/// TOP ROW — Summary cards with space for circular icon button
-// Padding(
-//   padding: const EdgeInsets.symmetric(
-//     horizontal: 15.0,
-//     vertical: 12.0,
-//   ),
-//   child: Container(
-//     width: double.infinity,
-//     decoration: BoxDecoration(
-//       color: const Color(0xFFF5F5F5),
-//       borderRadius: BorderRadius.circular(20),
-//       border: Border.all(
-//         color: const Color(0xFFE0E0E0),
-//         width: 1,
-//       ),
-//     ),
-//     child: Column(
-//       crossAxisAlignment: CrossAxisAlignment.start,
-//       children: [
-//         /// Top Row with arrow and action buttons
-//         Padding(
-//           padding: const EdgeInsets.only(
-//             top: 12.0,
-//             left: 12.0,
-//             right: 12.0,
-//             bottom: 12.0,
-//           ),
-//           child: Row(
-//             children: [
-//               Container(
-//                 padding: const EdgeInsets.all(6),
-//                 decoration: BoxDecoration(
-//                   color: Color(0xFF1A1A4F),
-//                   borderRadius: BorderRadius.circular(8),
-//                 ),
-//                 child: const Icon(
-//                   Icons.filter_alt,
-//                   size: 18,
-//                   color: Colors.white,
-//                 ),
-//               ),
-//               // Spacer so scroll area gets more space
-//               Expanded(child: SizedBox()),
-//               // Action buttons (Download + Filter)
-//               Row(
-//                 children: [
-//                   Container(
-//                     padding: const EdgeInsets.all(6),
-//                     decoration: BoxDecoration(
-//                       color: Color(0xFF1A1A4F),
-//                       borderRadius: BorderRadius.circular(8),
-//                     ),
-//                     child: const Icon(
-//                       Icons.upload,
-//                       size: 18,
-//                       color: Colors.white,
-//                     ),
-//                   ),
-//                   const SizedBox(width: 8),
-//                   InkWell(
-//                     onTap: () =>
-//                         itemController.exportProductListToExcel(),
-//                     child: Container(
-//                       padding: const EdgeInsets.all(6),
-//                       decoration: BoxDecoration(
-//                         color: Color(0xFF1A1A4F),
-//                         borderRadius: BorderRadius.circular(8),
-//                       ),
-//                       child: const Icon(
-//                         Icons.download,
-//                         size: 18,
-//                         color: Colors.white,
-//                       ),
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//             ],
-//           ),
-//         ),
-//
-//         const SizedBox(height: 10),
-//
-//         /// Scrollable summary cards
-//         ClipRRect(
-//           borderRadius: BorderRadius.circular(
-//             20,
-//           ), // Match parent container
-//           child: Container(
-//             height: 100,
-//             color: Color(
-//               0xFFF5F5F5,
-//             ), // Same background as outer container
-//             child: ListView(
-//               scrollDirection: Axis.horizontal,
-//               padding: const EdgeInsets.symmetric(
-//                 horizontal: 12.0,
-//               ),
-//               children: const [
-//                 SummaryCard(
-//                   title: "Total Listed Item",
-//                   count: "23",
-//                 ),
-//                 SizedBox(width: 12),
-//                 SummaryCard(title: "Total Purchase", count: "23"),
-//                 SizedBox(width: 12),
-//                 SummaryCard(title: "Total sales ", count: "23"),
-//                 SizedBox(width: 12),
-//               ],
-//             ),
-//           ),
-//         ),
-//
-//         const SizedBox(height: 12), // Add bottom spacing
-//       ],
-//     ),
-//   ),
-// ),

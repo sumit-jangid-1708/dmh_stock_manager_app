@@ -336,29 +336,27 @@ class HomeScreen extends StatelessWidget {
                     itemBuilder: (context, index) {
                       final product = itemController.products[index];
 
-                      return InkWell(
-                        onTap: () {
-                          handleInventoryAction(product);
+                      return ProductCard(
+                        count: index + 1,
+                        product: product,
+                        onShare: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => ImageShareDialog(
+                              product: product,
+                            ),
+                          );
                         },
-                        child: ProductCard(
-                          count: index + 1,
-                          product: product,
-                          onShare: () {
-                            showDialog(
-                              context: context,
-                              builder: (_) => ImageShareDialog(
-                                product: product,
-                              ),
-                            );
-                          },
-                          onView: () {
-                            showBarcodeDialog(
-                              context,
-                              product.barcode,
-                              product.barcodeImage,
-                            );
-                          },
-                        ),
+                        onView: () {
+                          showBarcodeDialog(
+                            context,
+                            product.barcode,
+                            product.barcodeImage,
+                          );
+                        },
+                        onAdd:() {
+                          handleInventoryAction(product);
+                        }
                       );
                     },
                   );
