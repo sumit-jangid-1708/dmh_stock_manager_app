@@ -1,4 +1,5 @@
 import 'package:dmj_stock_manager/model/product_model.dart';
+import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/stock_controller.dart';
 import 'package:flutter/material.dart';
@@ -182,15 +183,18 @@ class ProductCard extends StatelessWidget {
                           // Action Buttons (Share & Barcode)
                           Row(
                             children: [
-                              _buildActionButton(
-                                icon: FontAwesomeIcons.image,
-                                onTap: onShare,
-                              ),
+                              AppGradientButton(onPressed: onShare, width: 40, height:40, icon: FontAwesomeIcons.image,),
                               const SizedBox(width: 10),
-                              _buildActionButton(
-                                icon: FontAwesomeIcons.barcode,
-                                onTap: onView,
-                              ),
+                              AppGradientButton(onPressed: onView, width: 40, height:40, icon: FontAwesomeIcons.barcode,),
+                              // // _buildActionButton(
+                              // //   icon: FontAwesomeIcons.image,
+                              // //   onTap: onShare,
+                              // // ),
+                              //
+                              // _buildActionButton(
+                              //   icon: FontAwesomeIcons.barcode,
+                              //   onTap: onView,
+                              // ),
                             ],
                           ),
                         ],
@@ -264,38 +268,11 @@ class ProductCard extends StatelessWidget {
                 ),
 
                 // ADD Button
-                Container(
+                AppGradientButton(
                   width: 90,
                   height: 40,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF1A1A4F), Color(0xFF4A4ABF)],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Color(0xFF1A1A4F).withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: Offset(0, 4),
-                      ),
-                    ],
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                    onPressed: onAdd ?? () {},
-                    child: const Text(
-                      "Add",
-                      style: TextStyle(fontSize: 15, color: Colors.white),
-                    ),
-                  ),
+                  text: "Add",
+                  onPressed: onAdd ?? () {},
                 ),
               ],
             ),
@@ -316,30 +293,30 @@ class ProductCard extends StatelessWidget {
     return "https://via.placeholder.com/150"; // Fallback
   }
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1A4F),
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: FaIcon(icon, size: 16, color: Colors.white),
-      ),
-    );
-  }
+  // Widget _buildActionButton({
+  //   required IconData icon,
+  //   required VoidCallback onTap,
+  // }) {
+  //   return InkWell(
+  //     onTap: onTap,
+  //     borderRadius: BorderRadius.circular(10),
+  //     child: Container(
+  //       padding: const EdgeInsets.all(10),
+  //       decoration: BoxDecoration(
+  //         color: const Color(0xFF1A1A4F),
+  //         borderRadius: BorderRadius.circular(10),
+  //         boxShadow: [
+  //           BoxShadow(
+  //             color: Colors.black.withOpacity(0.1),
+  //             blurRadius: 4,
+  //             offset: const Offset(0, 2),
+  //           ),
+  //         ],
+  //       ),
+  //       child: FaIcon(icon, size: 16, color: Colors.white),
+  //     ),
+  //   );
+  // }
 
   void _showImageDialog(BuildContext context, List<dynamic> images) {
     final validImages = images

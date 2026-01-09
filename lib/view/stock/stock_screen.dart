@@ -1,3 +1,4 @@
+import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/view_models/controller/stock_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -44,7 +45,11 @@ class StockScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: IconButton(
-                            icon: Icon(Icons.arrow_back, size: 20, color: Colors.white),
+                            icon: Icon(
+                              Icons.arrow_back,
+                              size: 20,
+                              color: Colors.white,
+                            ),
                             onPressed: () => Get.back(),
                             padding: EdgeInsets.zero,
                           ),
@@ -64,11 +69,15 @@ class StockScreen extends StatelessWidget {
                               ),
                               Text(
                                 "Track and manage stock levels",
-                                style: TextStyle(color: Colors.white70, fontSize: 12),
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
                               ),
                             ],
                           ),
                         ),
+
                         ElevatedButton.icon(
                           onPressed: () => showAddInventorySheet(context),
                           icon: Icon(Icons.add, size: 18),
@@ -79,7 +88,10 @@ class StockScreen extends StatelessWidget {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
                           ),
                         ),
                       ],
@@ -102,16 +114,32 @@ class StockScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.2),
+                        ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildStatItem("Total", totalItems.toString(), Icons.inventory_2),
+                          _buildStatItem(
+                            "Total",
+                            totalItems.toString(),
+                            Icons.inventory_2,
+                          ),
                           _buildDivider(),
-                          _buildStatItem("Low Stock", lowStock.toString(), Icons.warning_amber, Colors.orange.shade300),
+                          _buildStatItem(
+                            "Low Stock",
+                            lowStock.toString(),
+                            Icons.warning_amber,
+                            Colors.orange.shade300,
+                          ),
                           _buildDivider(),
-                          _buildStatItem("Out", outOfStock.toString(), Icons.error_outline, Colors.red.shade300),
+                          _buildStatItem(
+                            "Out",
+                            outOfStock.toString(),
+                            Icons.error_outline,
+                            Colors.red.shade300,
+                          ),
                         ],
                       ),
                     );
@@ -127,7 +155,8 @@ class StockScreen extends StatelessWidget {
                   await stockController.fetchInventoryList();
                 },
                 child: Obx(() {
-                  if (stockController.isLoading.value && stockController.inventoryList.isEmpty) {
+                  if (stockController.isLoading.value &&
+                      stockController.inventoryList.isEmpty) {
                     return Center(child: CircularProgressIndicator());
                   }
 
@@ -136,11 +165,18 @@ class StockScreen extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey.shade300),
+                          Icon(
+                            Icons.inventory_2_outlined,
+                            size: 80,
+                            color: Colors.grey.shade300,
+                          ),
                           SizedBox(height: 16),
                           Text(
                             "No inventory items yet",
-                            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey.shade600,
+                            ),
                           ),
                           SizedBox(height: 8),
                           TextButton.icon(
@@ -158,7 +194,9 @@ class StockScreen extends StatelessWidget {
                     itemCount: stockController.inventoryList.length,
                     itemBuilder: (context, index) {
                       final item = stockController.inventoryList[index];
-                      final product = stockController.getProductById(item.product);
+                      final product = stockController.getProductById(
+                        item.product,
+                      );
 
                       return _buildInventoryCard(item, product, context);
                     },
@@ -172,7 +210,12 @@ class StockScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon, [Color? iconColor]) {
+  Widget _buildStatItem(
+    String label,
+    String value,
+    IconData icon, [
+    Color? iconColor,
+  ]) {
     return Column(
       children: [
         Icon(icon, color: iconColor ?? Colors.white70, size: 24),
@@ -185,10 +228,7 @@ class StockScreen extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        Text(
-          label,
-          style: TextStyle(color: Colors.white70, fontSize: 11),
-        ),
+        Text(label, style: TextStyle(color: Colors.white70, fontSize: 11)),
       ],
     );
   }
@@ -197,7 +237,11 @@ class StockScreen extends StatelessWidget {
     return Container(height: 40, width: 1, color: Colors.white24);
   }
 
-  Widget _buildInventoryCard(dynamic item, dynamic product, BuildContext context) {
+  Widget _buildInventoryCard(
+    dynamic item,
+    dynamic product,
+    BuildContext context,
+  ) {
     final isLowStock = item.quantity < 10 && item.quantity > 0;
     final isOutOfStock = item.quantity == 0;
 
@@ -256,11 +300,18 @@ class StockScreen extends StatelessWidget {
                           if (product?.sku != null)
                             Row(
                               children: [
-                                Icon(Icons.qr_code, size: 12, color: Colors.grey),
+                                Icon(
+                                  Icons.qr_code,
+                                  size: 12,
+                                  color: Colors.grey,
+                                ),
                                 SizedBox(width: 4),
                                 Text(
                                   "SKU: ${product!.sku}",
-                                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey.shade600,
+                                  ),
                                 ),
                               ],
                             ),
@@ -268,7 +319,10 @@ class StockScreen extends StatelessWidget {
                       ),
                     ),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: statusColor.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(8),
@@ -294,11 +348,24 @@ class StockScreen extends StatelessWidget {
                   runSpacing: 6,
                   children: [
                     if (product?.size != null && product!.size.isNotEmpty)
-                      _buildAttributeChip(product.size, Icons.straighten, Colors.blue),
+                      _buildAttributeChip(
+                        product.size,
+                        Icons.straighten,
+                        Colors.blue,
+                      ),
                     if (product?.color != null && product!.color.isNotEmpty)
-                      _buildAttributeChip(product.color, Icons.palette, Colors.red),
-                    if (product?.material != null && product!.material.isNotEmpty)
-                      _buildAttributeChip(product.material, Icons.category, Colors.brown),
+                      _buildAttributeChip(
+                        product.color,
+                        Icons.palette,
+                        Colors.red,
+                      ),
+                    if (product?.material != null &&
+                        product!.material.isNotEmpty)
+                      _buildAttributeChip(
+                        product.material,
+                        Icons.category,
+                        Colors.brown,
+                      ),
                   ],
                 ),
 
@@ -335,7 +402,7 @@ class StockScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      ElevatedButton.icon(
+                      AppGradientButton(
                         onPressed: () {
                           if (product?.sku != null) {
                             showAdjustSheet(context, product!.sku!);
@@ -343,16 +410,8 @@ class StockScreen extends StatelessWidget {
                             Get.snackbar("Error", "SKU not available");
                           }
                         },
-                        icon: Icon(Icons.tune, size: 16),
-                        label: Text("Adjust"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF1A1A4F),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        ),
+                        icon: Icons.tune,
+                        text: "Adjust",
                       ),
                     ],
                   ),
@@ -473,9 +532,15 @@ void showAddInventorySheet(BuildContext context) {
                   ),
                   child: DropdownButtonFormField<int>(
                     decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.inventory_2, color: Color(0xFF1A1A4F)),
+                      prefixIcon: Icon(
+                        Icons.inventory_2,
+                        color: Color(0xFF1A1A4F),
+                      ),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                     ),
                     hint: Text("Choose a product"),
                     items: itemController.products.map((p) {
@@ -513,9 +578,15 @@ void showAddInventorySheet(BuildContext context) {
                     controller: qtyController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.shopping_cart, color: Color(0xFF1A1A4F)),
+                      prefixIcon: Icon(
+                        Icons.shopping_cart,
+                        color: Color(0xFF1A1A4F),
+                      ),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       hintText: "Enter quantity",
                     ),
                   ),
@@ -524,51 +595,28 @@ void showAddInventorySheet(BuildContext context) {
                 SizedBox(height: 32),
 
                 // Submit Button
-                SizedBox(
+                AppGradientButton(
                   width: double.infinity,
                   height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF1A1A4F),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () {
-                      final qty = int.tryParse(qtyController.text) ?? 1;
-                      if (selectedProduct == null) {
-                        Get.snackbar(
-                          "Error",
-                          "Please select a product",
-                          backgroundColor: Colors.red,
-                          colorText: Colors.white,
-                        );
-                        return;
-                      }
-
-                      Get.find<StockController>().addInventory(
-                        productId: selectedProduct!,
-                        quantity: qty,
+                  onPressed: () {
+                    final qty = int.tryParse(qtyController.text) ?? 1;
+                    if (selectedProduct == null) {
+                      Get.snackbar(
+                        "Error",
+                        "Please select a product",
+                        backgroundColor: Colors.red,
+                        colorText: Colors.white,
                       );
-
-                      Get.back();
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.check_circle, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          "Add to Inventory",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                      return;
+                    }
+                    Get.find<StockController>().addInventory(
+                      productId: selectedProduct!,
+                      quantity: qty,
+                    );
+                    Get.back();
+                  },
+                  icon: Icons.check_circle,
+                  text: "Add to Inventory",
                 ),
               ],
             ),
@@ -664,9 +712,15 @@ void showAdjustSheet(BuildContext context, String sku) {
                     controller: deltaController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.add_circle_outline, color: Colors.green),
+                      prefixIcon: Icon(
+                        Icons.add_circle_outline,
+                        color: Colors.green,
+                      ),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       hintText: "+ to add, - to reduce",
                     ),
                   ),
@@ -692,16 +746,19 @@ void showAdjustSheet(BuildContext context, String sku) {
                   ),
                   child: DropdownButtonFormField<String>(
                     decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.info_outline, color: Color(0xFF1A1A4F)),
+                      prefixIcon: Icon(
+                        Icons.info_outline,
+                        color: Color(0xFF1A1A4F),
+                      ),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                     ),
                     hint: Text("Select reason"),
                     items: reasons.map((r) {
-                      return DropdownMenuItem(
-                        value: r,
-                        child: Text(r),
-                      );
+                      return DropdownMenuItem(value: r, child: Text(r));
                     }).toList(),
                     onChanged: (val) => selectedReason = val,
                   ),
@@ -731,10 +788,16 @@ void showAdjustSheet(BuildContext context, String sku) {
                     decoration: InputDecoration(
                       prefixIcon: Padding(
                         padding: EdgeInsets.only(bottom: 50),
-                        child: Icon(Icons.note_alt_outlined, color: Colors.grey),
+                        child: Icon(
+                          Icons.note_alt_outlined,
+                          color: Colors.grey,
+                        ),
                       ),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       hintText: "Add any additional details...",
                     ),
                   ),
@@ -743,53 +806,30 @@ void showAdjustSheet(BuildContext context, String sku) {
                 SizedBox(height: 32),
 
                 // Submit Button
-                SizedBox(
+                AppGradientButton(
+                  onPressed: () {
+                    final delta = int.tryParse(deltaController.text) ?? 0;
+                    if (selectedReason == null) {
+                      Get.snackbar(
+                        "Error",
+                        "Please select a reason",
+                        backgroundColor: Colors.red,
+                        colorText: Colors.white,
+                      );
+                      return;
+                    }
+                    Get.find<StockController>().adjustInventoryStock(
+                      sku: sku,
+                      delta: delta,
+                      reason: selectedReason!,
+                      note: noteController.text,
+                    );
+                    Get.back();
+                  },
                   width: double.infinity,
                   height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF1A1A4F),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: () {
-                      final delta = int.tryParse(deltaController.text) ?? 0;
-                      if (selectedReason == null) {
-                        Get.snackbar(
-                          "Error",
-                          "Please select a reason",
-                          backgroundColor: Colors.red,
-                          colorText: Colors.white,
-                        );
-                        return;
-                      }
-
-                      Get.find<StockController>().adjustInventoryStock(
-                        sku: sku,
-                        delta: delta,
-                        reason: selectedReason!,
-                        note: noteController.text,
-                      );
-
-                      Get.back();
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.check_circle, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          "Confirm Adjustment",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  icon: Icons.check_circle,
+                  text: "Confirm Adjustment",
                 ),
               ],
             ),

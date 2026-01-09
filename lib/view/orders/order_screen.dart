@@ -1,3 +1,4 @@
+import 'package:dmj_stock_manager/res/routes/routes_names.dart';
 import 'package:dmj_stock_manager/view/orders/order_detail_screen.dart';
 import 'package:dmj_stock_manager/view_models/controller/order_controller.dart';
 import 'package:flutter/material.dart';
@@ -72,7 +73,7 @@ class OrderScreen extends StatelessWidget {
                       child: TextField(
                         controller: searchController,
                         onChanged: (value) {
-                          // Yaha aap orderController ka search logic call kar sakte hain
+
                           orderController.filterOrders(value);
                         },
                         decoration: InputDecoration(
@@ -152,7 +153,18 @@ class OrderScreen extends StatelessWidget {
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        onTap: () => Get.to(() => const OrderDetailScreen(), arguments: order),
+        // onTap: () => Get.to(() => const OrderDetailScreen(), arguments: order),
+      //   onTap: (){
+      //     Get.toNamed('/orderDetail/${order.id}');
+      // },
+        // },
+        onTap: () {
+          Get.toNamed(
+            RouteName.orderDetailScreen,
+            parameters: {'id': order.id.toString()},   // ← pass as string
+          );
+          print("🤬🤬🤬🤬🤬🤬🤬🤬🤬🤬🤬🤬🤬 ${order.id}");
+        },
         // Circle leading with Order Initial
         leading: Container(
           width: 48,

@@ -1,4 +1,5 @@
 import 'package:dmj_stock_manager/res/components/barcode_dialog.dart';
+import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/res/components/widgets/product_list_card_widget.dart';
 import 'package:dmj_stock_manager/res/components/widgets/statCard.dart';
 import 'package:dmj_stock_manager/res/components/widgets/stock_button_row.dart';
@@ -66,54 +67,12 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Color(0xFF1A1A4F), Color(0xFF2D2D7F)],
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0xFF1A1A4F).withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () {
-                              Get.dialog(ChannelDialogWidget());
-                            },
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.add_circle_outline,
-                                    color: Colors.white,
-                                    size: 18,
-                                  ),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    "Add Channel",
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
+                      AppGradientButton(
+                        onPressed: () {
+                          Get.dialog(ChannelDialogWidget());
+                        },
+                        icon: Icons.add_circle_outline,
+                        text: "Add Channel",
                       ),
                     ],
                   ),
@@ -217,7 +176,7 @@ class HomeScreen extends StatelessWidget {
                                   child: StatCard(
                                     title: "Total Value",
                                     value:
-                                    "₹${homeController.totalStockValue.value.toStringAsFixed(0)}",
+                                        "₹${homeController.totalStockValue.value.toStringAsFixed(0)}",
                                     subtitle: "Total stock worth",
                                     icon: Icons.currency_rupee,
                                     gradient: LinearGradient(
@@ -342,9 +301,7 @@ class HomeScreen extends StatelessWidget {
                         onShare: () {
                           showDialog(
                             context: context,
-                            builder: (_) => ImageShareDialog(
-                              product: product,
-                            ),
+                            builder: (_) => ImageShareDialog(product: product),
                           );
                         },
                         onView: () {
@@ -354,9 +311,9 @@ class HomeScreen extends StatelessWidget {
                             product.barcodeImage,
                           );
                         },
-                        onAdd:() {
+                        onAdd: () {
                           handleInventoryAction(product);
-                        }
+                        },
                       );
                     },
                   );
@@ -371,8 +328,6 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
-
-
 
 // import 'package:dmj_stock_manager/res/components/barcode_dialog.dart';
 // import 'package:dmj_stock_manager/res/components/widgets/product_list_card_widget.dart';

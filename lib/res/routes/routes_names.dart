@@ -5,9 +5,10 @@ class RouteName{
   static const String itemScreen = "/itemScreen";
   static const String stockScreen = "/stockScreen";
   static const String orderScreen = "/orderScreen";
+  static const String orderDetailScreen = "/orderDetail";
   static const String vendorScreen = "/vendorScreen";
   static const String vendorDetailScreen = '/vendorDetailScreen';
   static const String historyScreen = '/historyScreen';
   static const String billingScreen = '/billingScreen';
-  static const String billDetail = '/billDetail';
+  static const String billDetail = '/billDetail/';
 }

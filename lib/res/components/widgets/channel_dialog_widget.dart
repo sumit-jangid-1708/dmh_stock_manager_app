@@ -1,3 +1,4 @@
+import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/view_models/controller/home_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -93,41 +94,11 @@ class ChannelDialogWidget extends StatelessWidget {
             style: TextStyle(fontSize: 15, color: Color(0xFF1A1A4F)),
           ),
         ),
-        Container(
-          width: 90,
-          height: 40,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF1A1A4F), Color(0xFF4A4ABF)],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Color(0xFF1A1A4F).withOpacity(0.3),
-                blurRadius: 8,
-                offset: Offset(0, 4),
-              ),
-            ],
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              shadowColor: Colors.transparent,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-            ),
-            onPressed: () {
-              homeController.addChannels();
-            },
-            child: const Text(
-              "Add",
-              style: TextStyle(fontSize: 15, color: Colors.white),
-            ),
-          ),
-        ),
+        AppGradientButton(onPressed: (){
+          homeController.addChannels();
+        },
+        text: "Add", width: 90, height: 40,
+        )
       ],
     );
   }

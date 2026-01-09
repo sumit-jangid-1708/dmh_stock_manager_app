@@ -1,8 +1,8 @@
+import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/view_models/controller/order_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-
 
 void showCreateBillDialog(BuildContext context, int orderId) {
   final OrderController controller = Get.put(OrderController());
@@ -121,50 +121,17 @@ void showCreateBillDialog(BuildContext context, int orderId) {
       }),
 
       actions: [
-        Obx(() => ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF1A1A4F),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            padding: EdgeInsets.symmetric(
-              horizontal: screenWidth * 0.04,
-              vertical: isTablet ? 16 : 12,
-            ),
-          ),
-          // ✅ Disable button when loading
-          onPressed: controller.isLoading.value
-              ? null
-              : () async {
-            debugPrint("Submitted Data:");
-            debugPrint("Payment Method: ${controller.selectedMethod.value}");
-            debugPrint("Date: ${controller.paymentDate.value}");
-            debugPrint("Status: ${controller.paidStatus.value}");
-            debugPrint("Transaction ID: ${controller.transactionId.value}");
+        Obx(() => AppGradientButton(onPressed: controller.isLoading.value ? null : () async{
+          debugPrint("Submitted Data");
+          debugPrint("Payment Method: ${controller.selectedMethod.value}");
+          debugPrint("Date: ${controller.paymentDate.value}");
+          debugPrint("Transaction ID: ${controller.transactionId.value}");
+          await controller.createOrderBill(orderId);
+          Get.back();
+        },
+        text: "Create Bill",
+        ))
 
-            // ✅ Call API - dialog will auto close in controller
-            await controller.createOrderBill(orderId);
-
-            Get.back();
-          },
-          child: controller.isLoading.value
-              ? const SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              color: Colors.white,
-              strokeWidth: 2,
-            ),
-          )
-              : Text(
-            "Create Bill",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: isTablet ? 16 : 14,
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
-        )),
       ],
     ),
   );
@@ -187,3 +154,51 @@ Widget _statusRadio(OrderController controller, String value, String text) {
     title: Text(text),
   );
 }
+
+
+
+
+// Obx(() => ElevatedButton(
+//   style: ElevatedButton.styleFrom(
+//     backgroundColor: const Color(0xFF1A1A4F),
+//     shape: RoundedRectangleBorder(
+//       borderRadius: BorderRadius.circular(15),
+//     ),
+//     padding: EdgeInsets.symmetric(
+//       horizontal: screenWidth * 0.04,
+//       vertical: isTablet ? 16 : 12,
+//     ),
+//   ),
+//   // ✅ Disable button when loading
+//   onPressed: controller.isLoading.value
+//       ? null
+//       : () async {
+//     debugPrint("Submitted Data:");
+//     debugPrint("Payment Method: ${controller.selectedMethod.value}");
+//     debugPrint("Date: ${controller.paymentDate.value}");
+//     debugPrint("Status: ${controller.paidStatus.value}");
+//     debugPrint("Transaction ID: ${controller.transactionId.value}");
+//
+//     // ✅ Call API - dialog will auto close in controller
+//     await controller.createOrderBill(orderId);
+//
+//     Get.back();
+//   },
+//   child: controller.isLoading.value
+//       ? const SizedBox(
+//     width: 20,
+//     height: 20,
+//     child: CircularProgressIndicator(
+//       color: Colors.white,
+//       strokeWidth: 2,
+//     ),
+//   )
+//       : Text(
+//     "Create Bill",
+//     style: TextStyle(
+//       color: Colors.white,
+//       fontSize: isTablet ? 16 : 14,
+//     ),
+//     overflow: TextOverflow.ellipsis,
+//   ),
+// )),

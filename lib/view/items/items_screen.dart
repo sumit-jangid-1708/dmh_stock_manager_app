@@ -421,10 +421,25 @@ void showAddInventoryDialog(ProductModel product, Function(int qty) onAdd) {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: "Quantity",
+                filled: true,
+                fillColor: Colors.grey.shade50,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade200),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF1A1A4F),
+                    width: 1,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16,
+                  vertical: 12,),
               ),
             ),
             const SizedBox(height: 16),
