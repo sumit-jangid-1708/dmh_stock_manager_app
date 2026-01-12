@@ -9,6 +9,7 @@ class OrderDetailModel {
   final String mobile;
 
   final String? channelOrderId;
+  final String? customerEmail;
   final String? paymentMethod;
   final DateTime? paymentDate;
   final String paidStatus;
@@ -24,6 +25,7 @@ class OrderDetailModel {
     required this.mobile,
     required this.paidStatus,
     this.remarks,
+    this.customerEmail,
     this.channelOrderId,
     this.paymentMethod,
     this.paymentDate,
@@ -40,6 +42,7 @@ class OrderDetailModel {
       channel: json['channel'],
       countryCode: json['country_code'] ?? '',
       mobile: json['mobile'] ?? '',
+      customerEmail: json['customer_email'],
       channelOrderId: json['channel_order_id'],
       paymentMethod: json['payment_method'],
       paymentDate: json['payment_date'] != null

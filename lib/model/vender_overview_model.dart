@@ -2,12 +2,14 @@
 
 class VendorOverviewModel {
   final VendorsModel vendor;
+  final VendorStatsModel stats;
   final VendorPerformanceModel performance;
   final List<SuppliedProductModel> suppliedProducts;
   final List<PastOrderModel> pastOrders;
 
   VendorOverviewModel({
     required this.vendor,
+    required this.stats,
     required this.performance,
     required this.suppliedProducts,
     required this.pastOrders,
@@ -15,8 +17,9 @@ class VendorOverviewModel {
 
   factory VendorOverviewModel.fromJson(Map<String, dynamic> json) {
     return VendorOverviewModel(
-      vendor: VendorsModel.fromJson(json['vendor']),
-      performance: VendorPerformanceModel.fromJson(json['performance']),
+      vendor: VendorsModel.fromJson(json['vendor'] ?? {}),
+      stats: VendorStatsModel.fromJson(json['stats'] ?? {}),
+      performance: VendorPerformanceModel.fromJson(json['performance'] ?? {}),
       suppliedProducts: (json['supplied_products'] as List? ?? [])
           .map((e) => SuppliedProductModel.fromJson(e))
           .toList(),
@@ -27,6 +30,7 @@ class VendorOverviewModel {
   }
 }
 
+
 class VendorsModel {
   final int id;
   final String name;
@@ -35,7 +39,6 @@ class VendorsModel {
   final String country;
   final String gstin;
   final String? vendorLogo;
-  final List<String> categories;
 
   VendorsModel({
     required this.id,
@@ -45,7 +48,6 @@ class VendorsModel {
     required this.country,
     required this.gstin,
     this.vendorLogo,
-    required this.categories,
   });
 
   factory VendorsModel.fromJson(Map<String, dynamic> json) {
@@ -57,10 +59,32 @@ class VendorsModel {
       country: json['country'] ?? '',
       gstin: json['gstin'] ?? '',
       vendorLogo: json['vendor_logo'],
-      categories: List<String>.from(json['categories'] ?? []),
     );
   }
 }
+
+class VendorStatsModel {
+  final int totalBillsGenerated;
+  final int totalProductsPurchased;
+  final double totalBusinessAmount;
+
+  VendorStatsModel({
+    required this.totalBillsGenerated,
+    required this.totalProductsPurchased,
+    required this.totalBusinessAmount,
+  });
+
+  factory VendorStatsModel.fromJson(Map<String, dynamic> json) {
+    return VendorStatsModel(
+      totalBillsGenerated: json['total_bills_generated'] ?? 0,
+      totalProductsPurchased: json['total_products_purchased'] ?? 0,
+      totalBusinessAmount:
+      num.tryParse(json['total_business_amount'].toString())?.toDouble() ??
+          0.0,
+    );
+  }
+}
+
 
 class VendorPerformanceModel {
   final int onTimeDelivery;
@@ -79,6 +103,7 @@ class VendorPerformanceModel {
     );
   }
 }
+
 
 class SuppliedProductModel {
   final String sku;
@@ -103,9 +128,10 @@ class SuppliedProductModel {
   }
 }
 
+
 class PastOrderModel {
   final String poNumber;
-  final String date;
+  final DateTime date;
   final int items;
   final double totalAmount;
   final String status;
@@ -121,7 +147,7 @@ class PastOrderModel {
   factory PastOrderModel.fromJson(Map<String, dynamic> json) {
     return PastOrderModel(
       poNumber: json['po_number'] ?? '',
-      date: json['date'] ?? '',
+      date: DateTime.tryParse(json['date'] ?? '') ?? DateTime.now(),
       items: json['items'] ?? 0,
       totalAmount:
       num.tryParse(json['total_amount'].toString())?.toDouble() ?? 0.0,

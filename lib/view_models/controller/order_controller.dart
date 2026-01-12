@@ -149,6 +149,8 @@ class OrderController extends GetxController {
       Map<String, dynamic> data = {
         "channel": selectedChannel.value?.id,
         "customer_name": customerNameController.text,
+        "customer_email": emailController.text,
+        "channel_order_id": channelOrderId.text,
         "remarks": remarkController.text,
         "items": itemList,
         "country_code": countryCode.value,

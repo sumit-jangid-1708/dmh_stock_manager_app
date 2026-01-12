@@ -25,4 +25,6 @@ class AppUrl {
   static const String lowStock = "$baseUrl/low-stock-products/";
   static const String vendorDetails = "$baseUrl/vendor-dashboard/";
   static const String bestSellingProducts = "$baseUrl/product-list";
+  static const String purchaseItem = "$baseUrl/purchase-item";
+  static const String getPurchaseDetails = "$baseUrl/purchase-list";
 }

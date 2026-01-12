@@ -1,13 +1,11 @@
-import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
-import 'package:dmj_stock_manager/view_models/controller/vendor_controller.dart';
-import 'package:drop_down_list/model/selected_list_item.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
-import 'package:intl/intl.dart';
 import 'package:dmj_stock_manager/model/product_model.dart';
 import 'package:dmj_stock_manager/model/vendor_model.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import '../../view_models/controller/item_controller.dart';
 import '../../view_models/controller/purchase_controller.dart';
+import '../../view_models/controller/vendor_controller.dart';
 
 class AddPurchaseBottomSheet extends StatelessWidget {
   AddPurchaseBottomSheet({super.key});
@@ -16,216 +14,235 @@ class AddPurchaseBottomSheet extends StatelessWidget {
   final VendorController vendorController = Get.find<VendorController>();
   final ItemController itemController = Get.find<ItemController>();
 
-  final Rx<DateTime?> billDate = Rx<DateTime?>(DateTime.now());
-  final Rx<DateTime?> dueDate = Rx<DateTime?>(null);
-  final Rx<DateTime?> paidDate = Rx<DateTime?>(null);
+  final List<String> statusOptions = ["PAID", "UNPAID", "PARTIAL PAID"];
 
-  final TextEditingController billNumberController = TextEditingController(
-    text: "PO-2026",
-  );
-  final TextEditingController billAmountController = TextEditingController(
-    text: "₹0.00",
-  );
-  final TextEditingController descriptionController = TextEditingController();
-  final TextEditingController paidAmountController = TextEditingController();
-
-  final RxString selectedVendor = "".obs;
-  final RxString paymentStatus = "UNPAID".obs; // Payment Status
-
-  final List<String> vendors = ["Vendor A", "Vendor B", "Vendor C"];
-  //
-  // List<SelectedListItem<VendorModel>> get _vendorListItems => vendorController
-  //     .vendors
-  //     .map((v) => SelectedListItem<VendorModel>(data: v)) // ⬅️ pass full object
-  //     .toList();
-
-  Future<void> _selectDate(
-    BuildContext context,
-    Rx<DateTime?> dateController,
-  ) async {
+  Future<void> _selectDate(BuildContext context, Rx<DateTime?> rxDate) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: dateController.value ?? DateTime.now(),
+      initialDate: rxDate.value ?? DateTime.now(),
       firstDate: DateTime(2020),
-      lastDate: DateTime(2100),
+      lastDate: DateTime(2030),
     );
-    if (picked != null) dateController.value = picked;
-  }
-
-  Widget _buildDropdown<T>({
-    required String label,
-    required List<T> items,
-    required T? value,
-    required void Function(T?) onChanged,
-    required String Function(T) labelBuilder,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade400),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<T>(
-              hint: Text("--Select $label--"),
-              value: value,
-              isExpanded: true,
-              items: items.map((e) {
-                return DropdownMenuItem<T>(
-                  value: e,
-                  child: Text(labelBuilder(e)),
-                );
-              }).toList(),
-              onChanged: onChanged,
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-      ],
-    );
+    if (picked != null) {
+      rxDate.value = picked;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
+    const Color primaryColor = Color(0xFF1A1A4F);
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(25),
+          topRight: Radius.circular(25),
+        ),
       ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Create Purchase Bill",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
+      child: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header Indicator
+              Center(
+                child: Container(
+                  width: 50,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
 
-            // Vendor Dropdown
-            Obx(() {
-              return _buildDropdown<VendorModel>(
-                label: "Vendor",
-                items: vendorController.vendors.toList(),
-                value: vendorController.selectedVendor.value,
-                onChanged: (v) => vendorController.selectedVendor.value = v,
-                labelBuilder: (v) => v.vendorName ?? "Unknown",
-              );
-            }),
+              // Title
+              const Row(
+                children: [
+                  Icon(Icons.add_shopping_cart, color: primaryColor),
+                  SizedBox(width: 10),
+                  Text(
+                    "Create Purchase Bill",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 25),
 
-            // Bill Details
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: billNumberController,
-                    // readOnly: true,
-                    decoration: InputDecoration(
-                      labelText: "Bill Number*",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+              // Vendor Selection
+              _sectionHeader("General Information"),
+              const SizedBox(height: 12),
+              Obx(() => DropdownButtonFormField<VendorModel>(
+                value: purchaseController.selectedVendor.value,
+                hint: const Text("Select Vendor"),
+                isExpanded: true,
+                decoration: _inputDecoration("Vendor *", Icons.person_outline),
+                items: vendorController.vendors.map((vendor) {
+                  return DropdownMenuItem<VendorModel>(
+                    value: vendor,
+                    child: Text(vendor.vendorName ?? "Unnamed"),
+                  );
+                }).toList(),
+                onChanged: (value) =>
+                purchaseController.selectedVendor.value = value,
+              )),
+              const SizedBox(height: 16),
+
+              // Bill Number + Bill Date
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: purchaseController.billNumberController,
+                      decoration: _inputDecoration(
+                        "Bill Number *",
+                        Icons.receipt_long,
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Obx(() {
-                    return GestureDetector(
-                      onTap: () => _selectDate(context, billDate),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => _selectDate(context, purchaseController.billDate),
                       child: AbsorbPointer(
-                        child: TextField(
+                        child: Obx(() => TextField(
+                          decoration: _inputDecoration(
+                            "Bill Date *",
+                            Icons.calendar_today_outlined,
+                          ),
                           controller: TextEditingController(
-                            text: DateFormat(
-                              'd/MM/yyyy',
-                            ).format(billDate.value ?? DateTime.now()),
+                            text: purchaseController.billDate.value != null
+                                ? DateFormat('dd MMM, yyyy').format(
+                                purchaseController.billDate.value!)
+                                : "",
                           ),
-                          decoration: InputDecoration(
-                            labelText: "Bill Date*",
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            suffixIcon: const Icon(Icons.calendar_today),
-                          ),
-                        ),
+                        )),
                       ),
-                    );
-                  }),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 25),
 
-            // Items Section
-            const Text(
-              "Items",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
+              // Items Section
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _sectionHeader("Purchase Items"),
+                  TextButton.icon(
+                    style: TextButton.styleFrom(foregroundColor: primaryColor),
+                    icon: const Icon(Icons.add_circle_outline, size: 20),
+                    label: const Text(
+                      "Add Item",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: purchaseController.addNewItem,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
 
-            Obx(() {
-              return Column(
-                children: purchaseController.items.asMap().entries.map((entry) {
-                  int index = entry.key;
-                  var item = entry.value;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
+              Obx(() => Column(
+                children: purchaseController.purchaseItems
+                    .asMap()
+                    .entries
+                    .map((entry) {
+                  final index = entry.key;
+                  final item = entry.value;
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildDropdown(
-                          label: "Product",
-                          items: itemController.products,
-                          value: itemController.selectedProduct.value,
-                          onChanged: (v) =>
-                              itemController.selectedProduct.value = v,
-                          labelBuilder: (v) => v.name ?? "Unknown",
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 14,
+                              backgroundColor: primaryColor,
+                              child: Text(
+                                "${index + 1}",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Obx(() => DropdownButtonFormField<ProductModel>(
+                                isExpanded: true,
+                                value: item.selectedProduct.value,
+                                hint: const Text("Select Product"),
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                                items: itemController.products.map((p) {
+                                  return DropdownMenuItem(
+                                    value: p,
+                                    child: Text(
+                                      "${p.name} | ${p.size} | ${p.color}",
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (val) =>
+                                item.selectedProduct.value = val,
+                              )),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.redAccent,
+                                size: 22,
+                              ),
+                              onPressed: () =>
+                                  purchaseController.removeItem(index),
+                            ),
+                          ],
                         ),
+                        const Divider(),
                         Row(
                           children: [
                             Expanded(
                               child: TextField(
-                                controller: item["quantity"],
-                                decoration: InputDecoration(
-                                  labelText: "Qty",
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
+                                controller: item.quantityController,
                                 keyboardType: TextInputType.number,
+                                decoration: _inputDecoration(
+                                  "Qty",
+                                  null,
+                                  isCompact: true,
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: TextField(
-                                controller: item["unit"],
-                                decoration: InputDecoration(
-                                  labelText: "Unit",
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
+                                controller: item.unitPriceController,
+                                keyboardType: TextInputType.number,
+                                decoration: _inputDecoration(
+                                  "Price",
+                                  null,
+                                  isCompact: true,
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete,
-                                color: Colors.white,
-                              ),
-                              style: IconButton.styleFrom(
-                                backgroundColor: const Color(0xFF1A1A4F),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              onPressed: () =>
-                                  purchaseController.removeItemRow(index),
                             ),
                           ],
                         ),
@@ -233,121 +250,197 @@ class AddPurchaseBottomSheet extends StatelessWidget {
                     ),
                   );
                 }).toList(),
-              );
-            }),
+              )),
 
-            const SizedBox(height: 8),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1A1A4F),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+              const SizedBox(height: 16),
+
+              // Description
+              TextField(
+                controller: purchaseController.descriptionController,
+                maxLines: 2,
+                decoration: _inputDecoration(
+                  "Description (Optional)",
+                  Icons.note_add_outlined,
                 ),
               ),
-              onPressed: purchaseController.addItemRow,
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text(
-                "Add Item",
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
+              const SizedBox(height: 25),
 
-            const SizedBox(height: 16),
-            TextField(
-              controller: descriptionController,
-              decoration: InputDecoration(
-                labelText: "Description (Optional)",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+              // Payment Details Section
+              _sectionHeader("Payment Details"),
+              const SizedBox(height: 12),
+
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.03),
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: primaryColor.withOpacity(0.1)),
                 ),
-              ),
-              maxLines: 1,
-            ),
-
-            const SizedBox(height: 16),
-            const Text(
-              "Payment Details",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-
-            Obx(() {
-              return GestureDetector(
-                onTap: () => _selectDate(
-                  context,
-                  paidDate,
-                ), // reuse existing date selector
-                child: AbsorbPointer(
-                  child: TextField(
-                    controller: TextEditingController(
-                      text: paidDate.value == null
-                          ? ""
-                          : DateFormat('d/mm/yyyy').format(paidDate.value!),
-                    ),
-                    decoration: InputDecoration(
-                      labelText: "Paid Date",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
+                child: Column(
+                  children: [
+                    GestureDetector(
+                      onTap: () => _selectDate(context, purchaseController.paidDate),
+                      child: AbsorbPointer(
+                        child: Obx(() => TextField(
+                          decoration: _inputDecoration(
+                            "Paid Date",
+                            Icons.event_available,
+                          ),
+                          controller: TextEditingController(
+                            text: purchaseController.paidDate.value != null
+                                ? DateFormat('dd MMM, yyyy').format(
+                                purchaseController.paidDate.value!)
+                                : "",
+                          ),
+                        )),
                       ),
-                      suffixIcon: const Icon(Icons.calendar_today),
                     ),
-                  ),
-                ),
-              );
-            }),
-
-            const SizedBox(height: 12),
-            TextField(
-              controller: paidAmountController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText: "Paid Amount",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: purchaseController.paidAmountController,
+                      keyboardType: TextInputType.number,
+                      decoration: _inputDecoration(
+                        "Paid Amount",
+                        Icons.currency_rupee,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Obx(() => DropdownButtonFormField<String>(
+                      value: purchaseController.selectedStatus.value,
+                      decoration: _inputDecoration(
+                        "Status *",
+                        Icons.info_outline,
+                      ),
+                      items: statusOptions
+                          .map((status) => DropdownMenuItem(
+                        value: status,
+                        child: Text(status),
+                      ))
+                          .toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          purchaseController.selectedStatus.value = value;
+                        }
+                      },
+                    )),
+                  ],
                 ),
               ),
-            ),
 
-            const SizedBox(height: 12),
+              const SizedBox(height: 30),
 
-            Obx(() {
-              return _buildDropdown<String>(
-                label: "Payment Status",
-                items: const ["PAID", "UNPAID", " PARTIAL PAID"],
-                value: paymentStatus.value,
-                onChanged: (v) => paymentStatus.value = v ?? "UNPAID",
-                labelBuilder: (v) => v,
-              );
-            }),
-
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Get.back(),
-                    child: const Text("Cancel"),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1A1A4F),
-                    ),
-                    onPressed: () {
-                      // Save or Submit logic here
-                      Get.back();
-                    },
-                    child: const Text(
-                      "Create",
-                      style: TextStyle(color: Colors.white),
+              // Action Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        purchaseController.clearForm();
+                        Get.back();
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        "Cancel",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Obx(() => ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: purchaseController.isLoading.value
+                          ? null
+                          : () async {
+                        debugPrint("🔘 Create Purchase button clicked!");
+                        await purchaseController.addPurchaseBill(
+                          onSuccess: () {
+                            Navigator.pop(context);
+                            debugPrint("✅ Bottom sheet closed via Navigator.pop");
+                          },
+                        );
+                      },
+                      child: purchaseController.isLoading.value
+                          ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                          : const Text(
+                        "Create Purchase",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    )),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Helper for Section Titles
+  Widget _sectionHeader(String title) {
+    return Text(
+      title.toUpperCase(),
+      style: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w800,
+        color: Colors.grey.shade600,
+        letterSpacing: 1.2,
+      ),
+    );
+  }
+
+  // Helper for Input Decoration
+  InputDecoration _inputDecoration(String label, IconData? icon,
+      {bool isCompact = false}) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: icon != null
+          ? Icon(icon, size: 20, color: const Color(0xFF1A1A4F))
+          : null,
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: isCompact ? 10 : 16,
+      ),
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade200),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(
+          color: Color(0xFF1A1A4F),
+          width: 1.5,
         ),
       ),
     );
