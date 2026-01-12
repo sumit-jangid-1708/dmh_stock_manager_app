@@ -52,8 +52,8 @@ class SuppliedProductTable extends StatelessWidget {
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: const Color(0xfff8f8f8),
-              borderRadius: BorderRadius.circular(12),
+              color: const Color(0xffffffff),
+              borderRadius: BorderRadius.circular(15),
               border: Border.all(width: 1, color: Colors.grey.shade300),
             ),
             child: Column(
@@ -65,18 +65,22 @@ class SuppliedProductTable extends StatelessWidget {
                     vertical: height * 0.012,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF1A1A4F), Color(0xFF4A4ABF)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
                     borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      topRight: Radius.circular(12),
+                      topLeft: Radius.circular(15),
+                      topRight: Radius.circular(15),
                     ),
                   ),
                   child: Row(
                     children: const [
-                      Expanded(flex: 4, child: Text("SKU", style: TextStyle(fontWeight: FontWeight.w600,fontSize: 13))),
-                      Expanded(flex: 2, child: Text("Product", style: TextStyle(fontWeight: FontWeight.w600,fontSize: 13))),
-                      Expanded(flex: 1, child: Text("Qty", style: TextStyle(fontWeight: FontWeight.w600,fontSize: 13), textAlign: TextAlign.center)),
-                      Expanded(flex: 2, child: Text("Remainder", style: TextStyle(fontWeight: FontWeight.w600,fontSize: 13), textAlign: TextAlign.center)),
+                      Expanded(flex: 4, child: Text("SKU", style: TextStyle(fontWeight: FontWeight.w600,fontSize: 13, color: Colors.white))),
+                      Expanded(flex: 2, child: Text("Product", style: TextStyle(fontWeight: FontWeight.w600,fontSize: 13,color: Colors.white))),
+                      Expanded(flex: 1, child: Text("Qty", style: TextStyle(fontWeight: FontWeight.w600,fontSize: 13,color: Colors.white), textAlign: TextAlign.center,)),
+                      Expanded(flex: 2, child: Text("Remainder", style: TextStyle(fontWeight: FontWeight.w600,fontSize: 13, color: Colors.white), textAlign: TextAlign.center)),
                     ],
                   ),
                 ),

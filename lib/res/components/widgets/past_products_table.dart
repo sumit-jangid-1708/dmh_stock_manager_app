@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../../model/vender_overview_model.dart';
-
 class PastProductsTable extends StatelessWidget {
   final List<PastOrderModel> pastProducts;
 
-  const PastProductsTable({
-    super.key,
-    required this.pastProducts,
-  });
+  const PastProductsTable({super.key, required this.pastProducts});
 
   // Helper to get status color
   Color getStatusColor(String status) {
@@ -35,10 +30,7 @@ class PastProductsTable extends StatelessWidget {
       children: [
         const Text(
           "Past Orders",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
         ),
         SizedBox(height: height * 0.015),
 
@@ -55,10 +47,7 @@ class PastProductsTable extends StatelessWidget {
             child: const Center(
               child: Text(
                 "No past orders yet",
-                style: TextStyle(
-                  color: Colors.black54,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.black54, fontSize: 14),
               ),
             ),
           )
@@ -66,8 +55,8 @@ class PastProductsTable extends StatelessWidget {
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: const Color(0xfff8f8f8),
-              borderRadius: BorderRadius.circular(12),
+              color: const Color(0xffffffff),
+              borderRadius: BorderRadius.circular(15),
               border: Border.all(width: 1, color: Colors.grey.shade300),
             ),
             child: Column(
@@ -79,19 +68,56 @@ class PastProductsTable extends StatelessWidget {
                     vertical: height * 0.012,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF1A1A4F), Color(0xFF4A4ABF)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
                     borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      topRight: Radius.circular(12),
+                      topLeft: Radius.circular(15),
+                      topRight: Radius.circular(15),
                     ),
                   ),
                   child: Row(
                     children: const [
-                      Expanded(flex: 2, child: Text("PO", style: TextStyle(fontWeight: FontWeight.w600))),
-                      Expanded(flex: 2, child: Text("Date", style: TextStyle(fontWeight: FontWeight.w600))),
-                      Expanded(flex: 2, child: Text("Items", style: TextStyle(fontWeight: FontWeight.w600), textAlign: TextAlign.center)),
-                      Expanded(flex: 2, child: Text("Total", style: TextStyle(fontWeight: FontWeight.w600), textAlign: TextAlign.right)),
-                      Expanded(flex: 2, child: Text("Status", style: TextStyle(fontWeight: FontWeight.w600), textAlign: TextAlign.center)),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          "PO",
+                          style: TextStyle(fontWeight: FontWeight.w600,color: Colors.white),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          "Date",
+                          style: TextStyle(fontWeight: FontWeight.w600,color: Colors.white),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          "Items",
+                          style: TextStyle(fontWeight: FontWeight.w600,color: Colors.white),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          "Total",
+                          style: TextStyle(fontWeight: FontWeight.w600,color: Colors.white),
+                          textAlign: TextAlign.right,
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          "Status",
+                          style: TextStyle(fontWeight: FontWeight.w600,color: Colors.white),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -151,7 +177,9 @@ class PastProductsTable extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: getStatusColor(order.status).withOpacity(0.1),
+                              color: getStatusColor(
+                                order.status,
+                              ).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(

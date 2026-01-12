@@ -131,7 +131,7 @@ class SuppliedProductModel {
 
 class PastOrderModel {
   final String poNumber;
-  final DateTime date;
+  final String date;
   final int items;
   final double totalAmount;
   final String status;
@@ -147,7 +147,7 @@ class PastOrderModel {
   factory PastOrderModel.fromJson(Map<String, dynamic> json) {
     return PastOrderModel(
       poNumber: json['po_number'] ?? '',
-      date: DateTime.tryParse(json['date'] ?? '') ?? DateTime.now(),
+      date: json['date'] ?? '',
       items: json['items'] ?? 0,
       totalAmount:
       num.tryParse(json['total_amount'].toString())?.toDouble() ?? 0.0,
