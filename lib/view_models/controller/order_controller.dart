@@ -12,10 +12,12 @@ import 'package:intl/intl.dart';
 import '../../data/app_exceptions.dart';
 import '../../model/product_model.dart';
 import '../../model/return_order_history_model.dart';
+import '../../model/scan_product_response_model.dart';
+import '../../view/orders/order_create_bottom_sheet.dart';
 
 class OrderController extends GetxController {
   final OrderService orderService = OrderService();
-  final BillingController billingController = Get.find<BillingController>();
+  late final BillingController billingController = Get.find<BillingController>();
 
   var orders = <OrderDetailModel>[].obs;
   var isLoading = false.obs;
@@ -457,4 +459,79 @@ class OrderController extends GetxController {
       );
     }
   }
+
+  void openOrderBottomSheet() {
+    Get.bottomSheet(
+      OrderCreateBottomSheet(),
+      isScrollControlled: true,
+      isDismissible: true,
+      enableDrag: true,
+      backgroundColor: Colors.white,
+    );
+  }
+
+  void addScannedProduct(ProductModel product) {
+    // Check if product already exists in items
+    final existingIndex = items.indexWhere((item) {
+      final p = (item["product"] as Rx<ProductModel?>).value;
+      return p?.id == product.id;
+    });
+
+    if (existingIndex != -1) {
+      // Product exists - increment quantity
+      final qtyController = items[existingIndex]["quantity"] as TextEditingController;
+      int currentQty = int.tryParse(qtyController.text) ?? 0;
+      qtyController.text = (currentQty + 1).toString();
+
+      Get.snackbar(
+        "Updated",
+        "${product.name} quantity increased to ${currentQty + 1}",
+        duration: const Duration(seconds: 2),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.blue,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
+    } else {
+      // Product doesn't exist - add new row
+      items.add({
+        "product": Rx<ProductModel?>(product),
+        "quantity": TextEditingController(text: "1"),
+        "unitPrice": TextEditingController(
+          text: product.purchasePrice?.toString() ?? "",
+        ),
+      });
+
+      Get.snackbar(
+        "Added",
+        "${product.name} added to order",
+        duration: const Duration(seconds: 2),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
+    }
+  }
+
+  void addScannedProductFromScan(ScanProductModel scanProduct) {
+    final itemController = Get.find<ItemController>();
+
+    final product = itemController.products.firstWhereOrNull(
+          (p) => p.sku == scanProduct.sku,
+    );
+
+    if (product == null) {
+      Get.snackbar(
+        "Not Found",
+        "Scanned product not in product list",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    addScannedProduct(product);
+  }
+
 }

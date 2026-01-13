@@ -8,8 +8,8 @@ import '../view_models/controller/vendor_controller.dart';
 class OrderBinding extends Bindings{
   @override
   void dependencies (){
-    Get.lazyPut(()=> BillingController());
-    Get.lazyPut(()=> OrderController());
+    Get.put(BillingController(), permanent: true);
+    Get.put(OrderController(), permanent: true);
     Get.lazyPut(()=> ItemController());
     Get.lazyPut(()=> VendorController());
   }

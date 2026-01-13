@@ -15,7 +15,7 @@ class HistoryRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(child: Text("${data.dateTime.toString().substring(0, 16)}")),
+          Expanded(child: Text(data.dateTime.toString().substring(0, 16))),
           Expanded(child: Text(data.action)),
           Expanded(child: Text(data.sku)),
           Expanded(

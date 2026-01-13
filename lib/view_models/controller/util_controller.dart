@@ -4,7 +4,8 @@ import 'package:get/get.dart';
 
 import '../../data/app_exceptions.dart';
 import '../../model/generate_barcode_model.dart';
-import '../services/util_service.dart'; // ← Yeh import add karna
+import '../services/util_service.dart';
+import 'order_controller.dart'; // ← Yeh import add karna
 
 class UtilController extends GetxController {
   final UtilService utilService = UtilService();
@@ -12,12 +13,13 @@ class UtilController extends GetxController {
   var barcodeGenerationLoading = false.obs;
   // ← Yeh observables add kar do (optional but recommended)
   var scannedProduct = Rxn<ScanProductResponseModel>(); // Pura response
-  var foundProduct = Rxn<ProductModel>(); // Sirf product
+  var foundProduct = Rxn<ScanProductModel>(); // Sirf product
   var serialScanned = RxnInt(); // Serial number
-
   var generatedBarcodes = Rxn<BarcodeListResponseModel>();
+  final orderController = Get.find<OrderController>();
 
-  Future<ProductModel?> barcodeScanned(String barcode) async {
+
+  Future<ScanProductModel?> barcodeScanned(String barcode) async {
     // Agar pehle se scan chal raha ho to double scan na ho
     if (isLoading.value) return null;
 
@@ -39,6 +41,9 @@ class UtilController extends GetxController {
 
       // Success message (optional)
       if (scanResponse.product != null) {
+        orderController.addScannedProductFromScan(
+          scanResponse.product!,
+        );
         Get.snackbar(
           "Product Found!",
           "${scanResponse.product!.name} • ${scanResponse.product!.size} • ${scanResponse.product!.color}",
@@ -83,6 +88,7 @@ class UtilController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+    return null;
   }
 
   Future<void> generateBarcode(int productId, int quantity) async {

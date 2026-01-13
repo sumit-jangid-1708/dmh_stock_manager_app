@@ -1,6 +1,6 @@
 class ScanProductResponseModel {
   final int? serialScanned;
-  final ProductModel? product;
+  final ScanProductModel? product;
 
   ScanProductResponseModel({
     this.serialScanned,
@@ -11,7 +11,7 @@ class ScanProductResponseModel {
     return ScanProductResponseModel(
       serialScanned: json['serial_scanned'],
       product: json['product'] != null
-          ? ProductModel.fromJson(json['product'])
+          ? ScanProductModel.fromJson(json['product'])
           : null,
     );
   }
@@ -25,7 +25,7 @@ class ScanProductResponseModel {
 }
 
 
-class ProductModel {
+class ScanProductModel {
   final int? id;
   final VendorModel? vendor;
   final InventoryModel? inventory;
@@ -42,8 +42,9 @@ class ProductModel {
   final String? productImage;
   final List<String>? productImageVariants;
   final String? unitPurchasePrice;
+  final int? hsn;
 
-  ProductModel({
+  ScanProductModel({
     this.id,
     this.vendor,
     this.inventory,
@@ -60,10 +61,11 @@ class ProductModel {
     this.productImage,
     this.productImageVariants,
     this.unitPurchasePrice,
+    this.hsn,
   });
 
-  factory ProductModel.fromJson(Map<String, dynamic> json) {
-    return ProductModel(
+  factory ScanProductModel.fromJson(Map<String, dynamic> json) {
+    return ScanProductModel(
       id: json['id'],
       vendor: json['vendor'] != null
           ? VendorModel.fromJson(json['vendor'])
@@ -86,6 +88,7 @@ class ProductModel {
           ? List<String>.from(json['product_image_variants'])
           : [],
       unitPurchasePrice: json['unit_purchase_price'],
+      hsn: json['hsn'],
     );
   }
 
@@ -107,6 +110,7 @@ class ProductModel {
       'product_image': productImage,
       'product_image_variants': productImageVariants,
       'unit_purchase_price': unitPurchasePrice,
+      'hsn': hsn,
     };
   }
 }

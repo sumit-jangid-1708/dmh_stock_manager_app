@@ -3,7 +3,6 @@ import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.
 import 'package:dmj_stock_manager/view_models/controller/dashboard_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../../../view/orders/order_create_bottom_sheet.dart';
 import '../../../view_models/controller/order_controller.dart';
 
@@ -48,10 +47,14 @@ class AppHeader extends StatelessWidget {
                 return Stack(
                   alignment: Alignment.topRight,
                   children: [
-                    AppGradientButton(onPressed: (){
-                      controller.openLowStockDialog();
-                    }, icon:Icons.inventory_2_outlined, width: 50, height: 50,),
-
+                    AppGradientButton(
+                      onPressed: () {
+                        controller.openLowStockDialog();
+                      },
+                      icon: Icons.inventory_2_outlined,
+                      width: 50,
+                      height: 50,
+                    ),
                     Positioned(
                       right: 7,
                       top: 3,
@@ -63,7 +66,7 @@ class AppHeader extends StatelessWidget {
                           border: Border.all(
                             color: Colors.white,
                             width: 1,
-                          ), // Pop effect
+                          ),
                         ),
                         child: Text(
                           count.toString(),
@@ -78,19 +81,30 @@ class AppHeader extends StatelessWidget {
                   ],
                 );
               }),
-                SizedBox(width: 10,),
+              const SizedBox(width: 10),
               // --- Gradient QR Scanner Button ---
               AppGradientButton(
                 onPressed: () async {
-                  final result = await Get.to(() => const QrScannerWidget());
-                  if (result != null) {
-                    final orderController = Get.find<OrderController>();
-                    orderController.setScannedSku(result);
-                    Get.bottomSheet(
-                      OrderCreateBottomSheet(),
-                      isScrollControlled: true,
-                      backgroundColor: Colors.white,
-                    );
+                  final orderController = Get.find<OrderController>();
+
+                  // ✅ Scanner se product model milega (not SKU string)
+                  final scannedProduct = await Get.to(() => const QrScannerWidget());
+
+                  if (scannedProduct != null) {
+                    // ✅ Product add karo order items mein
+                    orderController.addScannedProduct(scannedProduct);
+
+                    // ✅ Check if bottom sheet already open hai
+                    bool isBottomSheetOpen = Get.isBottomSheetOpen ?? false;
+
+                    if (!isBottomSheetOpen) {
+                      // ✅ Bottom sheet open karo agar pehle se open nahi hai
+                      Get.bottomSheet(
+                        OrderCreateBottomSheet(),
+                        isScrollControlled: true,
+                        backgroundColor: Colors.white,
+                      );
+                    }
                   }
                 },
                 icon: Icons.qr_code_scanner_rounded,

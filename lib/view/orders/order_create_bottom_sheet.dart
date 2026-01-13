@@ -1,4 +1,5 @@
 import 'package:dmj_stock_manager/model/channel_model.dart';
+import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/view_models/controller/home_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/order_controller.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import '../../model/product_model.dart';
+import '../../res/components/scanner/qr_scanner_widget.dart';
 import '../../res/components/widgets/custom_searchable_dropdown.dart';
 
 class OrderCreateBottomSheet extends StatelessWidget {
@@ -37,6 +39,15 @@ class OrderCreateBottomSheet extends StatelessWidget {
       ),
     );
   }
+
+  // // ✅ NEW: Open Scanner and Add Scanned Product
+  // Future<void> _openScannerAndAddProduct() async {
+  //   final ProductModel? scannedProduct = await Get.to(() => const QrScannerWidget());
+  //
+  //   if (scannedProduct != null) {
+  //     orderController.addScannedProduct(scannedProduct);
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -310,8 +321,7 @@ class OrderCreateBottomSheet extends StatelessWidget {
                           final skuController =
                           item["skuId"] as TextEditingController?;
                           if (priceController != null) {
-                            priceController.text =
-                                val.purchasePrice.toString();
+                            priceController.text = val.purchasePrice.toString();
                           }
                           if (skuController != null) {
                             skuController.text = val.sku ?? "";
@@ -422,28 +432,16 @@ class OrderCreateBottomSheet extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 16),
+
         Expanded(
           flex: 2,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              backgroundColor: const Color(0xFF1A1A4F),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 0,
-            ),
+          child: AppGradientButton(
             onPressed: () {
               orderController.createOrder();
               Get.back();
             },
-            child: const Text(
-              "Submit Order",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            height: 50,
+            text: "Submit Order",
           ),
         ),
       ],

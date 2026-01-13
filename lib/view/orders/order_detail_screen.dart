@@ -161,6 +161,8 @@ class OrderDetailScreen extends StatelessWidget {
                           "Mobile",
                           "${order.countryCode ?? ''}${order.mobile ?? ''}",
                         ),
+                        _buildInfoRow("Email", order.customerEmail!),
+                        _buildInfoRow("Channel ID", order.channelOrderId!),
                         _buildInfoRow("Remarks", order.remarks ?? "No remarks"),
                       ],
                     ),
@@ -359,22 +361,26 @@ class OrderDetailScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      AppGradientButton(
-                        onPressed: () {
-                          showReturnDialog(context, order, true);
-                        },
-                        text: "Courier Return",
-                        width: 180,
-                        height: 50,
+                      Expanded(
+                        child: AppGradientButton(
+                          onPressed: () {
+                            showReturnDialog(context, order, true);
+                          },
+                          text: "Courier Return",
+
+                          height: 50,
+                        ),
                       ),
                       const SizedBox(width: 12),
-                      AppGradientButton(
-                        onPressed: () {
-                          showReturnDialog(context, order, false);
-                        },
-                        text: "Customer Return",
-                        width: 180,
-                        height: 50,
+                      Expanded(
+                        child: AppGradientButton(
+                          onPressed: () {
+                            showReturnDialog(context, order, false);
+                          },
+                          text: "Customer Return",
+
+                          height: 50,
+                        ),
                       ),
                     ],
                   ),
