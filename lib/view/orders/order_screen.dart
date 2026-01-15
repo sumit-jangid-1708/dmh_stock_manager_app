@@ -15,10 +15,33 @@ class OrderScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF1A1A4F),
-        onPressed: () => _showCreateOrderSheet(context),
-        child: const Icon(Icons.add, color: Colors.white, size: 30),
+      floatingActionButton: Container(
+        height: 60,
+        width: 60,
+        decoration: BoxDecoration(
+          // shape: BoxShape.circle,
+          borderRadius: BorderRadius.circular(15),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1A1A4F), Color(0xFF4A4ABF)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1A1A4F).withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 6), // Gives it a nice lifted effect
+            ),
+          ],
+        ),
+        child: FloatingActionButton(
+          // We make the FAB itself transparent to show the Container's gradient
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          highlightElevation: 0,
+          onPressed: () => _showCreateOrderSheet(context),
+          child: const Icon(Icons.add, color: Colors.white, size: 30),
+        ),
       ),
       body: SafeArea(
         child: Column(

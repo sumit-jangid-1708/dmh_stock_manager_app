@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:dmj_stock_manager/res/components/barcode_dialog.dart';
+import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/res/components/widgets/iamge_share_dialog.dart';
 import 'package:dmj_stock_manager/res/components/widgets/product_list_card_widget.dart';
 import 'package:dmj_stock_manager/res/components/widgets/summary_card_widget.dart';
@@ -447,27 +448,18 @@ void showAddInventoryDialog(ProductModel product, Function(int qty) onAdd) {
             ),
             const SizedBox(height: 16),
 
-            SizedBox(
-              // width: double.infinity,
-              height: 40,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1A1A4F),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8), // Square shape
-                  ),
-                  padding: EdgeInsets.zero, // Taaki button square rahe
-                ),
-                onPressed: () async {
-                  if (qtyController.text.isNotEmpty) {
-                    int qty = int.tryParse(qtyController.text) ?? 0;
-                    onAdd(qty);
-                    Get.back();
-                    await Get.to(StockScreen());
-                  }
-                },
-                child: const Text("Add", style: TextStyle(color: Colors.white)),
-              ),
+            AppGradientButton(
+              width: double.infinity,
+              height: 50,
+              onPressed: () async {
+                if (qtyController.text.isNotEmpty) {
+                  int qty = int.tryParse(qtyController.text) ?? 0;
+                  onAdd(qty);
+                  Get.back();
+                  await Get.to(StockScreen());
+                }
+              },
+              text: "Add",
             ),
           ],
         ),
@@ -518,18 +510,39 @@ void showAdjustInventoryDialog(String sku) {
             TextField(
               controller: deltaController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: "Delta (use - for reduce)",
-                border: OutlineInputBorder(),
+                filled: false,
+                fillColor: Colors.grey,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.grey),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF1A1A4F),
+                    width: 1,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
             ),
             const SizedBox(height: 12),
 
             //Reason Dropdown
             DropdownButtonFormField<String>(
-              decoration: const InputDecoration(
+              decoration:  InputDecoration(
                 labelText: "Reason",
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder( borderRadius: BorderRadius.circular(12),
+                ),
               ),
               items: reason
                   .map((r) => DropdownMenuItem(value: r, child: Text(r)))
@@ -541,44 +554,34 @@ void showAdjustInventoryDialog(String sku) {
             //Note Field
             TextField(
               controller: noteController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: "Note",
-                border: OutlineInputBorder(),
+                border: OutlineInputBorder( borderRadius: BorderRadius.circular(12),
+                  ),
               ),
             ),
             const SizedBox(height: 20),
 
             //Submit Button
-            SizedBox(
-              height: 40,
+            AppGradientButton(
+              onPressed: () async {
+                final delta = int.tryParse(deltaController.text) ?? 0;
+                if (selectedReason == null) {
+                  Get.snackbar("Error", "Please select a reason");
+                  return;
+                }
+                Get.find<StockController>().adjustInventoryStock(
+                  sku: sku,
+                  delta: delta,
+                  reason: selectedReason!,
+                  note: noteController.text,
+                );
+                Get.back();
+                await Get.to(StockScreen());
+              },
+              text: "Submit",
               width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1A1A4F),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                onPressed: () async {
-                  final delta = int.tryParse(deltaController.text) ?? 0;
-                  if (selectedReason == null) {
-                    Get.snackbar("Error", "Please select a reason");
-                    return;
-                  }
-                  Get.find<StockController>().adjustInventoryStock(
-                    sku: sku,
-                    delta: delta,
-                    reason: selectedReason!,
-                    note: noteController.text,
-                  );
-                  Get.back();
-                  await Get.to(StockScreen());
-                },
-                child: const Text(
-                  "Submit",
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
+              height: 50,
             ),
           ],
         ),
