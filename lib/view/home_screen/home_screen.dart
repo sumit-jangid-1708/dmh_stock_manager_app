@@ -307,6 +307,7 @@ class HomeScreen extends StatelessWidget {
                         onView: () {
                           showBarcodeDialog(
                             context,
+                            product.id,
                             product.barcode,
                             product.barcodeImage,
                           );

@@ -161,6 +161,7 @@ class ItemsScreen extends StatelessWidget {
                         onView: () {
                           showBarcodeDialog(
                             context,
+                            product.id,
                             product.barcode,
                             product.barcodeImage,
                           );
@@ -438,8 +439,10 @@ void showAddInventoryDialog(ProductModel product, Function(int qty) onAdd) {
                     width: 1,
                   ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16,
-                  vertical: 12,),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
             ),
             const SizedBox(height: 16),

@@ -89,10 +89,25 @@ class ItemController extends GetxController {
     selectedImage.clear();
   }
 
-  Future<void> printBarcode(Uint8List imageBytes, {int quantity = 1}) async {
+  // ✅ Add this method in ItemController - Print multiple different barcodes
+
+  /// Print multiple different barcode images in a single PDF page
+  Future<void> printMultipleBarcodes(List<Uint8List> barcodeImages) async {
+    if (barcodeImages.isEmpty) {
+      Get.snackbar(
+        "Error",
+        "No barcodes to print",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
     try {
       final pdf = pw.Document();
-      final image = pw.MemoryImage(imageBytes);
+
+      // Convert all byte arrays to MemoryImage
+      final images = barcodeImages.map((bytes) => pw.MemoryImage(bytes)).toList();
 
       pdf.addPage(
         pw.MultiPage(
@@ -102,14 +117,14 @@ class ItemController extends GetxController {
               pw.Wrap(
                 spacing: 10, // horizontal spacing
                 runSpacing: 10, // vertical spacing
-                children: List.generate(quantity, (index) {
+                children: images.map((image) {
                   return pw.Container(
                     width: 180,
                     height: 100,
                     alignment: pw.Alignment.center,
                     child: pw.Image(image, width: 150, height: 60),
                   );
-                }),
+                }).toList(),
               ),
             ];
           },
@@ -120,8 +135,12 @@ class ItemController extends GetxController {
       await Printing.layoutPdf(
         onLayout: (PdfPageFormat format) async => pdf.save(),
       );
+
+      debugPrint("✅ Printed ${barcodeImages.length} barcodes successfully");
+
     } catch (e) {
-      print("❌ Error printing barcode: $e");
+      debugPrint("❌ Error printing barcodes: $e");
+      rethrow; // Let dialog handle the error
     }
   }
   // Future<void> printBarcode(Uint8List imageBytes, ) async {

@@ -91,6 +91,8 @@ class UtilController extends GetxController {
     return null;
   }
 
+  // ✅ Updated generateBarcode method for UtilController
+
   Future<void> generateBarcode(int productId, int quantity) async {
     if (quantity <= 0) {
       Get.snackbar(
@@ -115,15 +117,12 @@ class UtilController extends GetxController {
 
       generatedBarcodes.value = result;
 
-      Get.snackbar(
-        "Success!",
-        "${result.barcodes?.length ?? 0} barcode(s) generated!",
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 3),
-        snackPosition: SnackPosition.TOP,
-      );
+      debugPrint("✅ Generated ${result.barcodes?.length ?? 0} barcodes");
+
+      // ✅ No snackbar here - dialog will show success/error
+
     } on AppExceptions catch (e) {
+      debugPrint("❌ Barcode generation error: $e");
       Get.snackbar(
         "Error",
         e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
@@ -131,7 +130,9 @@ class UtilController extends GetxController {
         colorText: Colors.white,
         snackPosition: SnackPosition.TOP,
       );
+      rethrow; // ✅ Throw error so dialog can catch it
     } catch (e) {
+      debugPrint("❌ Unexpected error: $e");
       Get.snackbar(
         "Failed",
         "Generation failed!",
@@ -139,6 +140,7 @@ class UtilController extends GetxController {
         colorText: Colors.white,
         snackPosition: SnackPosition.TOP,
       );
+      rethrow; // ✅ Throw error so dialog can catch it
     } finally {
       barcodeGenerationLoading.value = false;
     }
