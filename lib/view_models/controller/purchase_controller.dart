@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-
 import '../../data/app_exceptions.dart';
 import '../../model/product_model.dart';
 import '../../model/purchase_model.dart';
@@ -36,6 +35,9 @@ class PurchaseController extends GetxController {
   final RxString selectedStatus = "UNPAID".obs;
   var purchaseList = <PurchaseBillModel>[].obs;
 
+  final RxString searchQuery = ''.obs;
+  final RxList<PurchaseBillModel> filteredPurchaseList =
+      <PurchaseBillModel>[].obs;
   var isLoading = false.obs;
 
   // Add a new empty item row
@@ -73,6 +75,11 @@ class PurchaseController extends GetxController {
     super.onInit();
     addNewItem(); // Start with 1 empty item row
     getPurchaseList();
+    debounce(
+      searchQuery,
+      (_) => _filterPurchases(),
+      time: const Duration(milliseconds: 400),
+    );
   }
 
   @override
@@ -84,6 +91,26 @@ class PurchaseController extends GetxController {
     paidAmountController.dispose();
     descriptionController.dispose();
     super.onClose();
+  }
+
+  void _filterPurchases() {
+    final query = searchQuery.value.toLowerCase().trim();
+
+    if (query.isEmpty) {
+      filteredPurchaseList.assignAll(purchaseList);
+    } else {
+      filteredPurchaseList.assignAll(
+        purchaseList.where((purchase) {
+          final billNumber = purchase.billNumber.toLowerCase();
+          final vendorName = purchase.vendor.name.toLowerCase();
+          final status = purchase.status.toLowerCase();
+
+          return billNumber.contains(query) ||
+              vendorName.contains(query) ||
+              status.contains(query);
+        }).toList(),
+      );
+    }
   }
 
   /// ✅ Add Purchase Bill Function (Similar to createOrder)
@@ -266,6 +293,7 @@ class PurchaseController extends GetxController {
       purchaseList.value = data
           .map((item) => PurchaseBillModel.fromJson(item))
           .toList();
+      _filterPurchases();
     } on AppExceptions catch (e) {
       if (kDebugMode) {
         print("❌ Exception Details: $e"); // full stack ya raw details

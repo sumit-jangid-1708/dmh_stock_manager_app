@@ -72,12 +72,22 @@ class PurchaseScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: TextField(
+                        onChanged: (value) {
+                          purchaseController.searchQuery.value =
+                              value; // ← This triggers filtering
+                        },
                         decoration: InputDecoration(
-                          hintText: "Search bills, vendors...",
+                          hintText: "Search bills, vendors, status...",
                           prefixIcon: const Icon(
                             Icons.search,
                             color: Colors.grey,
                           ),
+                          // suffixIcon: Obx(() => purchaseController.searchQuery.value.isNotEmpty
+                          //     ? IconButton(
+                          //   icon: const Icon(Icons.clear),
+                          //   onPressed: () => purchaseController.searchQuery.value = '',
+                          // )
+                          //     : null),
                           filled: true,
                           fillColor: Colors.white,
                           border: OutlineInputBorder(
@@ -124,95 +134,6 @@ class PurchaseScreen extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // 📊 Stats Cards
-                // Obx(() {
-                //   if (!purchaseController.isLoading.value &&
-                //       purchaseController.purchaseList.isNotEmpty) {
-                //     final totalBills = purchaseController.purchaseList.length;
-                //     final paidBills = purchaseController.purchaseList
-                //         .where((b) => b.status.toUpperCase() == 'PAID')
-                //         .length;
-                //     final unpaidBills = purchaseController.purchaseList
-                //         .where((b) => b.status.toUpperCase() == 'UNPAID')
-                //         .length;
-                //     final totalAmount = purchaseController.purchaseList
-                //         .fold<double>(0, (sum, bill) => sum + bill.totalAmount);
-                //
-                //     return Container(
-                //       padding: const EdgeInsets.all(16),
-                //       decoration: BoxDecoration(
-                //         gradient: const LinearGradient(
-                //           colors: [Color(0xFF1A1A4F), Color(0xFF2D2D7F)],
-                //         ),
-                //         borderRadius: BorderRadius.circular(16),
-                //         boxShadow: [
-                //           BoxShadow(
-                //             color: const Color(0xFF1A1A4F).withOpacity(0.3),
-                //             blurRadius: 10,
-                //             offset: const Offset(0, 4),
-                //           ),
-                //         ],
-                //       ),
-                //       child: Column(
-                //         children: [
-                //           Row(
-                //             children: [
-                //               Expanded(
-                //                 child: _buildStatItem(
-                //                   "Total Bills",
-                //                   totalBills.toString(),
-                //                   Icons.receipt_long,
-                //                 ),
-                //               ),
-                //               Container(
-                //                 height: 50,
-                //                 width: 1,
-                //                 color: Colors.white24,
-                //               ),
-                //               Expanded(
-                //                 child: _buildStatItem(
-                //                   "Total Amount",
-                //                   "₹${NumberFormat('#,##,###').format(totalAmount)}",
-                //                   Icons.currency_rupee,
-                //                 ),
-                //               ),
-                //             ],
-                //           ),
-                //           const SizedBox(height: 12),
-                //           Row(
-                //             children: [
-                //               Expanded(
-                //                 child: _buildStatItem(
-                //                   "Paid",
-                //                   paidBills.toString(),
-                //                   Icons.check_circle,
-                //                   Colors.green.shade300,
-                //                 ),
-                //               ),
-                //               Container(
-                //                 height: 50,
-                //                 width: 1,
-                //                 color: Colors.white24,
-                //               ),
-                //               Expanded(
-                //                 child: _buildStatItem(
-                //                   "Unpaid",
-                //                   unpaidBills.toString(),
-                //                   Icons.pending,
-                //                   Colors.orange.shade300,
-                //                 ),
-                //               ),
-                //             ],
-                //           ),
-                //         ],
-                //       ),
-                //     );
-                //   }
-                //   return const SizedBox.shrink();
-                // }),
-
-                // const SizedBox(height: 20),
-
                 // 📜 Recent Purchases Title
                 const Text(
                   "Recent Purchase Bills",
@@ -231,7 +152,8 @@ class PurchaseScreen extends StatelessWidget {
                     );
                   }
 
-                  if (purchaseController.purchaseList.isEmpty) {
+                  final listToShow = purchaseController.filteredPurchaseList;
+                  if (listToShow.isEmpty) {
                     return Center(
                       child: Padding(
                         padding: const EdgeInsets.all(50),
@@ -244,7 +166,9 @@ class PurchaseScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              "No Purchase Bills Found",
+                              purchaseController.searchQuery.value.isEmpty
+                                  ? "No Purchase Bills Found"
+                                  : "No matching bills found",
                               style: TextStyle(
                                 fontSize: 18,
                                 color: Colors.grey.shade600,
@@ -260,9 +184,9 @@ class PurchaseScreen extends StatelessWidget {
                   return ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: purchaseController.purchaseList.length,
+                    itemCount: listToShow.length,
                     itemBuilder: (context, index) {
-                      final purchase = purchaseController.purchaseList[index];
+                      final purchase = listToShow[index];
                       return PurchaseListCard(purchase: purchase);
                     },
                   );
@@ -595,10 +519,97 @@ class PurchaseListCard extends StatelessWidget {
               width: double.infinity,
               height: 50,
             ),
-
           ],
         ),
       ),
     );
   }
 }
+
+// 📊 Stats Cards
+// Obx(() {
+//   if (!purchaseController.isLoading.value &&
+//       purchaseController.purchaseList.isNotEmpty) {
+//     final totalBills = purchaseController.purchaseList.length;
+//     final paidBills = purchaseController.purchaseList
+//         .where((b) => b.status.toUpperCase() == 'PAID')
+//         .length;
+//     final unpaidBills = purchaseController.purchaseList
+//         .where((b) => b.status.toUpperCase() == 'UNPAID')
+//         .length;
+//     final totalAmount = purchaseController.purchaseList
+//         .fold<double>(0, (sum, bill) => sum + bill.totalAmount);
+//
+//     return Container(
+//       padding: const EdgeInsets.all(16),
+//       decoration: BoxDecoration(
+//         gradient: const LinearGradient(
+//           colors: [Color(0xFF1A1A4F), Color(0xFF2D2D7F)],
+//         ),
+//         borderRadius: BorderRadius.circular(16),
+//         boxShadow: [
+//           BoxShadow(
+//             color: const Color(0xFF1A1A4F).withOpacity(0.3),
+//             blurRadius: 10,
+//             offset: const Offset(0, 4),
+//           ),
+//         ],
+//       ),
+//       child: Column(
+//         children: [
+//           Row(
+//             children: [
+//               Expanded(
+//                 child: _buildStatItem(
+//                   "Total Bills",
+//                   totalBills.toString(),
+//                   Icons.receipt_long,
+//                 ),
+//               ),
+//               Container(
+//                 height: 50,
+//                 width: 1,
+//                 color: Colors.white24,
+//               ),
+//               Expanded(
+//                 child: _buildStatItem(
+//                   "Total Amount",
+//                   "₹${NumberFormat('#,##,###').format(totalAmount)}",
+//                   Icons.currency_rupee,
+//                 ),
+//               ),
+//             ],
+//           ),
+//           const SizedBox(height: 12),
+//           Row(
+//             children: [
+//               Expanded(
+//                 child: _buildStatItem(
+//                   "Paid",
+//                   paidBills.toString(),
+//                   Icons.check_circle,
+//                   Colors.green.shade300,
+//                 ),
+//               ),
+//               Container(
+//                 height: 50,
+//                 width: 1,
+//                 color: Colors.white24,
+//               ),
+//               Expanded(
+//                 child: _buildStatItem(
+//                   "Unpaid",
+//                   unpaidBills.toString(),
+//                   Icons.pending,
+//                   Colors.orange.shade300,
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+//   return const SizedBox.shrink();
+// }),
+// const SizedBox(height: 20),
