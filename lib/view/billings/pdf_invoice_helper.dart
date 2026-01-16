@@ -2,7 +2,8 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import '../../model/bill_response_model.dart';
-import '../../view_models/controller/item_controller.dart'; // Import zaroori hai
+import '../../view_models/controller/item_controller.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
@@ -22,6 +23,11 @@ class PdfInvoiceHelper {
 
     // Get ItemController to find HSN Code
     final ItemController itemController = Get.find<ItemController>();
+    final box = GetStorage();
+    final companyName = box.read('companyName') ?? 'Your Company Name';
+    final gstNumber = box.read('gstNumber') ?? 'GST: Not Set';
+    final address = box.read('address') ?? 'Address: Not Set';
+    final contactNumber = box.read('contactNumber') ?? 'Contact: Not Set';
 
     pdf.addPage(
       pw.MultiPage(
@@ -43,9 +49,10 @@ class PdfInvoiceHelper {
               pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.end,
                 children: [
-                  pw.Text('DMJ STOCK MANAGER', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                  pw.Text('Your Business Address'),
-                  pw.Text('GSTIN: 08XXXXXXXXXXXX'), // Aap apna GST yahan likh sakte hain
+                  pw.Text(companyName, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                  pw.Text(address),
+                  pw.Text('GSTIN: $gstNumber'),
+                  pw.Text(contactNumber),
                 ],
               ),
             ],

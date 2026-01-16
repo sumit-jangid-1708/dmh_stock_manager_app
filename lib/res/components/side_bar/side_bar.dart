@@ -87,7 +87,7 @@ class Sidebar extends StatelessWidget {
                     _buildMenuItem(
                       icon: Icons.settings_outlined,
                       title: "Setting",
-                      onTap: () => onItemTap("setting"),
+                      onTap: () => Get.toNamed(RouteName.settings),
                     ),
                   ],
                 ),
