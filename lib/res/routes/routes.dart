@@ -8,6 +8,7 @@ import 'package:dmj_stock_manager/view/items/items_screen.dart';
 import 'package:dmj_stock_manager/view/orders/order_create_bottom_sheet.dart';
 import 'package:dmj_stock_manager/view/orders/order_detail_screen.dart';
 import 'package:dmj_stock_manager/view/orders/order_screen.dart';
+import 'package:dmj_stock_manager/view/settings/settings_screen.dart';
 import 'package:dmj_stock_manager/view/stock/stock_screen.dart';
 import 'package:dmj_stock_manager/view/vendors/vendor_detail_screen.dart';
 import 'package:dmj_stock_manager/view/vendors/vendor_screen.dart';
@@ -75,5 +76,6 @@ class AppRoutes {
       page: () => OrderDetailScreen(),
       binding: OrderBinding(),
     ),
+    GetPage(name: RouteName.settings, page: ()=> SettingsScreen())
   ];
 }

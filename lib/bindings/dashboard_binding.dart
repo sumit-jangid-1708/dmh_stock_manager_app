@@ -13,12 +13,12 @@ class DashboardBinding extends Bindings {
   @override
   void dependencies() {
     Get.lazyPut(() => DashboardController());
-    Get.put(BillingController(), permanent: true);
-    Get.put(OrderController(),permanent: true);
+    Get.put(BillingController(), );
+    Get.put(OrderController());
     Get.lazyPut(() => HomeController());
     Get.lazyPut(() => VendorController());
     Get.lazyPut(() => ItemController());
     Get.lazyPut(() => StockController());
-    Get.put(PurchaseController(), permanent: true);
+    Get.lazyPut(() => PurchaseController());
   }
 }

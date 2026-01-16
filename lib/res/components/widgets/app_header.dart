@@ -42,8 +42,7 @@ class AppHeader extends StatelessWidget {
               // --- Low Stock Notification Badge ---
               Obx(() {
                 final count = controller.lowStockItems.length;
-                if (count == 0) return const SizedBox.shrink();
-
+                // if (count == 0) return const SizedBox.shrink();
                 return Stack(
                   alignment: Alignment.topRight,
                   children: [
@@ -55,6 +54,7 @@ class AppHeader extends StatelessWidget {
                       width: 50,
                       height: 50,
                     ),
+                    if(count > 0)
                     Positioned(
                       right: 7,
                       top: 3,

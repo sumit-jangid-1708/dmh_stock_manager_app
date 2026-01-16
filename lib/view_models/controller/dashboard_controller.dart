@@ -251,7 +251,7 @@ class DashboardController extends GetxController with WidgetsBindingObserver {
   void _startPolling() {
     _pollingTimer?.cancel();
     _pollingTimer = Timer.periodic(
-      const Duration(minutes: 10),
+      const Duration(minutes: 5),
       (_) => getLowStock(),
     );
   }
