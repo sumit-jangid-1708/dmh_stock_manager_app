@@ -1,9 +1,11 @@
 import 'package:dmj_stock_manager/data/app_exceptions.dart';
 import 'package:dmj_stock_manager/model/vendor_model.dart';
+import 'package:dmj_stock_manager/utils/utils.dart';
 import 'package:dmj_stock_manager/view_models/services/vendor_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 
 import '../../model/vender_overview_model.dart';
 
@@ -12,6 +14,8 @@ class VendorController extends GetxController {
   final vendors = <VendorModel>[].obs; // Store vendors
   var filteredVendors = <VendorModel>[].obs;
   final searchBar = TextEditingController();
+
+  final formKey = GlobalKey<FormState>();
 
   Rx<VendorOverviewModel?> vendorOverview = Rx<VendorOverviewModel?>(null);
   //fields
@@ -32,7 +36,7 @@ class VendorController extends GetxController {
   final VendorService _vendorService = VendorService();
 
   Rx<VendorModel?> selectedVendor = Rx<VendorModel?>(null);
-
+final RxString gstError = ''.obs;
 
   var isLoading = false.obs;
 
@@ -61,6 +65,19 @@ class VendorController extends GetxController {
     });
   }
 
+  void validateGST(String value){
+    if (value.isEmpty){
+      gstError.value = '';
+    }else if(value.length < 15){
+      gstError.value = 'GST must be 15 Character';
+    }else if(!Utils.isValidGST(value)){
+      gstError.value = 'Invalid GST format';
+    }else{
+      gstError.value = '';
+    }
+  }
+  bool get isGSTValid => gstError.value.isEmpty;
+
   void clearForm() {
     vendorNameController.value.clear();
     emailController.value.clear();
@@ -72,6 +89,9 @@ class VendorController extends GetxController {
     firmNameController.value.clear();
     gstNumberController.value.clear();
     isWithGst.value = false;
+    countryCode.value = "";
+    phoneNumber.value = "";
+    formKey.currentState?.reset();
   }
   // void clearSearch() {
   //   searchBar.clear();

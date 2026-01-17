@@ -9,6 +9,7 @@ import 'package:intl_phone_field/intl_phone_field.dart';
 import '../../model/product_model.dart';
 import '../../res/components/scanner/qr_scanner_widget.dart';
 import '../../res/components/widgets/custom_searchable_dropdown.dart';
+import '../../utils/utils.dart';
 
 class OrderCreateBottomSheet extends StatelessWidget {
   OrderCreateBottomSheet({super.key});
@@ -119,10 +120,19 @@ class OrderCreateBottomSheet extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  TextField(
+                  Obx(() => TextField(
                     controller: orderController.emailController,
-                    decoration: _getInputDecoration("Email", Icons.email),
-                  ),
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: _getInputDecoration(
+                      "Email",
+                      Icons.email,
+                    ).copyWith(
+                      errorText: orderController.emailError.value.isEmpty
+                          ? null
+                          : orderController.emailError.value,
+                    ),
+                    onChanged: orderController.validateEmail,
+                  )),
                   const SizedBox(height: 12),
                   _buildPhoneField(),
                   const SizedBox(height: 12),
@@ -288,7 +298,7 @@ class OrderCreateBottomSheet extends StatelessWidget {
                         items: itemController.products,
                         selectedItem: item["product"] as Rx<ProductModel?>,
                         itemAsString: (product) =>
-                        "${product.name} | ${product.size} | ${product.color}",
+                            "${product.name} | ${product.size} | ${product.color}",
                         hintText: "Choose Product",
                         prefixIcon: Icons.inventory_2_outlined,
                         enableSearch: true,
@@ -317,9 +327,9 @@ class OrderCreateBottomSheet extends StatelessWidget {
                           (item["product"] as Rx<ProductModel?>).value = val;
                           if (val == null) return;
                           final priceController =
-                          item["purchasePrice"] as TextEditingController?;
+                              item["purchasePrice"] as TextEditingController?;
                           final skuController =
-                          item["skuId"] as TextEditingController?;
+                              item["skuId"] as TextEditingController?;
                           if (priceController != null) {
                             priceController.text = val.purchasePrice.toString();
                           }
@@ -395,10 +405,10 @@ class OrderCreateBottomSheet extends StatelessWidget {
   }
 
   Widget _buildSmallField(
-      TextEditingController ctrl,
-      String label,
-      IconData icon,
-      ) {
+    TextEditingController ctrl,
+    String label,
+    IconData icon,
+  ) {
     return TextField(
       controller: ctrl,
       keyboardType: TextInputType.number,

@@ -1,5 +1,6 @@
 import 'package:dmj_stock_manager/model/create_bill_model.dart';
 import 'package:dmj_stock_manager/model/order_model.dart';
+import 'package:dmj_stock_manager/utils/utils.dart';
 import 'package:dmj_stock_manager/view/billings/billing_screen.dart';
 import 'package:dmj_stock_manager/view_models/controller/billing_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
@@ -8,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:dmj_stock_manager/model/channel_model.dart';
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import '../../data/app_exceptions.dart';
 import '../../model/product_model.dart';
@@ -17,7 +19,8 @@ import '../../view/orders/order_create_bottom_sheet.dart';
 
 class OrderController extends GetxController {
   final OrderService orderService = OrderService();
-  late final BillingController billingController = Get.find<BillingController>();
+  late final BillingController billingController =
+      Get.find<BillingController>();
 
   var orders = <OrderDetailModel>[].obs;
   var isLoading = false.obs;
@@ -43,6 +46,7 @@ class OrderController extends GetxController {
   final billStatus = <CreateBillModel>[].obs;
 
   var filteredOrders = <OrderDetailModel>[].obs;
+  RxString emailError = ''.obs;
 
   // Form Logic Methods
   void addItemRow() {
@@ -53,10 +57,23 @@ class OrderController extends GetxController {
     });
   }
 
+  void validateEmail(String value) {
+    if (value.isEmpty) {
+      emailError.value = '';
+    } else if (!Utils.isEmailValid(value)) {
+      emailError.value = 'Please enter a valid Email Address';
+    } else {
+      emailError.value = '';
+    }
+  }
+
+  bool get isEmailValid => emailError.value.isEmpty;
+
   void clearForm() {
     selectedChannel.value = null;
     customerNameController.clear();
     channelOrderId.clear();
+    emailController.clear();
     remarkController.clear();
     items.clear();
   }
@@ -479,7 +496,8 @@ class OrderController extends GetxController {
 
     if (existingIndex != -1) {
       // Product exists - increment quantity
-      final qtyController = items[existingIndex]["quantity"] as TextEditingController;
+      final qtyController =
+          items[existingIndex]["quantity"] as TextEditingController;
       int currentQty = int.tryParse(qtyController.text) ?? 0;
       qtyController.text = (currentQty + 1).toString();
 
@@ -518,7 +536,7 @@ class OrderController extends GetxController {
     final itemController = Get.find<ItemController>();
 
     final product = itemController.products.firstWhereOrNull(
-          (p) => p.sku == scanProduct.sku,
+      (p) => p.sku == scanProduct.sku,
     );
 
     if (product == null) {
@@ -533,5 +551,4 @@ class OrderController extends GetxController {
 
     addScannedProduct(product);
   }
-
 }

@@ -3,6 +3,7 @@ import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.
 import 'package:dmj_stock_manager/view_models/controller/home_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/order_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/vendor_controller.dart';
+import 'package:dmj_stock_manager/view_models/controller/billing_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../res/components/widgets/create_bill_dialog_widget.dart';
@@ -12,11 +13,8 @@ class OrderDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final String? idStr = Get.parameters['id'];
     final int orderId = int.parse(Get.parameters['id']!);
 
-    print("🤖🤖🤖🤖🤖 $orderId");
-    // final int orderId = int.parse(idStr!);
     if (orderId == null) {
       return const Scaffold(
         body: Center(child: Text("Invalid or Missing order Id")),
@@ -24,17 +22,9 @@ class OrderDetailScreen extends StatelessWidget {
     }
 
     final orderController = Get.find<OrderController>();
-
-    // final args = Get.arguments;
-    // if (args == null || args is! OrderDetailModel) {
-    //   return const Scaffold(body: Center(child: Text("Order details missing")));
-    // }
-    // final order = args;
-    // final orderController = Get.find<OrderController>();
     final homeController = Get.find<HomeController>();
     final vendorController = Get.find<VendorController>();
-    // final screenWidth = MediaQuery.of(context).size.width;
-    // final isTablet = screenWidth >= 600;
+    final billingController = Get.find<BillingController>();
 
     return Obx(() {
       final order = orderController.orders.firstWhereOrNull(
@@ -44,11 +34,26 @@ class OrderDetailScreen extends StatelessWidget {
       if (order == null) {
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
       }
+
+      // ✅ Check if bill already exists for this order
+      final bool hasBill = billingController.bills.any(
+        (bill) => bill.items.any((item) => item.order == orderId),
+      );
+
+      // ✅ Check payment status - only hide if fully PAID
+      final bool isPaid = order.paidStatus.toLowerCase() == 'paid';
+
+      // ✅ Show button only if no bill exists OR bill exists but not fully paid
+      final bool showCreateBillButton = !hasBill || !isPaid;
+
       return Scaffold(
         backgroundColor: Colors.grey.shade50,
         body: SafeArea(
           child: RefreshIndicator(
-            onRefresh: () async => await orderController.getOrderList(),
+            onRefresh: () async {
+              await orderController.getOrderList();
+              await billingController.refreshBills();
+            },
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               child: Column(
@@ -71,13 +76,56 @@ class OrderDetailScreen extends StatelessWidget {
                           padding: EdgeInsets.zero,
                         ),
                       ),
-                      AppGradientButton(
-                        onPressed: () {
-                          showCreateBillDialog(context, order.id);
-                        },
-                        icon: Icons.receipt_long,
-                        text: "Create Bill",
-                      ),
+
+                      // ✅ Conditionally show Create Bill button or Paid badge
+                      if (showCreateBillButton)
+                        AppGradientButton(
+                          onPressed: () {
+                            showCreateBillDialog(context, order.id);
+                          },
+                          icon: Icons.receipt_long,
+                          text: "Create Bill",
+                        )
+                      else
+                        // ✅ Show "Bill Paid" badge only when fully paid
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Colors.green, Colors.green],
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.green.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                "Bill Paid",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                     ],
                   ),
 
@@ -161,8 +209,14 @@ class OrderDetailScreen extends StatelessWidget {
                           "Mobile",
                           "${order.countryCode ?? ''}${order.mobile ?? ''}",
                         ),
-                        _buildInfoRow("Email", order.customerEmail!),
-                        _buildInfoRow("Channel ID", order.channelOrderId!),
+                        _buildInfoRow(
+                          "Email",
+                          order.customerEmail ?? "No Email",
+                        ),
+                        _buildInfoRow(
+                          "Channel ID",
+                          order.channelOrderId ?? "-",
+                        ),
                         _buildInfoRow("Remarks", order.remarks ?? "No remarks"),
                       ],
                     ),
@@ -177,7 +231,7 @@ class OrderDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  // 📋 Items List (Beautiful Cards like LowStockScreen)
+                  // 📋 Items List
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -357,7 +411,7 @@ class OrderDetailScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // 🔄 Return Buttons (Same style as LowStockScreen)
+                  // 🔄 Return Buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -367,7 +421,6 @@ class OrderDetailScreen extends StatelessWidget {
                             showReturnDialog(context, order, true);
                           },
                           text: "Courier Return",
-
                           height: 50,
                         ),
                       ),
@@ -378,7 +431,6 @@ class OrderDetailScreen extends StatelessWidget {
                             showReturnDialog(context, order, false);
                           },
                           text: "Customer Return",
-
                           height: 50,
                         ),
                       ),
@@ -394,7 +446,7 @@ class OrderDetailScreen extends StatelessWidget {
     });
   }
 
-  // Helper Widgets (Same as LowStockScreen)
+  // Helper Widgets
   Widget _buildStatItem(String label, String value, IconData icon) {
     return Column(
       children: [
@@ -437,19 +489,6 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 }
-
-//
-// double calculateTotalAmount(OrderDetailModel order) {
-//   double total = 0;
-//   for (var item in order.items) {
-//     final unitPrice = double.tryParse(item.unitPrice.toString()) ?? 0;
-//     final quantity = item.quantity ?? 0;
-//     total += unitPrice * quantity;
-//   }
-//   return total;
-// }
-
-// showReturnDialog function same as before (you can keep it)
 
 double calculateTotalAmount(OrderDetailModel order) {
   double total = 0;
@@ -660,12 +699,9 @@ void showReturnDialog(
                         selectedItems.forEach((productId, data) {
                           final qty = data["quantity"] as int;
                           final orderId = order.id;
-                          print("this is the order id 🤢🌠🌠🌠 ${orderId}");
                           final channelId = order.channel;
-                          print(
-                            "this is the channel id 🤢🕑👻🌠🌠🌠 ${channelId}",
-                          );
                           final condition = data["condition"] as String;
+
                           if (isWps) {
                             Get.find<OrderController>().wpsReturn(
                               productId: productId,

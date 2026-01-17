@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -6,7 +7,12 @@ import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/util_controller.dart';
 import 'package:share_plus/share_plus.dart';
 
-void showBarcodeDialog(BuildContext context, int productId, String sku, String barcodeImageUrl) {
+void showBarcodeDialog(
+  BuildContext context,
+  int productId,
+  String sku,
+  String barcodeImageUrl,
+) {
   final qtyController = TextEditingController(text: "1");
   const Color primaryColor = Color(0xFF1A1A4F);
 
@@ -23,8 +29,14 @@ void showBarcodeDialog(BuildContext context, int productId, String sku, String b
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text("Product Barcode",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor)),
+                const Text(
+                  "Product Barcode",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                  ),
+                ),
                 IconButton(
                   onPressed: () => Get.back(),
                   icon: const Icon(Icons.close_rounded, color: Colors.grey),
@@ -37,8 +49,17 @@ void showBarcodeDialog(BuildContext context, int productId, String sku, String b
             // SKU Badge
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(color: primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-              child: Text(sku, style: const TextStyle(fontWeight: FontWeight.bold, color: primaryColor)),
+              decoration: BoxDecoration(
+                color: primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                sku,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: primaryColor,
+                ),
+              ),
             ),
             const SizedBox(height: 20),
 
@@ -55,7 +76,11 @@ void showBarcodeDialog(BuildContext context, int productId, String sku, String b
                 height: 100,
                 width: double.infinity,
                 fit: BoxFit.contain,
-                errorBuilder: (c, e, s) => const Icon(Icons.barcode_reader, size: 50, color: Colors.grey),
+                errorBuilder: (c, e, s) => const Icon(
+                  Icons.barcode_reader,
+                  size: 50,
+                  color: Colors.grey,
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -63,7 +88,10 @@ void showBarcodeDialog(BuildContext context, int productId, String sku, String b
             // Quantity Input
             Row(
               children: [
-                const Text("Set Quantity:", style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text(
+                  "Set Quantity:",
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
                 const Spacer(),
                 SizedBox(
                   width: 80,
@@ -75,7 +103,10 @@ void showBarcodeDialog(BuildContext context, int productId, String sku, String b
                       filled: true,
                       fillColor: Colors.grey[100],
                       contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                   ),
                 ),
@@ -84,83 +115,87 @@ void showBarcodeDialog(BuildContext context, int productId, String sku, String b
             const SizedBox(height: 24),
 
             // Action Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    onPressed: () async {
-                      // Logic kept exactly same
+            AppGradientButton(
+              width: double.infinity,
+              icon: Icons.print,
+              text: "Print",
+              onPressed: () async {
+                try {
+                  final qty = int.tryParse(qtyController.text) ?? 1;
+                  if (qty <= 0) {
+                    Get.snackbar(
+                      "Invalid",
+                      "Quantity must be greater than 0",
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                    );
+                    return;
+                  }
+                  Get.dialog(
+                    const Center(child: CircularProgressIndicator()),
+                    barrierDismissible: false,
+                  );
+                  final utilController = Get.find<UtilController>();
+                  await utilController.generateBarcode(productId, qty);
+                  final barcodes =
+                      utilController.generatedBarcodes.value?.barcodes;
+                  if (barcodes == null || barcodes.isEmpty) {
+                    Get.back();
+                    Get.snackbar(
+                      "Error",
+                      "No barcodes generated",
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                    );
+                    return;
+                  }
+                  List<Uint8List> barcodeImages = [];
+                  for (var barcode in barcodes) {
+                    if (barcode.image != null) {
                       try {
-                        final qty = int.tryParse(qtyController.text) ?? 1;
-                        if (qty <= 0) {
-                          Get.snackbar("Invalid", "Quantity must be greater than 0", backgroundColor: Colors.red, colorText: Colors.white);
-                          return;
-                        }
-                        Get.dialog(const Center(child: CircularProgressIndicator()), barrierDismissible: false);
-                        final utilController = Get.find<UtilController>();
-                        await utilController.generateBarcode(productId, qty);
-                        final barcodes = utilController.generatedBarcodes.value?.barcodes;
-                        if (barcodes == null || barcodes.isEmpty) {
-                          Get.back();
-                          Get.snackbar("Error", "No barcodes generated", backgroundColor: Colors.red, colorText: Colors.white);
-                          return;
-                        }
-                        List<Uint8List> barcodeImages = [];
-                        for (var barcode in barcodes) {
-                          if (barcode.image != null) {
-                            try {
-                              final response = await NetworkAssetBundle(Uri.parse(barcode.image!)).load("");
-                              final bytes = response.buffer.asUint8List();
-                              if (bytes.length >= 10 && bytes[0] == 137 && bytes[1] == 80) barcodeImages.add(bytes);
-                            } catch (e) { debugPrint("Error downloading: $e"); }
-                          }
-                        }
-                        if (barcodeImages.isEmpty) {
-                          Get.back();
-                          Get.snackbar("Error", "Failed to download barcodes", backgroundColor: Colors.red, colorText: Colors.white);
-                          return;
-                        }
-                        final itemController = Get.find<ItemController>();
-                        await itemController.printMultipleBarcodes(barcodeImages);
-                        Get.back(); Get.back();
-                        Get.snackbar("Success", "Printed ${barcodeImages.length} barcode(s)", backgroundColor: Colors.green, colorText: Colors.white);
-                      } catch (e) { Get.back(); Get.snackbar("Error", "Failed to print", backgroundColor: Colors.red, colorText: Colors.white); }
-                    },
-                    icon: const Icon(Icons.print_rounded, size: 20),
-                    label: const Text("Print"),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    onPressed: () async {
-                      // Share Logic kept exactly same
-                      try {
-                        final qty = int.tryParse(qtyController.text) ?? 1;
-                        final fullUrl = "https://traders.testwebs.in/$barcodeImageUrl";
-                        final response = await NetworkAssetBundle(Uri.parse(fullUrl)).load("");
+                        final response = await NetworkAssetBundle(
+                          Uri.parse(barcode.image!),
+                        ).load("");
                         final bytes = response.buffer.asUint8List();
-                        final tempFile = await XFile.fromData(bytes, name: "$sku.png", mimeType: "image/png");
-                        await Share.shareXFiles([tempFile], text: "SKU: $sku (x$qty)");
-                      } catch (e) { Get.snackbar("Error", "Failed to share", backgroundColor: Colors.red, colorText: Colors.white); }
-                    },
-                    icon: const Icon(Icons.share_rounded, size: 20),
-                    label: const Text("Share"),
-                  ),
-                ),
-              ],
+                        if (bytes.length >= 10 &&
+                            bytes[0] == 137 &&
+                            bytes[1] == 80)
+                          barcodeImages.add(bytes);
+                      } catch (e) {
+                        debugPrint("Error downloading: $e");
+                      }
+                    }
+                  }
+                  if (barcodeImages.isEmpty) {
+                    Get.back();
+                    Get.snackbar(
+                      "Error",
+                      "Failed to download barcodes",
+                      backgroundColor: Colors.red,
+                      colorText: Colors.white,
+                    );
+                    return;
+                  }
+                  final itemController = Get.find<ItemController>();
+                  await itemController.printMultipleBarcodes(barcodeImages);
+                  Get.back();
+                  Get.back();
+                  Get.snackbar(
+                    "Success",
+                    "Printed ${barcodeImages.length} barcode(s)",
+                    backgroundColor: Colors.green,
+                    colorText: Colors.white,
+                  );
+                } catch (e) {
+                  Get.back();
+                  Get.snackbar(
+                    "Error",
+                    "Failed to print",
+                    backgroundColor: Colors.red,
+                    colorText: Colors.white,
+                  );
+                }
+              },
             ),
           ],
         ),
@@ -168,3 +203,15 @@ void showBarcodeDialog(BuildContext context, int productId, String sku, String b
     ),
   );
 }
+
+// onPressed: () async {
+//Share Logic kept exactly same
+//try {
+//final qty = int.tryParse(qtyController.text) ?? 1;
+//final fullUrl = "https://traders.testwebs.in/$barcodeImageUrl";
+//final response = await NetworkAssetBundle(Uri.parse(fullUrl)).load("");
+//final bytes = response.buffer.asUint8List();
+//final tempFile = await XFile.fromData(bytes, name: "$sku.png", mimeType: "image/png");
+//await Share.shareXFiles([tempFile], text: "SKU: $sku (x$qty)");
+// } catch (e) { Get.snackbar("Error", "Failed to share", backgroundColor: Colors.red, colorText: Colors.white); }
+//},
