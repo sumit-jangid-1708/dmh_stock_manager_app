@@ -1,5 +1,6 @@
 // Path: lib/data/network/network_api_services.dart
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -51,9 +52,9 @@ class NetworkApiServices extends BaseApiServices {
 
       return returnResponse(response);
     } on SocketException {
-      throw InternetExceptions('No Internet Connection');
-    } on RequestTimeOut {
-      throw RequestTimeOut('Request Time Out');
+      throw InternetExceptions();
+    } on TimeoutException {
+      throw RequestTimeOut();
     }
   }
 
@@ -67,63 +68,73 @@ class NetworkApiServices extends BaseApiServices {
       print('🌐 POST Request URL: $url');
       print('🌐 POST Request Body: $data');
     }
-
     try {
       // use token headers unless custom passed
       final mergedHeaders = await _getHeaders(url, extra: headers);
-
       final response = await http
           .post(Uri.parse(url), body: jsonEncode(data), headers: mergedHeaders)
           .timeout(const Duration(seconds: 30));
-
-      final contentType = response.headers['content-type'];
-
-      if (kDebugMode) {
-        print("🌐 API Response Status Code: ${response.statusCode}");
-        print("🌐 API Response Content-Type: $contentType");
-      }
-
-      // PDF case
-      if (contentType != null && contentType.contains('application/pdf')) {
-        if (kDebugMode) print("📄 PDF response received.");
-        return response.bodyBytes;
-      }
-
+      // final contentType = response.headers['content-type'];
+      // if (kDebugMode) {
+      //   print("🌐 API Response Status Code: ${response.statusCode}");
+      //   print("🌐 API Response Content-Type: $contentType");
+      // }
+      // // PDF case
+      // if (contentType != null && contentType.contains('application/pdf')) {
+      //   if (kDebugMode) print("📄 PDF response received.");
+      //   return response.bodyBytes;
+      // }
       return jsonDecode(response.body);
+      // return jsonDecode(response.body);
     } on SocketException {
-      throw InternetExceptions('No Internet Connection');
-    } on RequestTimeOut {
-      throw RequestTimeOut('Request Time Out');
+      throw InternetExceptions();
+    } on TimeoutException {
+      throw RequestTimeOut();
     }
   }
 
   dynamic returnResponse(http.Response response) {
+    final contentType = response.headers['content-type'];
+
+    if (kDebugMode) {
+      print("🌐 API Response Status Code: ${response.statusCode}");
+      print("🌐 API Response Content-Type: $contentType");
+    }
+    // PDF case
+    if (contentType != null && contentType.contains('application/pdf')) {
+      if (kDebugMode) print("📄 PDF response received.");
+      return response.bodyBytes;
+    }
     if (kDebugMode) {
       print('🌐 API Response Status Code: ${response.statusCode}');
       print('🌐 API Response Body: ${response.body}');
     }
-
+    final responseBody = response.body.isNotEmpty
+        ? jsonDecode(response.body)
+        : {};
+    // final jsonData = _tryDecodeJson(response.body);
     switch (response.statusCode) {
       case 200:
       case 201:
         return jsonDecode(response.body);
 
       case 400:
-        final jsonData = _tryDecodeJson(response.body);
-        throw BadRequestException(jsonData['message'] ?? 'Bad Request');
+        throw AppExceptions(responseBody);
+      // throw BadRequestException(jsonData['message'] ?? 'Bad Request');
 
       case 401:
       case 403:
-        throw UnauthorizedException('Unauthorized request');
-
+        throw UnauthorizedException();
+      // case 403:
+      //   throw UnauthorizedException('Unauthorized request');
       case 500:
-        throw ServerException('Server error');
-
+        throw ServerException();
       default:
-        final jsonData = _tryDecodeJson(response.body);
-        throw FetchDataException(
-          jsonData['message'] ?? 'Error: ${response.statusCode}',
-        );
+        // final jsonData = _tryDecodeJson(response.body);
+        throw AppExceptions("Error: ${response.statusCode}");
+      // throw FetchDataException(
+      //   jsonData['message'] ?? 'Error: ${response.statusCode}',
+      // );
     }
   }
 

@@ -1,5 +1,4 @@
 import 'package:dmj_stock_manager/res/routes/routes_names.dart';
-import 'package:dmj_stock_manager/view/orders/order_detail_screen.dart';
 import 'package:dmj_stock_manager/view_models/controller/order_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

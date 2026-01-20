@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'package:barcode/barcode.dart';
 import 'package:barcode_image/barcode_image.dart';
 import 'package:image/image.dart' as img;
 import 'package:pdf/pdf.dart';

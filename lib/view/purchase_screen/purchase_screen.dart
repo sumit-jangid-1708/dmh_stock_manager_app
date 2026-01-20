@@ -5,7 +5,6 @@ import 'package:dmj_stock_manager/view/purchase_screen/purchase_details.dart';
 import 'package:dmj_stock_manager/view_models/controller/purchase_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 
 class PurchaseScreen extends StatelessWidget {
   const PurchaseScreen({super.key});

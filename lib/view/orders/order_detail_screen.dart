@@ -15,12 +15,6 @@ class OrderDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final int orderId = int.parse(Get.parameters['id']!);
 
-    if (orderId == null) {
-      return const Scaffold(
-        body: Center(child: Text("Invalid or Missing order Id")),
-      );
-    }
-
     final orderController = Get.find<OrderController>();
     final homeController = Get.find<HomeController>();
     final vendorController = Get.find<VendorController>();
@@ -389,14 +383,13 @@ class OrderDetailScreen extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                              if (product.barcodeImage != null &&
-                                  product.barcodeImage!.isNotEmpty)
+                              if (product.barcodeImage.isNotEmpty)
                                 Padding(
                                   padding: const EdgeInsets.only(top: 12),
                                   child: Align(
                                     alignment: Alignment.center,
                                     child: Image.network(
-                                      "https://traders.testwebs.in${product.barcodeImage!}",
+                                      "https://traders.testwebs.in${product.barcodeImage}",
                                       height: 50,
                                       fit: BoxFit.contain,
                                     ),
@@ -571,12 +564,12 @@ void showReturnDialog(
                                     ),
                                     onChanged: (val) {
                                       if (val == true) {
-                                        selectedItems[item.product.id!] = {
+                                        selectedItems[item.product.id] = {
                                           "quantity": 0,
                                           "condition": "OK",
                                         };
                                       } else {
-                                        selectedItems.remove(item.product.id!);
+                                        selectedItems.remove(item.product.id);
                                       }
                                     },
                                   );
@@ -621,7 +614,7 @@ void showReturnDialog(
                             SizedBox(height: screenHeight * 0.01),
                             Obx(() {
                               return DropdownButtonFormField<String>(
-                                value:
+                                initialValue:
                                     selectedItems[item
                                         .product
                                         .id]?["condition"],
@@ -712,7 +705,7 @@ void showReturnDialog(
                             );
                           } else {
                             Get.find<OrderController>().customerReturn(
-                              orderId: order.id!,
+                              orderId: order.id,
                               productId: productId,
                               quantity: qty,
                               condition: condition,

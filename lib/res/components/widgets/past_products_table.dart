@@ -196,7 +196,7 @@ class PastProductsTable extends StatelessWidget {
                       ],
                     ),
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),

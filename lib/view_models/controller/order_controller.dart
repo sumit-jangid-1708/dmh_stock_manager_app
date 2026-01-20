@@ -1,7 +1,9 @@
 import 'package:dmj_stock_manager/model/create_bill_model.dart';
 import 'package:dmj_stock_manager/model/order_model.dart';
+import 'package:dmj_stock_manager/utils/app_alerts.dart';
 import 'package:dmj_stock_manager/utils/utils.dart';
 import 'package:dmj_stock_manager/view/billings/billing_screen.dart';
+import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/billing_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
 import 'package:dmj_stock_manager/view_models/services/order_service.dart';
@@ -17,7 +19,7 @@ import '../../model/return_order_history_model.dart';
 import '../../model/scan_product_response_model.dart';
 import '../../view/orders/order_create_bottom_sheet.dart';
 
-class OrderController extends GetxController {
+class OrderController extends GetxController with BaseController{
   final OrderService orderService = OrderService();
   late final BillingController billingController =
       Get.find<BillingController>();
@@ -124,21 +126,21 @@ class OrderController extends GetxController {
       orders.value = data
           .map((item) => OrderDetailModel.fromJson(item))
           .toList();
-
       filteredOrders.assignAll(orders);
-    } on AppExceptions catch (e) {
-      if (kDebugMode) {
-        print("❌ Exception Details: $e"); // full stack ya raw details
-      }
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        duration: const Duration(seconds: 1),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    // } on AppExceptions catch (e) {
+    //   if (kDebugMode) {
+    //     print("❌ Exception Details: $e"); // full stack ya raw details
+    //   }
+    //   Get.snackbar(
+    //     "Error",
+    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+    //     duration: const Duration(seconds: 1),
+    //     snackPosition: SnackPosition.TOP,
+    //     backgroundColor: Colors.red,
+    //     colorText: Colors.white,
+    //   );
     } catch (e) {
+      handleError(e, onRetry: () => getOrderList());
       print("Error fetching order list $e");
     } finally {
       isLoading.value = false;
@@ -149,7 +151,6 @@ class OrderController extends GetxController {
   Future<void> createOrder() async {
     try {
       isLoading.value = true;
-
       // Convert form items into API format
       List<Map<String, dynamic>> itemList = items.map((item) {
         final productRx = item["product"] as Rx<ProductModel?>?;
@@ -181,37 +182,15 @@ class OrderController extends GetxController {
       // Parse response
       final order = OrderDetailModel.fromJson(response);
       orders.add(order);
-      Get.snackbar(
-        'Success',
-        'Order created successfully ✅',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
+      AppAlerts.success("Order created successfully ✅");
       resetForm(); // clear form after saving
       getOrderList();
-    } on AppExceptions catch (e) {
-      if (kDebugMode) {
-        print("❌ Exception Details: $e"); // full stack ya raw details
-      }
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        duration: const Duration(seconds: 1),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      if(Get.isBottomSheetOpen ?? false) Get.back();
     } catch (e) {
+      handleError(e);
       if (kDebugMode) {
         print("❌ Exception Details: $e"); // full stack ya raw details
       }
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-      );
     } finally {
       isLoading.value = false;
     }
@@ -236,25 +215,10 @@ class OrderController extends GetxController {
       final response = await orderService.wpsReturnApi(
         body,
       ); // create this in service
-      Get.snackbar(
-        "Success",
-        "WPS return completed",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
+      AppAlerts.success("WPS return completed");
       getOrderList();
-    } on AppExceptions catch (e) {
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        duration: const Duration(seconds: 1),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
     } catch (e) {
-      Get.snackbar("Error", e.toString().replaceAll(RegExp(r"<[^>]*>"), ""));
+      handleError(e);
     } finally {
       isLoading.value = false;
     }
@@ -277,31 +241,13 @@ class OrderController extends GetxController {
         "channel_id": channelId,
       };
       final response = await orderService.customerReturnApi(body);
-      Get.snackbar(
-        "Success",
-        "Customer return completed",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
+      AppAlerts.success("Customer return completed");
       getOrderList();
-    } on AppExceptions catch (e) {
-      if (kDebugMode) {
-        print("❌ Exception Details: $e"); // full stack ya raw details
-      }
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        duration: const Duration(seconds: 1),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
     } catch (e) {
       if (kDebugMode) {
         print("❌ Exception Details: $e"); // full stack ya raw details
       }
-      Get.snackbar("Error", e.toString().replaceAll(RegExp(r"<[^>]*>"), ""));
+      handleError(e);
     } finally {
       isLoading.value = false;
     }
@@ -328,12 +274,7 @@ class OrderController extends GetxController {
         addItemRowWithProduct(product);
       }
     } else {
-      Get.snackbar(
-        "Error",
-        "No product found for this SKU",
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-      );
+      AppAlerts.error("No product found for this SKU");
     }
   }
 
@@ -353,27 +294,11 @@ class OrderController extends GetxController {
       final returnOrderResponse = ReturnOrderHistoryResponse.fromJson(response);
       returnOrders.value = returnOrderResponse.data ?? [];
       print("📦 Return Orders fetched: ${returnOrders.length}");
-    } on AppExceptions catch (e) {
-      if (kDebugMode) {
-        print("❌ Exception Details: $e"); // full stack ya raw details
-      }
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        duration: const Duration(seconds: 1),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
     } catch (e) {
+      handleError(e, onRetry: ()=> getReturnOrderHistory(reason, condition));
       if (kDebugMode) {
         print("❌ Exception Details: $e"); // full stack ya raw details
       }
-      Get.snackbar(
-        "Error",
-        "Unable to fetch return order history",
-        backgroundColor: Colors.red,
-      );
     } finally {
       isLoading.value = false;
     }
@@ -410,53 +335,31 @@ class OrderController extends GetxController {
         debugPrint("✅ Dialog closed");
       }
       // await Future.delayed(const Duration(milliseconds: 300));
-      Get.snackbar(
-        "Success",
-        apiResponse.message.isNotEmpty
-            ? apiResponse.message
-            : "Bill created successfully",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        // duration: const Duration(seconds: 2),
-      );
+      if (Get.isDialogOpen ?? false) Get.back();
+      AppAlerts.success(apiResponse.message.isEmpty ? "Bill Created" : apiResponse.message);
       debugPrint("✅ Snackbar shown");
       // ✅ Refresh order list
       await getOrderList();
       debugPrint("✅ Order list refreshed");
       Get.to(() => BillingScreen());
       billingController.refreshBills();
-    } on AppExceptions catch (e) {
-      if (kDebugMode) print("❌ API Error: $e");
-      // ✅ Close dialog first
-      if (Get.isDialogOpen ?? false) {
-        Get.back();
-      }
-      await Future.delayed(const Duration(milliseconds: 300));
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 3),
-      );
     } catch (e) {
+      handleError(e);
       if (kDebugMode) print("❌ Unexpected Error: $e");
       if (kDebugMode) print("❌ Error Type: ${e.runtimeType}");
       // ✅ Close dialog first
-      if (Get.isDialogOpen ?? false) {
-        Get.back();
-      }
-      await Future.delayed(const Duration(milliseconds: 300));
-      Get.snackbar(
-        "Error",
-        "Failed to create bill: ${e.toString()}",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 3),
-      );
+      // if (Get.isDialogOpen ?? false) {
+      //   Get.back();
+      // }
+      // await Future.delayed(const Duration(milliseconds: 300));
+      // Get.snackbar(
+      //   "Error",
+      //   "Failed to create bill: ${e.toString()}",
+      //   snackPosition: SnackPosition.TOP,
+      //   backgroundColor: Colors.red,
+      //   colorText: Colors.white,
+      //   duration: const Duration(seconds: 3),
+      // );
     } finally {
       isLoading.value = false;
     }
@@ -501,6 +404,7 @@ class OrderController extends GetxController {
       int currentQty = int.tryParse(qtyController.text) ?? 0;
       qtyController.text = (currentQty + 1).toString();
 
+
       Get.snackbar(
         "Updated",
         "${product.name} quantity increased to ${currentQty + 1}",
@@ -516,7 +420,7 @@ class OrderController extends GetxController {
         "product": Rx<ProductModel?>(product),
         "quantity": TextEditingController(text: "1"),
         "unitPrice": TextEditingController(
-          text: product.purchasePrice?.toString() ?? "",
+          text: product.purchasePrice.toString() ?? "",
         ),
       });
 

@@ -208,8 +208,7 @@ class BillingCardWidget extends StatelessWidget {
   final BillModel bill;
   final VoidCallback onTap;
 
-  const BillingCardWidget({Key? key, required this.bill, required this.onTap})
-    : super(key: key);
+  const BillingCardWidget({super.key, required this.bill, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

@@ -1,4 +1,3 @@
-import 'package:pdf/widgets.dart';
 
 class AppUrl {
   static const String baseUrl = "https://traders.testwebs.in/api";

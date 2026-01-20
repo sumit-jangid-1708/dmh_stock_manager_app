@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/vendor_controller.dart';
 import 'package:dmj_stock_manager/view_models/services/dashbord_service.dart';
 import 'package:flutter/foundation.dart';
@@ -8,7 +9,7 @@ import 'package:get/get.dart';
 import '../../data/app_exceptions.dart';
 import '../../model/low_stock_product_model.dart';
 
-class DashboardController extends GetxController with WidgetsBindingObserver {
+class DashboardController extends GetxController with WidgetsBindingObserver, BaseController{
   final VendorController vendorController = Get.find();
   final DashbordService dashboardService = DashbordService();
 
@@ -75,23 +76,24 @@ class DashboardController extends GetxController with WidgetsBindingObserver {
       if (kDebugMode) {
         print("✅ Low Stock Items fetched: ${lowStockItems.length}");
       }
-    } on AppExceptions catch (e) {
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    // } on AppExceptions catch (e) {
+    //   Get.snackbar(
+    //     "Error",
+    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+    //     snackPosition: SnackPosition.TOP,
+    //     backgroundColor: Colors.red,
+    //     colorText: Colors.white,
+    //   );
     } catch (e) {
       if (kDebugMode) print("❌ Low Stock Error: $e");
-      Get.snackbar(
-        "Error",
-        "Failed to load Low Stock Products",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      handleError(e, onRetry:()=> getLowStock() );
+      // Get.snackbar(
+      //   "Error",
+      //   "Failed to load Low Stock Products",
+      //   snackPosition: SnackPosition.TOP,
+      //   backgroundColor: Colors.red,
+      //   colorText: Colors.white,
+      // );
     } finally {
       isLoading.value = false;
     }
@@ -99,7 +101,6 @@ class DashboardController extends GetxController with WidgetsBindingObserver {
 
   void _showLowStockDialog() {
     if (Get.isDialogOpen == true) return;
-
     isLowStockDialogOpen.value = true;
 
     Get.dialog(

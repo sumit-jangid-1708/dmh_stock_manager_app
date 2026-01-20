@@ -159,8 +159,9 @@ void showBarcodeDialog(
                         final bytes = response.buffer.asUint8List();
                         if (bytes.length >= 10 &&
                             bytes[0] == 137 &&
-                            bytes[1] == 80)
+                            bytes[1] == 80) {
                           barcodeImages.add(bytes);
+                        }
                       } catch (e) {
                         debugPrint("Error downloading: $e");
                       }

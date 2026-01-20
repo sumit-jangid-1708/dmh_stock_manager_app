@@ -1,3 +1,4 @@
+import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
 import 'package:dmj_stock_manager/view_models/services/billing_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +7,7 @@ import 'package:get/get.dart';
 import '../../data/app_exceptions.dart';
 import '../../model/bill_response_model.dart';
 
-class BillingController extends GetxController {
+class BillingController extends GetxController with BaseController{
   final BillingService billingService = BillingService();
 
   // ✅ Bill list and pagination state
@@ -55,20 +56,15 @@ class BillingController extends GetxController {
         bills.clear();
         hasMore.value = true;
       }
-
       isLoading.value = true;
       final response = await billingService.getBills(page: currentPage.value);
-
       BillsResponseModel billResponse = BillsResponseModel.fromJson(response);
-
       totalCount.value = billResponse.count;
-
       if (refresh) {
         bills.value = billResponse.results;
       } else {
         bills.addAll(billResponse.results);
       }
-
       hasMore.value = billResponse.next != null;
 
       if (kDebugMode) {
@@ -76,47 +72,48 @@ class BillingController extends GetxController {
         print("✅ Total: ${billResponse.count}, Has more: ${hasMore.value}");
       }
 
-    } on AppExceptions catch (e) {
-      if (kDebugMode) {
-        print("❌ Exception Details: $e");
-      }
-
-      // ✅ Check if token expired
-      if (e.toString().contains('Unauthorized') ||
-          e.toString().contains('token_not_valid')) {
-        Get.snackbar(
-          "Session Expired",
-          "Please login again",
-          duration: const Duration(seconds: 2),
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-        );
-
-        // ✅ Clear stored data and redirect to login
-        await Future.delayed(const Duration(seconds: 2));
-        // Get.offAllNamed('/login'); // Uncomment if you have login route
-        return;
-      }
-
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        duration: const Duration(seconds: 2),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    // } on AppExceptions catch (e) {
+    //   if (kDebugMode) {
+    //     print("❌ Exception Details: $e");
+    //   }
+    //
+    //   // ✅ Check if token expired
+    //   if (e.toString().contains('Unauthorized') ||
+    //       e.toString().contains('token_not_valid')) {
+    //     Get.snackbar(
+    //       "Session Expired",
+    //       "Please login again",
+    //       duration: const Duration(seconds: 2),
+    //       snackPosition: SnackPosition.TOP,
+    //       backgroundColor: Colors.orange,
+    //       colorText: Colors.white,
+    //     );
+    //
+    //     // ✅ Clear stored data and redirect to login
+    //     await Future.delayed(const Duration(seconds: 2));
+    //     // Get.offAllNamed('/login'); // Uncomment if you have login route
+    //     return;
+    //   }
+    //
+    //   Get.snackbar(
+    //     "Error",
+    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+    //     duration: const Duration(seconds: 2),
+    //     snackPosition: SnackPosition.TOP,
+    //     backgroundColor: Colors.red,
+    //     colorText: Colors.white,
+    //   );
     } catch (e) {
+      handleError(e, onRetry: ()=> getBillDetails(refresh: refresh));
       if (kDebugMode) print("🚩 Bill Error $e");
-      Get.snackbar(
-        'Error',
-        'Failed to load Bills List: $e',
-        duration: const Duration(seconds: 2),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      // Get.snackbar(
+      //   'Error',
+      //   'Failed to load Bills List: $e',
+      //   duration: const Duration(seconds: 2),
+      //   snackPosition: SnackPosition.TOP,
+      //   backgroundColor: Colors.red,
+      //   colorText: Colors.white,
+      // );
     } finally {
       isLoading.value = false;
     }
@@ -143,6 +140,7 @@ class BillingController extends GetxController {
     } catch (e) {
       if (kDebugMode) print("❌ Load more error: $e");
       currentPage.value--; // Rollback page number
+      handleError(e);
     } finally {
       isLoadingMore.value = false;
     }

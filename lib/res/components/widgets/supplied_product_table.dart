@@ -120,7 +120,7 @@ class SuppliedProductTable extends StatelessWidget {
                         Expanded(
                           flex: 1,
                           child: Text(
-                            product!.suppliedQty.toString(),
+                            product.suppliedQty.toString(),
                             style: const TextStyle(fontSize: 11),
                             textAlign: TextAlign.center,
                           ),
@@ -136,7 +136,7 @@ class SuppliedProductTable extends StatelessWidget {
                       ],
                     ),
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),

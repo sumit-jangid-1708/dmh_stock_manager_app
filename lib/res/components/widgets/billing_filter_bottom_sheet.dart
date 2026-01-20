@@ -33,7 +33,7 @@ class BillingFilterBottomSheet extends StatelessWidget {
             border: Border.all(color: Colors.grey.shade300),
           ),
           child: DropdownButtonFormField<String>(
-            value: selectedValue,
+            initialValue: selectedValue,
             decoration: const InputDecoration(
               border: InputBorder.none, // Removes the default underline
               contentPadding: EdgeInsets.zero,

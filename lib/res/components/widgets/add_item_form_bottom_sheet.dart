@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:dmj_stock_manager/model/hsn_model.dart';
 import 'package:dmj_stock_manager/model/vendor_model.dart';
 import 'package:dmj_stock_manager/res/components/widgets/multi_image_picker_widget.dart';
 import 'package:dmj_stock_manager/utils/app_lists.dart';

@@ -5,7 +5,6 @@ import 'package:dmj_stock_manager/res/components/widgets/statCard.dart';
 import 'package:dmj_stock_manager/res/components/widgets/stock_button_row.dart';
 import 'package:dmj_stock_manager/view/home_screen/low_stock_screen.dart';
 import 'package:dmj_stock_manager/view/home_screen/total_stock_screen.dart';
-import 'package:dmj_stock_manager/view/stock/stock_screen.dart';
 import 'package:dmj_stock_manager/view_models/controller/home_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/stock_controller.dart';
 import 'package:flutter/material.dart';

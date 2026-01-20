@@ -84,7 +84,7 @@ class AddPurchaseBottomSheet extends StatelessWidget {
               _sectionHeader("General Information"),
               const SizedBox(height: 12),
               Obx(() => DropdownButtonFormField<VendorModel>(
-                value: purchaseController.selectedVendor.value,
+                initialValue: purchaseController.selectedVendor.value,
                 hint: const Text("Select Vendor"),
                 isExpanded: true,
                 decoration: _inputDecoration("Vendor *", Icons.person_outline),
@@ -188,7 +188,7 @@ class AddPurchaseBottomSheet extends StatelessWidget {
                             Expanded(
                               child: Obx(() => DropdownButtonFormField<ProductModel>(
                                 isExpanded: true,
-                                value: item.selectedProduct.value,
+                                initialValue: item.selectedProduct.value,
                                 hint: const Text("Select Product"),
                                 decoration: const InputDecoration(
                                   border: InputBorder.none,
@@ -306,7 +306,7 @@ class AddPurchaseBottomSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Obx(() => DropdownButtonFormField<String>(
-                      value: purchaseController.selectedStatus.value,
+                      initialValue: purchaseController.selectedStatus.value,
                       decoration: _inputDecoration(
                         "Status *",
                         Icons.info_outline,

@@ -1,4 +1,6 @@
 import 'package:dmj_stock_manager/model/scan_product_response_model.dart';
+import 'package:dmj_stock_manager/utils/app_alerts.dart';
+import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -7,7 +9,7 @@ import '../../model/generate_barcode_model.dart';
 import '../services/util_service.dart';
 import 'order_controller.dart'; // ← Yeh import add karna
 
-class UtilController extends GetxController {
+class UtilController extends GetxController with BaseController{
   final UtilService utilService = UtilService();
   var isLoading = false.obs;
   var barcodeGenerationLoading = false.obs;
@@ -44,47 +46,25 @@ class UtilController extends GetxController {
         orderController.addScannedProductFromScan(
           scanResponse.product!,
         );
-        Get.snackbar(
-          "Product Found!",
-          "${scanResponse.product!.name} • ${scanResponse.product!.size} • ${scanResponse.product!.color}",
-          duration: const Duration(seconds: 2),
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        AppAlerts.success("Product Found! ${scanResponse.product!.name} • ${scanResponse.product!.size} • ${scanResponse.product!.color}");
       } else {
-        Get.snackbar(
-          "Not Found",
-          "Product with barcode $barcode not found!",
-          duration: const Duration(seconds: 2),
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-        );
+        AppAlerts.error("Product with barcode $barcode not found!");
       }
-
       print(
         "Barcode Scan Success: ${scanResponse.product?.name ?? 'Not found'}",
       );
-    } on AppExceptions catch (e) {
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        duration: const Duration(seconds: 2),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    // } on AppExceptions catch (e) {
+    //   Get.snackbar(
+    //     "Error",
+    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+    //     duration: const Duration(seconds: 2),
+    //     snackPosition: SnackPosition.TOP,
+    //     backgroundColor: Colors.red,
+    //     colorText: Colors.white,
+    //   );
     } catch (e) {
       print("Barcode Scan Error: $e");
-      Get.snackbar(
-        "Scan Failed",
-        "Something went wrong. Try again.",
-        duration: const Duration(seconds: 2),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      handleError(e);
     } finally {
       isLoading.value = false;
     }
@@ -121,25 +101,19 @@ class UtilController extends GetxController {
 
       // ✅ No snackbar here - dialog will show success/error
 
-    } on AppExceptions catch (e) {
-      debugPrint("❌ Barcode generation error: $e");
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-      );
-      rethrow; // ✅ Throw error so dialog can catch it
+    // } on AppExceptions catch (e) {
+    //   debugPrint("❌ Barcode generation error: $e");
+    //   Get.snackbar(
+    //     "Error",
+    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+    //     backgroundColor: Colors.red,
+    //     colorText: Colors.white,
+    //     snackPosition: SnackPosition.TOP,
+    //   );
+    //   rethrow; // ✅ Throw error so dialog can catch it
     } catch (e) {
       debugPrint("❌ Unexpected error: $e");
-      Get.snackbar(
-        "Failed",
-        "Generation failed!",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-      );
+      handleError(e);
       rethrow; // ✅ Throw error so dialog can catch it
     } finally {
       barcodeGenerationLoading.value = false;

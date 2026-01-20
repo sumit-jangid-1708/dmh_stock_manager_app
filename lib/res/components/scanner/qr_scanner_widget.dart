@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:dmj_stock_manager/view_models/controller/util_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -85,7 +84,6 @@ class _QrScannerWidgetState extends State<QrScannerWidget> {
                     for (final barcode in barcodes) {
                       final raw = barcode.rawValue;
                       if (raw == null) continue;
-
                       // prevent duplicate immediate (MobileScanner may fire quickly)
                       controller.stop(); // stop camera detection while processing
                       final product = await utilController.barcodeScanned(raw.trim());

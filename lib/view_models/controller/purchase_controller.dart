@@ -1,4 +1,5 @@
 import 'package:dmj_stock_manager/model/vendor_model.dart';
+import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
 import 'package:dmj_stock_manager/view_models/services/purchase_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../data/app_exceptions.dart';
 import '../../model/product_model.dart';
 import '../../model/purchase_model.dart';
+import '../../utils/app_alerts.dart';
 
 class PurchaseItem {
   final Rx<ProductModel?> selectedProduct = Rx<ProductModel?>(null);
@@ -19,7 +21,7 @@ class PurchaseItem {
   }
 }
 
-class PurchaseController extends GetxController {
+class PurchaseController extends GetxController with BaseController {
   final PurchaseService purchaseService = PurchaseService();
 
   // Form State Variables
@@ -122,26 +124,14 @@ class PurchaseController extends GetxController {
       // Validate vendor selection
       if (selectedVendor.value == null) {
         isLoading.value = false;
-        Get.snackbar(
-          "Error",
-          "Please select a vendor",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        AppAlerts.error("Please select a vendor");
         return;
       }
 
       // Validate bill number
       if (billNumberController.text.isEmpty) {
         isLoading.value = false;
-        Get.snackbar(
-          "Error",
-          "Please enter bill number",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        AppAlerts.error("Please enter a valid bill number");
         return;
       }
 
@@ -161,13 +151,7 @@ class PurchaseController extends GetxController {
       // Validate items
       if (itemList.isEmpty || itemList.any((item) => item["product"] == null)) {
         isLoading.value = false;
-        Get.snackbar(
-          "Error",
-          "Please select products for all items",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        AppAlerts.error("Please select products for all rows");
         return;
       }
 
@@ -185,7 +169,6 @@ class PurchaseController extends GetxController {
         "description": descriptionController.text,
         "items": itemList,
       };
-
       // Add optional fields only if they have values
       if (paidDate.value != null) {
         data["paid_date"] = DateFormat('yyyy-MM-dd').format(paidDate.value!);
@@ -194,25 +177,18 @@ class PurchaseController extends GetxController {
       if (paidAmountController.text.isNotEmpty) {
         data["paid_amount"] = double.tryParse(paidAmountController.text) ?? 0.0;
       }
-
       debugPrint("🚀 Purchase Bill Request: $data");
-
       // API call
       final response = await purchaseService.addPurchaseBill(data);
-
       debugPrint("📦 Raw API Response: $response");
       debugPrint("📦 Response Type: ${response.runtimeType}");
-
       // Parse response - Handle both single object and success message
       String successMessage = 'Purchase bill added successfully ✅';
-
       try {
         if (response is Map<String, dynamic>) {
           // If response has the expected structure
           if (response.containsKey('message')) {
-            final purchaseResponse = PurchaseBillResponseModel.fromJson(
-              response,
-            );
+            final purchaseResponse = PurchaseBillResponseModel.fromJson(response,);
             successMessage = purchaseResponse.message.isNotEmpty
                 ? purchaseResponse.message
                 : successMessage;
@@ -226,59 +202,40 @@ class PurchaseController extends GetxController {
           }
         }
       } catch (parseError) {
-        debugPrint(
-          "⚠️ Response parsing failed, using default message: $parseError",
-        );
+        debugPrint("⚠️ Response parsing failed, using default message: $parseError",);
         // Continue with default success message
       }
-
       debugPrint("✅ Purchase Bill Created Successfully!");
       debugPrint("🎉 Showing success message and closing...");
 
+      AppAlerts.success(successMessage);
       // Clear form first
       clearForm();
-
+      getPurchaseList();
       // Call success callback (this will close the bottom sheet)
       if (onSuccess != null) {
         onSuccess();
       } else {
         Get.back();
       }
-
       // Show success message after a small delay
       await Future.delayed(const Duration(milliseconds: 100));
 
-      Get.snackbar(
-        'Success',
-        successMessage,
-        duration: const Duration(seconds: 2),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-
       debugPrint("✅ Bottom sheet closed and snackbar shown!");
-    } on AppExceptions catch (e) {
-      debugPrint("❌ AppException caught: $e");
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        duration: const Duration(seconds: 2),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    // } on AppExceptions catch (e) {
+    //   debugPrint("❌ AppException caught: $e");
+    //   Get.snackbar(
+    //     "Error",
+    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+    //     duration: const Duration(seconds: 2),
+    //     snackPosition: SnackPosition.TOP,
+    //     backgroundColor: Colors.red,
+    //     colorText: Colors.white,
+    //   );
     } catch (e, stackTrace) {
       debugPrint("❌ General Exception caught: $e");
       debugPrint("❌ Stack Trace: $stackTrace");
-      Get.snackbar(
-        "Error",
-        "Failed to create purchase bill: ${e.toString()}",
-        duration: const Duration(seconds: 3),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-      );
+      handleError(e);
     } finally {
       isLoading.value = false;
       debugPrint("🏁 Purchase bill creation process completed");
@@ -294,19 +251,20 @@ class PurchaseController extends GetxController {
           .map((item) => PurchaseBillModel.fromJson(item))
           .toList();
       _filterPurchases();
-    } on AppExceptions catch (e) {
-      if (kDebugMode) {
-        print("❌ Exception Details: $e"); // full stack ya raw details
-      }
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        duration: const Duration(seconds: 1),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    // } on AppExceptions catch (e) {
+    //   if (kDebugMode) {
+    //     print("❌ Exception Details: $e"); // full stack ya raw details
+    //   }
+    //   Get.snackbar(
+    //     "Error",
+    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+    //     duration: const Duration(seconds: 1),
+    //     snackPosition: SnackPosition.TOP,
+    //     backgroundColor: Colors.red,
+    //     colorText: Colors.white,
+    //   );
     } catch (e) {
+      handleError(e, onRetry: () => getPurchaseList());
       print("Error fetching order list $e");
     } finally {
       isLoading.value = false;

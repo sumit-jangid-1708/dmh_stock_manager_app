@@ -86,17 +86,13 @@ class AppHeader extends StatelessWidget {
               AppGradientButton(
                 onPressed: () async {
                   final orderController = Get.find<OrderController>();
-
                   // ✅ Scanner se product model milega (not SKU string)
                   final scannedProduct = await Get.to(() => const QrScannerWidget());
-
                   if (scannedProduct != null) {
                     // ✅ Product add karo order items mein
                     orderController.addScannedProduct(scannedProduct);
-
                     // ✅ Check if bottom sheet already open hai
                     bool isBottomSheetOpen = Get.isBottomSheetOpen ?? false;
-
                     if (!isBottomSheetOpen) {
                       // ✅ Bottom sheet open karo agar pehle se open nahi hai
                       Get.bottomSheet(

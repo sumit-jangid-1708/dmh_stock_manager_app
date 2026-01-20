@@ -19,7 +19,7 @@ class CustomSearchableDropdown<T> extends StatelessWidget {
   final Widget Function(T)? customItemBuilder;
 
   const CustomSearchableDropdown({
-    Key? key,
+    super.key,
     required this.items,
     required this.selectedItem,
     required this.itemAsString,
@@ -33,7 +33,7 @@ class CustomSearchableDropdown<T> extends StatelessWidget {
     this.iconColor,
     this.height,
     this.customItemBuilder,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +109,7 @@ class _SearchDialog<T> extends StatefulWidget {
   final void Function(T?)? onChanged;
 
   const _SearchDialog({
-    Key? key,
+    super.key,
     required this.items,
     required this.selectedItem,
     required this.itemAsString,
@@ -119,7 +119,7 @@ class _SearchDialog<T> extends StatefulWidget {
     required this.searchHint,
     this.customItemBuilder,
     this.onChanged,
-  }) : super(key: key);
+  });
 
   @override
   State<_SearchDialog<T>> createState() => _SearchDialogState<T>();

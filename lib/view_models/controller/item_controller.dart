@@ -3,6 +3,8 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:dmj_stock_manager/model/hsn_model.dart';
 import 'package:dmj_stock_manager/model/product_model.dart';
+import 'package:dmj_stock_manager/utils/app_alerts.dart';
+import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
 import 'package:dmj_stock_manager/view_models/services/items_service%20.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +21,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../data/app_exceptions.dart';
 import '../../utils/app_lists.dart';
 
-class ItemController extends GetxController {
+class ItemController extends GetxController with BaseController{
   final ItemService itemService = ItemService();
   final products = <ProductModel>[].obs;
   var isLoading = false.obs;
@@ -143,38 +145,6 @@ class ItemController extends GetxController {
       rethrow; // Let dialog handle the error
     }
   }
-  // Future<void> printBarcode(Uint8List imageBytes, ) async {
-  //   try {
-  //     final pdf = pw.Document();
-  //
-  //     final image = pw.MemoryImage(imageBytes);
-  //
-  //     pdf.addPage(
-  //       pw.Page(
-  //         pageFormat: PdfPageFormat.a4,
-  //         build: (pw.Context context) {
-  //           return pw.Center(
-  //             child: pw.Column(
-  //               mainAxisAlignment: pw.MainAxisAlignment.center,
-  //               children: [
-  //                 pw.Text('Product Barcode', style: pw.TextStyle(fontSize: 20)),
-  //                 pw.SizedBox(height: 20),
-  //                 pw.Image(image, width: 230), // 👈 API Image
-  //               ],
-  //             ),
-  //           );
-  //         },
-  //       ),
-  //     );
-  //
-  //     // 🔹 Print / Save as PDF
-  //     await Printing.layoutPdf(
-  //       onLayout: (PdfPageFormat format) async => pdf.save(),
-  //     );
-  //   } catch (e) {
-  //     print("Error printing barcode: $e");
-  //   }
-  // }
 
   //--------------------------Show products api-------------------------------
 
@@ -183,41 +153,30 @@ class ItemController extends GetxController {
     try {
       final response = await itemService.showProducts();
       final List<dynamic> data = response;
-
       // fill products
       products.value = data
           .map<ProductModel>((item) => ProductModel.fromJson(item))
           .toList();
-
       // ✅ Sort products by ID (latest first)
       products.sort((a, b) => b.id.compareTo(a.id));
-
       // ✅ make filteredProducts same as products initially
       filteredProducts.assignAll(products);
-
       print("✅ Products fetched: ${products.length}");
-    } on AppExceptions catch (e) {
-      if (kDebugMode) {
-        print("❌ Exception Details: $e"); // full stack ya raw details
-      }
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        duration: const Duration(seconds: 1),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    // } on AppExceptions catch (e) {
+    //   if (kDebugMode) {
+    //     print("❌ Exception Details: $e"); // full stack ya raw details
+    //   }
+    //   Get.snackbar(
+    //     "Error",
+    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+    //     duration: const Duration(seconds: 1),
+    //     snackPosition: SnackPosition.TOP,
+    //     backgroundColor: Colors.red,
+    //     colorText: Colors.white,
+    //   );
     } catch (e) {
       print("🚩 Product Error $e");
-      Get.snackbar(
-        'Error',
-        'Failed to load Product List: $e',
-        duration: const Duration(seconds: 1),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      handleError(e, onRetry: ()=> getProducts());
     } finally {
       isLoading.value = false;
     }
@@ -246,38 +205,33 @@ class ItemController extends GetxController {
 
     try {
       isLoading.value = true;
-
       final response = await itemService.addProductApi(
         fields: fields,
         images: images, // ⬅️ use passed images instead of selectedImage
       );
-
       final product = ProductModel.fromJson(response);
       // products.add(product);
       await getProducts();
-
-      Get.snackbar("Success", "Product added successfully");
+      AppAlerts.success("Product added successfully");
 
       clearAddProductForm();
-    } on AppExceptions catch (e) {
-      if (kDebugMode) {
-        print("❌ Exception Details: $e"); // full stack ya raw details
-      }
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        duration: const Duration(seconds: 1),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    // } on AppExceptions catch (e) {
+    //   if (kDebugMode) {
+    //     print("❌ Exception Details: $e"); // full stack ya raw details
+    //   }
+    //   Get.snackbar(
+    //     "Error",
+    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+    //     duration: const Duration(seconds: 1),
+    //     snackPosition: SnackPosition.TOP,
+    //     backgroundColor: Colors.red,
+    //     colorText: Colors.white,
+    //   );
     } catch (e) {
       if (kDebugMode) {
-        print(
-          "🚩 Add product Error ❌ Exception Details: $e",
-        ); // full stack ya raw details
+        print("🚩 Add product Error ❌ Exception Details: $e",); // full stack ya raw details
       }
-      Get.snackbar('Error', 'Failed to add Product');
+      handleError(e);
     } finally {
       isLoading.value = false;
     }
@@ -303,10 +257,7 @@ class ItemController extends GetxController {
     try {
       var status = await Permission.storage.request();
       if (!status.isGranted) {
-        Get.snackbar(
-          "Permission Denied",
-          "Storage permission is required to export Excel",
-        );
+        AppAlerts.error("Storage permission is required to export Excel");
         return;
       }
       final Workbook workbook = Workbook();
@@ -322,7 +273,7 @@ class ItemController extends GetxController {
       for (int i = 0; i < products.length; i++) {
         final p = products[i];
         final row = i + 2;
-        sheet.getRangeByName('A$row').setNumber(p.id?.toDouble() ?? 0);
+        sheet.getRangeByName('A$row').setNumber(p.id.toDouble() ?? 0);
         sheet.getRangeByName('B$row').setText(p.name ?? "");
         sheet.getRangeByName('C$row').setText(p.size ?? "");
         sheet.getRangeByName('D$row').setText(p.color ?? "");
@@ -334,40 +285,35 @@ class ItemController extends GetxController {
       workbook.dispose();
 
       final directory = await getApplicationDocumentsDirectory();
-      final path = "${directory!.path}/products.xlsx";
+      final path = "${directory.path}/products.xlsx";
       final file = File(path);
       await file.writeAsBytes(bytes, flush: true);
 
       await OpenFile.open(path);
-      Get.snackbar(
-        "Success",
-        "Excel saved at $path",
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 3),
-      );
-    } on AppExceptions catch (e) {
-      if (kDebugMode) {
-        print("❌ Exception Details: $e"); // full stack ya raw details
-      }
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        duration: const Duration(seconds: 1),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      AppAlerts.success("Excel exported successfully!");
+      // Get.snackbar(
+      //   "Success",
+      //   "Excel saved at $path",
+      //   snackPosition: SnackPosition.TOP,
+      //   duration: const Duration(seconds: 3),
+      // );
+    // } on AppExceptions catch (e) {
+    //   if (kDebugMode) {
+    //     print("❌ Exception Details: $e"); // full stack ya raw details
+    //   }
+    //   Get.snackbar(
+    //     "Error",
+    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+    //     duration: const Duration(seconds: 1),
+    //     snackPosition: SnackPosition.TOP,
+    //     backgroundColor: Colors.red,
+    //     colorText: Colors.white,
+    //   );
     } catch (e) {
       if (kDebugMode) {
         print("❌ Exception Details: $e"); // full stack ya raw details
       }
-      Get.snackbar(
-        "Error",
-        e.toString(),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-      );
-      print("❌ Error exporting Excel: $e");
+      handleError(e);
     }
   }
 
@@ -406,31 +352,23 @@ class ItemController extends GetxController {
       if (kDebugMode) {
         print("✅ HSN List fetched: ${hsnList.length}");
       }
-    } on AppExceptions catch (e) {
-      if (kDebugMode) {
-        print("❌ HSN API Exception: $e");
-      }
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 2),
-      );
+    // } on AppExceptions catch (e) {
+    //   if (kDebugMode) {
+    //     print("❌ HSN API Exception: $e");
+    //   }
+    //   Get.snackbar(
+    //     "Error",
+    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+    //     snackPosition: SnackPosition.TOP,
+    //     backgroundColor: Colors.red,
+    //     colorText: Colors.white,
+    //     duration: const Duration(seconds: 2),
+    //   );
     } catch (e) {
       if (kDebugMode) {
         print("❌ HSN Error: $e");
       }
-
-      Get.snackbar(
-        "Error",
-        "Failed to load HSN list",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 2),
-      );
+      handleError(e);
     } finally {
       isLoading.value = false;
     }
@@ -439,56 +377,32 @@ class ItemController extends GetxController {
   Future<void> addHsn(String hsnCode, double gstPercentage) async {
     final alreadyExistsLocally = hsnList.any((e) => e.hsnCode == hsnCode);
     if (alreadyExistsLocally) {
-      Get.snackbar(
-        "Info",
-        "This HSN code already exists in the list",
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+    AppAlerts.error("This Hsn code is already exists");
       return;
     }
-
     Map<String, dynamic> data = {
       "hsn_code": hsnCode,
       "gst_percentage": gstPercentage,
     };
-
     try {
       isLoading.value = true;
-
       final response = await itemService.addHsn(data);
-
       final newHsn = HsnGstModel.fromJson(response);
-
       hsnList.add(newHsn);
-
-      Get.snackbar(
-        "Success",
-        "HSN code added successfully",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 1),
-      );
+      AppAlerts.success("Hsn added successfully");
       if (kDebugMode) {
         print("✅ HSN added: $hsnCode with GST: $gstPercentage%");
       }
-    } on AppExceptions catch (e) {
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    // } on AppExceptions catch (e) {
+    //   Get.snackbar(
+    //     "Error",
+    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+    //     snackPosition: SnackPosition.TOP,
+    //     backgroundColor: Colors.red,
+    //     colorText: Colors.white,
+    //   );
     } catch (e) {
-      Get.snackbar(
-        "Error",
-        "Failed to add HSN code: $e",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      handleError(e);
     } finally {
       isLoading.value = false;
     }
@@ -523,5 +437,37 @@ class ItemController extends GetxController {
 //     Get.snackbar('Error', 'Failed to add Product');
 //   } finally {
 //     isLoading.value = false;
+//   }
+// }
+// Future<void> printBarcode(Uint8List imageBytes, ) async {
+//   try {
+//     final pdf = pw.Document();
+//
+//     final image = pw.MemoryImage(imageBytes);
+//
+//     pdf.addPage(
+//       pw.Page(
+//         pageFormat: PdfPageFormat.a4,
+//         build: (pw.Context context) {
+//           return pw.Center(
+//             child: pw.Column(
+//               mainAxisAlignment: pw.MainAxisAlignment.center,
+//               children: [
+//                 pw.Text('Product Barcode', style: pw.TextStyle(fontSize: 20)),
+//                 pw.SizedBox(height: 20),
+//                 pw.Image(image, width: 230), // 👈 API Image
+//               ],
+//             ),
+//           );
+//         },
+//       ),
+//     );
+//
+//     // 🔹 Print / Save as PDF
+//     await Printing.layoutPdf(
+//       onLayout: (PdfPageFormat format) async => pdf.save(),
+//     );
+//   } catch (e) {
+//     print("Error printing barcode: $e");
 //   }
 // }

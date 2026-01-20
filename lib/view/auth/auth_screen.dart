@@ -1,5 +1,4 @@
 import 'package:dmj_stock_manager/res/assets/images_assets.dart';
-import 'package:dmj_stock_manager/view/dashboard/dashboard.dart';
 import 'package:dmj_stock_manager/view_models/controller/auth/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

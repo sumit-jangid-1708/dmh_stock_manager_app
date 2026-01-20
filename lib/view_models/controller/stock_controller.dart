@@ -1,4 +1,6 @@
 import 'package:dmj_stock_manager/model/inventory_model.dart';
+import 'package:dmj_stock_manager/utils/app_alerts.dart';
+import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
 import 'package:dmj_stock_manager/view_models/services/stock_service.dart';
 import 'package:flutter/foundation.dart';
@@ -8,7 +10,7 @@ import 'package:get/get.dart';
 import '../../data/app_exceptions.dart';
 import '../../model/product_model.dart';
 
-class StockController extends GetxController {
+class StockController extends GetxController with BaseController{
   //form key
   final StockService stockService = StockService();
   final formKey = GlobalKey<FormState>();
@@ -32,27 +34,20 @@ class StockController extends GetxController {
 
       inventoryList.sort((a, b)=> b.id.compareTo(a.id));
 
-    }on AppExceptions catch (e) {
-      if (kDebugMode) {
-        print("❌ Exception Details: $e"); // full stack ya raw details
-      }
-      Get.snackbar(
-        "Error", e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        duration: const Duration(seconds: 1),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    // }on AppExceptions catch (e) {
+    //   if (kDebugMode) {
+    //     print("❌ Exception Details: $e"); // full stack ya raw details
+    //   }
+    //   Get.snackbar(
+    //     "Error", e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+    //     duration: const Duration(seconds: 1),
+    //     snackPosition: SnackPosition.TOP,
+    //     backgroundColor: Colors.red,
+    //     colorText: Colors.white,
+    //   );
     } catch (e) {
       print("Error fetching Inventory: $e");
-      Get.snackbar(
-        'Error',
-        'Failed to load Vendor List: $e',
-        duration: const Duration(seconds: 1),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      handleError(e, onRetry: ()=> fetchInventoryList());
     } finally {
       isLoading.value = false;
     }
@@ -77,35 +72,30 @@ class StockController extends GetxController {
       final product = InventoryModel.formJson(response);
       inventoryList.add(product);
       await fetchInventoryList();
-      Get.snackbar(
-        "Success",
-        "Quantity added successfully",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-    } on AppExceptions catch (e) {
-      if (kDebugMode) {
-        print("❌ Exception Details: $e"); // full stack ya raw details
-      }
-      Get.snackbar(
-        "Error", e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        duration: const Duration(seconds: 1),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      AppAlerts.success("Quantity added successfully");
+      // Get.snackbar(
+      //   "Success",
+      //   "Quantity added successfully",
+      //   snackPosition: SnackPosition.TOP,
+      //   backgroundColor: Colors.green,
+      //   colorText: Colors.white,
+      // );
+    // } on AppExceptions catch (e) {
+    //   if (kDebugMode) {
+    //     print("❌ Exception Details: $e"); // full stack ya raw details
+    //   }
+    //   Get.snackbar(
+    //     "Error", e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+    //     duration: const Duration(seconds: 1),
+    //     snackPosition: SnackPosition.TOP,
+    //     backgroundColor: Colors.red,
+    //     colorText: Colors.white,
+    //   );
     }catch (e) {
       if (kDebugMode) {
         print("🚩 Add Inventory Error ❌ Exception Details: $e"); // full stack ya raw details
       }
-      Get.snackbar(
-        'Error',
-        'Failed to add quantity',
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      handleError(e);
     } finally {
       isLoading.value = false;
     }
@@ -129,39 +119,25 @@ class StockController extends GetxController {
       final response = await stockService.inventoryAdjustApi(data);
       // Agar success mila to
       if (response["new_quantity"] != null) {
-        Get.snackbar(
-          "Success",
-          "Inventory adjusted. New qty: ${response["new_quantity"]}",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        AppAlerts.success("Inventory adjusted. New qty: ${response["new_quantity"]}");
       }
       fetchInventoryList(); // refresh karo
-    }on AppExceptions catch (e) {
-      if (kDebugMode) {
-        print("❌ Exception Details: $e"); // full stack ya raw details
-      }
-      Get.snackbar(
-        "Error", e.toString(),
-        duration: const Duration(seconds: 1),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    // }on AppExceptions catch (e) {
+    //   if (kDebugMode) {
+    //     print("❌ Exception Details: $e"); // full stack ya raw details
+    //   }
+    //   Get.snackbar(
+    //     "Error", e.toString(),
+    //     duration: const Duration(seconds: 1),
+    //     snackPosition: SnackPosition.TOP,
+    //     backgroundColor: Colors.red,
+    //     colorText: Colors.white,
+    //   );
     } catch (e) {
       if (kDebugMode) {
         print("❌ Exception Details: $e"); // full stack ya raw details
       }
-      // Agar backend error deta h jaise "Cannot reduce below zero"
-      Get.snackbar(
-        "Error",
-        e.toString().contains("Cannot reduce below zero")
-            ? "Not enough stock to reduce!"
-            : "Failed to adjust inventory",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      print("🚩 Adjust Inventory error: $e");
+      handleError(e);
     } finally {
       isLoading.value = false;
     }

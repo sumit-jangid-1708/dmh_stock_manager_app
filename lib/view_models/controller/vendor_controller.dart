@@ -1,15 +1,15 @@
 import 'package:dmj_stock_manager/data/app_exceptions.dart';
 import 'package:dmj_stock_manager/model/vendor_model.dart';
 import 'package:dmj_stock_manager/utils/utils.dart';
+import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
 import 'package:dmj_stock_manager/view_models/services/vendor_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 
 import '../../model/vender_overview_model.dart';
 
-class VendorController extends GetxController {
+class VendorController extends GetxController with BaseController{
   var expandedList = <bool>[].obs;
   final vendors = <VendorModel>[].obs; // Store vendors
   var filteredVendors = <VendorModel>[].obs;
@@ -106,33 +106,24 @@ final RxString gstError = ''.obs;
     isLoading.value = true;
     try {
       final response = await _vendorService.getVendors();
-      final List<dynamic> data = response;
-
-      // fill vendors
+      final List<dynamic> data = response; // fill vendors
       vendors.value = data.map((item) => VendorModel.fromJson(item)).toList();
-
-      // ✅ Sort vendors by ID (latest first)
-      vendors.sort((a, b) => b.id.compareTo(a.id));
-
-      // update filtered list
-      filteredVendors.assignAll(vendors);
-
-      // update expanded list
-      expandedList.value = List.generate(vendors.length, (_) => false);
-
+      vendors.sort((a, b) => b.id.compareTo(a.id)); // ✅ Sort vendors by ID (latest first)
+      filteredVendors.assignAll(vendors); // update filtered list
+      expandedList.value = List.generate(vendors.length, (_) => false); // update expanded list
       print("✅ Vendors fetched: ${vendors.length}");
-    } on AppExceptions catch (e) {
-      if (kDebugMode) {
-        print("❌ Exception Details: $e"); // full stack ya raw details
-      }
-      Get.snackbar(
-        "Error",
-        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-        duration: const Duration(seconds: 1),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    // } on AppExceptions catch (e) {
+    //   if (kDebugMode) {
+    //     print("❌ Exception Details: $e"); // full stack ya raw details
+    //   }
+    //   Get.snackbar(
+    //     "Error",
+    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+    //     duration: const Duration(seconds: 1),
+    //     snackPosition: SnackPosition.TOP,
+    //     backgroundColor: Colors.red,
+    //     colorText: Colors.white,
+    //   );
     } catch (e) {
       if (kDebugMode) {
         print("🚩Vendor Error ❌ Exception Details: $e");

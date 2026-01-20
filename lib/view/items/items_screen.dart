@@ -4,7 +4,6 @@ import 'package:dmj_stock_manager/res/components/barcode_dialog.dart';
 import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/res/components/widgets/iamge_share_dialog.dart';
 import 'package:dmj_stock_manager/res/components/widgets/product_list_card_widget.dart';
-import 'package:dmj_stock_manager/res/components/widgets/summary_card_widget.dart';
 import 'package:dmj_stock_manager/view/stock/stock_screen.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/stock_controller.dart';
