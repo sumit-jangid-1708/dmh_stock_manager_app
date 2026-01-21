@@ -18,6 +18,7 @@ import '../../model/product_model.dart';
 import '../../model/return_order_history_model.dart';
 import '../../model/scan_product_response_model.dart';
 import '../../view/orders/order_create_bottom_sheet.dart';
+import 'auth/auth_controller.dart';
 
 class OrderController extends GetxController with BaseController{
   final OrderService orderService = OrderService();
@@ -106,10 +107,18 @@ class OrderController extends GetxController with BaseController{
   }
 
   @override
-  void onInit() {
-    super.onInit();
+  void onReady() {
+    super.onReady();
+    // final token = Get.find<AuthController>();
+    // if (token == null) return;
     getOrderList();
   }
+
+  // @override
+  // void onInit() {
+  //   super.onInit();
+  //   getOrderList();
+  // }
 
   @override
   void onClose() {

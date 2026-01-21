@@ -9,6 +9,19 @@ import '../services/util_service.dart';
 import 'order_controller.dart';
 
 class UtilController extends GetxController with BaseController {
+  late final OrderController orderController;
+
+  @override
+  void onReady() {
+    super.onReady();
+
+    if (!Get.isRegistered<OrderController>()) {
+      throw Exception("OrderController not found. Wrong binding.");
+    }
+
+    orderController = Get.find<OrderController>();
+  }
+
   final UtilService utilService = UtilService();
   var isLoading = false.obs;
   var barcodeGenerationLoading = false.obs;
@@ -16,7 +29,7 @@ class UtilController extends GetxController with BaseController {
   var foundProduct = Rxn<ScanProductModel>();
   var serialScanned = RxnInt();
   var generatedBarcodes = Rxn<BarcodeListResponseModel>();
-  final orderController = Get.find<OrderController>();
+  // final orderController = Get.find<OrderController>();
 
   Future<ScanProductModel?> barcodeScanned(String barcode) async {
     if (isLoading.value) return null;
@@ -28,7 +41,6 @@ class UtilController extends GetxController with BaseController {
     try {
       final response = await utilService.barcodeScan(barcode);
       final scanResponse = ScanProductResponseModel.fromJson(response);
-
       scannedProduct.value = scanResponse;
       foundProduct.value = scanResponse.product;
       serialScanned.value = scanResponse.serialScanned ?? 0;
