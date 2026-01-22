@@ -23,7 +23,6 @@ class DashboardScreen extends StatelessWidget {
   ];
 
   final List<String> labels = ["Home", "Items", "Vendors", "Orders"];
-
   DashboardScreen({super.key});
 
   @override
@@ -35,117 +34,127 @@ class DashboardScreen extends StatelessWidget {
       OrderScreen(),
     ];
 
-    return Obx(() {
-      return Scaffold(
-        key: scaffoldKey,
-        drawer: Drawer(
-          child: Sidebar(
-            onItemTap: (key) {
-              if (key == "logout") {
-                Get.offAll(() => AuthScreen());
-              } else if (key == "setting") {
-                // Setting logic
-              }
-            },
-          ),
-        ),
-        backgroundColor: Colors.grey.shade50,
-        bottomNavigationBar: _buildModernBottomBar(),
-        body: Stack(
-          children: [
-            // Main Content
-            Padding(
-              padding: const EdgeInsets.only(top: 70),
-              child: screens[dashboardController.currentIndex.value],
+    return WillPopScope(
+      onWillPop: () async {
+        final controller = dashboardController;
+        if (controller.currentIndex.value != 0) {
+          controller.changeTab(0);
+          return false; //stop app for closing
+        }
+        return true; // on home : allow app to close
+      },
+      child: Obx(() {
+        return Scaffold(
+          key: scaffoldKey,
+          drawer: Drawer(
+            child: Sidebar(
+              onItemTap: (key) {
+                if (key == "logout") {
+                  Get.offAll(() => AuthScreen());
+                } else if (key == "setting") {
+                  // Setting logic
+                }
+              },
             ),
+          ),
+          backgroundColor: Colors.grey.shade50,
+          bottomNavigationBar: _buildModernBottomBar(),
+          body: Stack(
+            children: [
+              // Main Content
+              Padding(
+                padding: const EdgeInsets.only(top: 70),
+                child: screens[dashboardController.currentIndex.value],
+              ),
 
-            // Top Header
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: SafeArea(
-                  bottom: false,
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 5),
-                        child: AppHeader(scaffoldKey: scaffoldKey),
-                      ),
-                      Container(
-                        height: 1,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.transparent,
-                              Colors.grey.shade300,
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
+              // Top Header
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
                       ),
                     ],
                   ),
-                ),
-              ),
-            ),
-
-            // Floating Action Button (Only on Items tab)
-            if (dashboardController.currentIndex.value == 1)
-              Positioned(
-                bottom: 20,
-                right: 20,
-                child: GestureDetector(
-                  onTap: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (_) => AddItemFormBottomSheet(),
-                    );
-                  },
-                  child: Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      // shape: BoxShape.circle,
-                      borderRadius: BorderRadius.circular(15),
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF1A1A4F), Color(0xFF2D2D7F)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Color(0xFF1A1A4F).withOpacity(0.4),
-                          blurRadius: 12,
-                          offset: Offset(0, 6),
+                  child: SafeArea(
+                    bottom: false,
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 5),
+                          child: AppHeader(scaffoldKey: scaffoldKey),
+                        ),
+                        Container(
+                          height: 1,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.transparent,
+                                Colors.grey.shade300,
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
                         ),
                       ],
-                    ),
-                    child: Icon(
-                      Icons.add_rounded,
-                      color: Colors.white,
-                      size: 28,
                     ),
                   ),
                 ),
               ),
-          ],
-        ),
-      );
-    });
+
+              // Floating Action Button (Only on Items tab)
+              if (dashboardController.currentIndex.value == 1)
+                Positioned(
+                  bottom: 20,
+                  right: 20,
+                  child: GestureDetector(
+                    onTap: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => AddItemFormBottomSheet(),
+                      );
+                    },
+                    child: Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        // shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(15),
+                        gradient: LinearGradient(
+                          colors: [Color(0xFF1A1A4F), Color(0xFF2D2D7F)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0xFF1A1A4F).withOpacity(0.4),
+                            blurRadius: 12,
+                            offset: Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.add_rounded,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      }),
+    );
   }
 
   Widget _buildModernBottomBar() {

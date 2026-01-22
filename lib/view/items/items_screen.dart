@@ -15,6 +15,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../../model/product_model.dart';
+import '../../utils/app_alerts.dart';
 
 class ItemsScreen extends StatelessWidget {
   final ItemController itemController = Get.put(ItemController());
@@ -100,26 +101,13 @@ class ItemsScreen extends StatelessWidget {
                         ],
                         borderRadius: BorderRadius.circular(15),
                       ),
-                      child: ElevatedButton(
+                      child: AppGradientButton(
                         onPressed: () {
                           showProductSelectionDialog(
                             context,
                           ); // 👈 Dialog open hoga
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              15,
-                            ), // Square shape
-                          ),
-                          padding: EdgeInsets.zero,
-                        ),
-                        child: const Icon(
-                          Icons.print,
-                          color: Colors.white,
-                          size: 22,
-                        ),
+                        icon: Icons.print,
                       ),
                     ),
                   ],
@@ -185,134 +173,228 @@ class ItemsScreen extends StatelessWidget {
 
 Future<void> showProductSelectionDialog(BuildContext context) async {
   final itemController = Get.find<ItemController>();
-  final products =
-      itemController.filteredProducts; // or itemController.products
+  // Local reactive list for selection
+  final RxSet<int> selectedIds = <int>{}.obs;
 
-  // local selection state inside the dialog
-  final Set<int> selectedIds = <int>{};
+  Get.bottomSheet(
+    SizedBox(
+      height: Get.height * 0.8, // 80% screen height
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        child: Column(
+          children: [
+            // Handle bar
+            Container(width: 45, height: 5, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10))),
+            const SizedBox(height: 15),
 
-  await showDialog(
-    context: context,
-    builder: (_) {
-      bool selectAll = false;
-
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return Dialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text("Select Products", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A1A4F))),
+                // Select All / Clear All Logic
+                Obx(() => TextButton(
+                  onPressed: () {
+                    if (selectedIds.length == itemController.filteredProducts.length) {
+                      selectedIds.clear();
+                    } else {
+                      selectedIds.addAll(itemController.filteredProducts.map((p) => p.id));
+                    }
+                  },
+                  child: Text(selectedIds.length == itemController.filteredProducts.length ? "Clear All" : "Select All"),
+                )),
+              ],
             ),
-            child: SizedBox(
-              width: double.maxFinite,
-              height: MediaQuery.of(context).size.height * 0.7,
-              child: Column(
-                children: [
-                  ListTile(
-                    title: const Text(
-                      "Select Products",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    trailing: TextButton(
-                      onPressed: () {
-                        setState(() {
-                          if (selectAll) {
-                            selectedIds.clear();
-                            selectAll = false;
-                          } else {
-                            selectedIds.clear();
-                            for (var p in products) {
-                              selectedIds.add(p.id);
-                            }
-                            selectAll = true;
-                          }
-                        });
-                      },
-                      child: Text(selectAll ? "Clear All" : "Select All"),
-                    ),
-                  ),
-                  const Divider(height: 1),
-                  Expanded(
-                    child: products.isEmpty
-                        ? const Center(child: Text("No products available"))
-                        : ListView.builder(
-                            itemCount: products.length,
-                            itemBuilder: (context, index) {
-                              final p = products[index];
-                              final checked = selectedIds.contains(p.id);
-                              return CheckboxListTile(
-                                value: checked,
-                                title: Text(p.name),
-                                subtitle: Text(
-                                  "${p.size ?? ''} • ${p.color ?? ''} • ${p.sku ?? ''}",
-                                ),
-                                onChanged: (v) => setState(() {
-                                  if (v == true) {
-                                    selectedIds.add(p.id);
-                                  } else {
-                                    selectedIds.remove(p.id);
-                                  }
-                                  selectAll =
-                                      selectedIds.length == products.length;
-                                }),
-                              );
-                            },
-                          ),
-                  ),
-                  const Divider(height: 1),
-                  Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Row(
-                      children: [
-                        TextButton(
-                          onPressed: () {
-                            Get.back();
-                          },
-                          child: const Text("Cancel"),
+            const Divider(),
+
+            // List Area
+            Expanded(
+              child: Obx(() {
+                if (itemController.filteredProducts.isEmpty) {
+                  return const Center(child: Text("No products available"));
+                }
+                return ListView.builder(
+                  itemCount: itemController.filteredProducts.length,
+                  itemBuilder: (context, index) {
+                    final p = itemController.filteredProducts[index];
+                    return Obx(() {
+                      final isSelected = selectedIds.contains(p.id);
+                      return ListTile(
+                        onTap: () => isSelected ? selectedIds.remove(p.id) : selectedIds.add(p.id),
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                        subtitle: Text("SKU: ${p.sku} | Size: ${p.size}", style: const TextStyle(fontSize: 12)),
+                        trailing: Checkbox(
+                          activeColor: const Color(0xFF1A1A4F),
+                          value: isSelected,
+                          onChanged: (v) => v! ? selectedIds.add(p.id) : selectedIds.remove(p.id),
                         ),
-                        const Spacer(),
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.print),
-                          label: const Text(
-                            "Print Barcodes",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1A1A4F),
-                          ),
-                          onPressed: () async {
-                            final selectedProducts = products
-                                .where((p) => selectedIds.contains(p.id))
-                                .toList();
-                            if (selectedProducts.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    "Select at least one product to print.",
-                                  ),
-                                ),
-                              );
-                              return;
-                            }
-                            Get.back(); // close selection dialog
-                            await _printSelectedProducts(
-                              context,
-                              selectedProducts,
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                      );
+                    });
+                  },
+                );
+              }),
             ),
-          );
-        },
-      );
-    },
+
+            const SizedBox(height: 15),
+
+            // Print Button
+            Obx(() => AppGradientButton(
+              width: double.infinity,
+              height: 50,
+              onPressed: selectedIds.isEmpty
+                  ? null // Disable button if nothing selected
+                  : () async {
+                final selectedList = itemController.filteredProducts
+                    .where((p) => selectedIds.contains(p.id))
+                    .toList();
+                Get.back(); // Close sheet
+                // Make sure this function exists in your screen/controller
+                await _printSelectedProducts(context, selectedList);
+              },
+              text: "Print ${selectedIds.length} Barcodes",
+            )),
+          ],
+        ),
+      ),
+    ),
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
   );
 }
+// Future<void> showProductSelectionDialog(BuildContext context) async {
+//   final itemController = Get.find<ItemController>();
+//   final products =
+//       itemController.filteredProducts; // or itemController.products
+//
+//   // local selection state inside the dialog
+//   final Set<int> selectedIds = <int>{};
+//
+//   await showDialog(
+//     context: context,
+//     builder: (_) {
+//       bool selectAll = false;
+//
+//       return StatefulBuilder(
+//         builder: (context, setState) {
+//           return Dialog(
+//             backgroundColor: Colors.white,
+//             shape: RoundedRectangleBorder(
+//               borderRadius: BorderRadius.circular(12),
+//             ),
+//             child: SizedBox(
+//               width: double.maxFinite,
+//               height: MediaQuery.of(context).size.height * 0.7,
+//               child: Column(
+//                 children: [
+//                   ListTile(
+//                     title: const Text(
+//                       "Select Products",
+//                       style: TextStyle(fontWeight: FontWeight.bold),
+//                     ),
+//                     trailing: TextButton(
+//                       onPressed: () {
+//                         setState(() {
+//                           if (selectAll) {
+//                             selectedIds.clear();
+//                             selectAll = false;
+//                           } else {
+//                             selectedIds.clear();
+//                             for (var p in products) {
+//                               selectedIds.add(p.id);
+//                             }
+//                             selectAll = true;
+//                           }
+//                         });
+//                       },
+//                       child: Text(selectAll ? "Clear All" : "Select All"),
+//                     ),
+//                   ),
+//                   const Divider(height: 1),
+//                   Expanded(
+//                     child: products.isEmpty
+//                         ? const Center(child: Text("No products available"))
+//                         : ListView.builder(
+//                             itemCount: products.length,
+//                             itemBuilder: (context, index) {
+//                               final p = products[index];
+//                               final checked = selectedIds.contains(p.id);
+//                               return CheckboxListTile(
+//                                 value: checked,
+//                                 title: Text(p.name),
+//                                 subtitle: Text(
+//                                   "${p.size ?? ''} • ${p.color ?? ''} • ${p.sku ?? ''}",
+//                                 ),
+//                                 onChanged: (v) => setState(() {
+//                                   if (v == true) {
+//                                     selectedIds.add(p.id);
+//                                   } else {
+//                                     selectedIds.remove(p.id);
+//                                   }
+//                                   selectAll =
+//                                       selectedIds.length == products.length;
+//                                 }),
+//                               );
+//                             },
+//                           ),
+//                   ),
+//                   const Divider(height: 1),
+//                   Padding(
+//                     padding: const EdgeInsets.all(12.0),
+//                     child: Row(
+//                       children: [
+//                         TextButton(
+//                           onPressed: () {
+//                             Get.back();
+//                           },
+//                           child: const Text("Cancel"),
+//                         ),
+//                         const Spacer(),
+//                         ElevatedButton.icon(
+//                           icon: const Icon(Icons.print),
+//                           label: const Text(
+//                             "Print Barcodes",
+//                             style: TextStyle(color: Colors.white),
+//                           ),
+//                           style: ElevatedButton.styleFrom(
+//                             backgroundColor: const Color(0xFF1A1A4F),
+//                           ),
+//                           onPressed: () async {
+//                             final selectedProducts = products
+//                                 .where((p) => selectedIds.contains(p.id))
+//                                 .toList();
+//                             if (selectedProducts.isEmpty) {
+//                               ScaffoldMessenger.of(context).showSnackBar(
+//                                 const SnackBar(
+//                                   content: Text(
+//                                     "Select at least one product to print.",
+//                                   ),
+//                                 ),
+//                               );
+//                               return;
+//                             }
+//                             Get.back(); // close selection dialog
+//                             await _printSelectedProducts(
+//                               context,
+//                               selectedProducts,
+//                             );
+//                           },
+//                         ),
+//                       ],
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//           );
+//         },
+//       );
+//     },
+//   );
+// }
 
 Future<void> _printSelectedProducts(
   BuildContext context,
@@ -538,9 +620,10 @@ void showAdjustInventoryDialog(String sku) {
 
             //Reason Dropdown
             DropdownButtonFormField<String>(
-              decoration:  InputDecoration(
+              decoration: InputDecoration(
                 labelText: "Reason",
-                border: OutlineInputBorder( borderRadius: BorderRadius.circular(12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
               items: reason
@@ -555,8 +638,9 @@ void showAdjustInventoryDialog(String sku) {
               controller: noteController,
               decoration: InputDecoration(
                 labelText: "Note",
-                border: OutlineInputBorder( borderRadius: BorderRadius.circular(12),
-                  ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
             const SizedBox(height: 20),
