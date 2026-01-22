@@ -14,11 +14,9 @@ class UtilController extends GetxController with BaseController {
   @override
   void onReady() {
     super.onReady();
-
     if (!Get.isRegistered<OrderController>()) {
       throw Exception("OrderController not found. Wrong binding.");
     }
-
     orderController = Get.find<OrderController>();
   }
 
@@ -29,6 +27,10 @@ class UtilController extends GetxController with BaseController {
   var foundProduct = Rxn<ScanProductModel>();
   var serialScanned = RxnInt();
   var generatedBarcodes = Rxn<BarcodeListResponseModel>();
+  RxBool isPrinting = false.obs;
+  RxInt progress = 0.obs;
+  RxString progressText = "Starting...".obs;
+
   // final orderController = Get.find<OrderController>();
 
   Future<ScanProductModel?> barcodeScanned(String barcode) async {
@@ -78,12 +80,7 @@ class UtilController extends GetxController with BaseController {
 
   Future<void> generateBarcode(int productId, int quantity) async {
     if (quantity <= 0) {
-      Get.snackbar(
-        "Invalid",
-        "Quantity must be > 0",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      AppAlerts.error("Invalid, Please enter Quantity");
       return;
     }
     if (barcodeGenerationLoading.value) return;

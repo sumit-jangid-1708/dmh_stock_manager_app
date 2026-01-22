@@ -7,12 +7,14 @@ import '../view_models/controller/billing_controller.dart';
 import '../view_models/controller/dashboard_controller.dart';
 import '../view_models/controller/home_controller.dart';
 import '../view_models/controller/order_controller.dart';
+import '../view_models/controller/util_controller.dart';
 
 class DashboardBinding extends Bindings {
   @override
   void dependencies() {
     Get.lazyPut(() => DashboardController());
     Get.put(BillingController(), );
+    Get.put<UtilController>(UtilController(), permanent: true);
     Get.put(OrderController());
     Get.lazyPut(() => HomeController());
     Get.lazyPut(() => VendorController());
