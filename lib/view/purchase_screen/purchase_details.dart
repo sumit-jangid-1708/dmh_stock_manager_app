@@ -257,7 +257,7 @@ class PurchaseDetails extends StatelessWidget {
                                 _buildDetailRow(
                                   icon: Icons.phone_outlined,
                                   label: "Mobile",
-                                  value: "+${vendor.countryCode} ${vendor.mobile}",
+                                  value: "${vendor.countryCode} ${vendor.mobile}",
                                   iconColor: Colors.green,
                                 ),
                                 const Divider(height: 24),

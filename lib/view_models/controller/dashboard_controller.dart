@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/vendor_controller.dart';
 import 'package:dmj_stock_manager/view_models/services/dashbord_service.dart';
@@ -8,6 +9,7 @@ import 'package:get/get.dart';
 
 import '../../data/app_exceptions.dart';
 import '../../model/low_stock_product_model.dart';
+import '../../res/assets/images_assets.dart';
 
 class DashboardController extends GetxController with WidgetsBindingObserver, BaseController{
   final VendorController vendorController = Get.find();
@@ -76,31 +78,15 @@ class DashboardController extends GetxController with WidgetsBindingObserver, Ba
       if (kDebugMode) {
         print("✅ Low Stock Items fetched: ${lowStockItems.length}");
       }
-    // } on AppExceptions catch (e) {
-    //   Get.snackbar(
-    //     "Error",
-    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-    //     snackPosition: SnackPosition.TOP,
-    //     backgroundColor: Colors.red,
-    //     colorText: Colors.white,
-    //   );
     } catch (e) {
       if (kDebugMode) print("❌ Low Stock Error: $e");
       handleError(e, onRetry:()=> getLowStock() );
-      // Get.snackbar(
-      //   "Error",
-      //   "Failed to load Low Stock Products",
-      //   snackPosition: SnackPosition.TOP,
-      //   backgroundColor: Colors.red,
-      //   colorText: Colors.white,
-      // );
     } finally {
       isLoading.value = false;
     }
   }
 
   void _showLowStockDialog() {
-    if (Get.isDialogOpen == true) return;
     isLowStockDialogOpen.value = true;
 
     Get.dialog(
@@ -123,7 +109,7 @@ class DashboardController extends GetxController with WidgetsBindingObserver, Ba
                 ),
                 child: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 30),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               const Text(
                 "Low Stock Alert",
                 style: TextStyle(fontWeight: FontWeight.w900, color: Color(0xFF1A1A4F), fontSize: 18),
@@ -132,11 +118,53 @@ class DashboardController extends GetxController with WidgetsBindingObserver, Ba
                 "The following items need attention",
                 style: TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.normal),
               ),
+              const SizedBox(height: 10),
+              Divider(
+                height: 2,
+                thickness: 1,
+                color: Colors.grey.shade300,
+              )
             ],
           ),
           content: SizedBox(
             width: double.maxFinite,
+            height: 300, // Fixed height to avoid layout jumps
             child: Obx(() {
+              if (lowStockItems.isEmpty) {
+                // Empty state when no low stock
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        ImageAssets.emptyList,
+                        height: 70,
+                        // errorBuilder: (context, error, stackTrace) => const Icon(Icons.business, size: 50, color: primaryColor),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        "No Low Stock Items!",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A1A4F),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "All products are sufficiently stocked right now.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              // Normal list when items exist
               return ListView.separated(
                 shrinkWrap: true,
                 itemCount: lowStockItems.length,
@@ -174,7 +202,11 @@ class DashboardController extends GetxController with WidgetsBindingObserver, Ba
                                     children: [
                                       Text(
                                         item.name,
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1A1A4F)),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          color: Color(0xFF1A1A4F),
+                                        ),
                                       ),
                                       Text(
                                         "SKU: ${item.sku}",
@@ -186,11 +218,22 @@ class DashboardController extends GetxController with WidgetsBindingObserver, Ba
                                     children: [
                                       Text(
                                         item.quantity.toString(),
-                                        style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w900, fontSize: 16),
+                                        style: const TextStyle(
+                                          color: Colors.red,
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 16,
+                                        ),
                                       ),
-                                      const Text("STOCK", style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.grey)),
+                                      const Text(
+                                        "STOCK",
+                                        style: TextStyle(
+                                          fontSize: 8,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
                                     ],
-                                  )
+                                  ),
                                 ],
                               ),
                             ),
@@ -205,40 +248,14 @@ class DashboardController extends GetxController with WidgetsBindingObserver, Ba
           ),
           actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           actions: [
-            // --- Gradient Button ---
-            Container(
+            AppGradientButton(
+              onPressed: () {
+                isLowStockDialogOpen.value = false;
+                Get.back();
+              },
+              text: "Close",
               width: double.infinity,
-              height: 48,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF1A1A4F), Color(0xFF2D2D7F)],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF1A1A4F).withOpacity(0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  )
-                ],
-              ),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: () {
-                  isLowStockDialogOpen.value = false;
-                  Get.back();
-                },
-                child: const Text(
-                  "Close Alert",
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ),
+              height: 50,
             ),
           ],
         ),
@@ -258,9 +275,7 @@ class DashboardController extends GetxController with WidgetsBindingObserver, Ba
   }
 
   void openLowStockDialog() {
-    if (lowStockItems.isEmpty) return;
     if (Get.isDialogOpen == true) return;
-
     _showLowStockDialog();
   }
 

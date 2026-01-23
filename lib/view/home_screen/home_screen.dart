@@ -219,20 +219,20 @@ class HomeScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Recent Activity",
+                            "Recent Added Products",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Colors.black87,
                             ),
                           ),
-                          Text(
-                            "Items requiring attention",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
+                          // Text(
+                          //   "These are the recently ",
+                          //   style: TextStyle(
+                          //     fontSize: 12,
+                          //     color: Colors.grey.shade600,
+                          //   ),
+                          // ),
                         ],
                       ),
                     ],

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dmj_stock_manager/model/product_model.dart';
+import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -17,8 +18,13 @@ class ImageShareDialog extends StatelessWidget {
 
   Future<void> _shareImages() async {
     if (selectedImages.isEmpty) {
-      Get.snackbar("No Image Selected", "Please select at least one image to share.",
-          snackPosition: SnackPosition.TOP, backgroundColor: Colors.white30);
+      Get.snackbar(
+        "Selection Required",
+        "Please select at least one image.",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.orangeAccent,
+        colorText: Colors.white,
+      );
       return;
     }
 
@@ -36,11 +42,19 @@ class ImageShareDialog extends StatelessWidget {
       }
 
       if (filesToShare.isNotEmpty) {
-        await Share.shareXFiles(filesToShare, text: "Check out these product images!");
+        await Share.shareXFiles(
+          filesToShare,
+          text: "Check out these product images!",
+        );
       }
     } catch (e) {
-      Get.snackbar("Error", "Failed to share images: $e",
-          snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.redAccent, colorText: Colors.white);
+      Get.snackbar(
+        "Error",
+        "Failed to share: $e",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
     }
   }
 
@@ -49,106 +63,146 @@ class ImageShareDialog extends StatelessWidget {
     final images = product.productImageVariants;
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      insetPadding: const EdgeInsets.all(20),
-      child: Padding(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      elevation: 10,
+      child: Container(
         padding: const EdgeInsets.all(20),
+        constraints: BoxConstraints(maxHeight: Get.height * 0.7),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
+            // --- Header ---
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  "Select Image to Share",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A1A4F).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.share_rounded,
+                    color: Color(0xFF1A1A4F),
+                    size: 20,
+                  ),
                 ),
+                const SizedBox(width: 12),
+                const Text(
+                  "Share Product Images",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A1A4F),
+                  ),
+                ),
+                const Spacer(),
                 IconButton(
                   onPressed: () => Get.back(),
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Icons.close, color: Colors.grey),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const Divider(height: 24),
 
-            // Image list
+            // --- Grid of Images ---
             if (images.isEmpty)
-              const Text("No images found for this product.")
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: Text("No images found for this product."),
+              )
             else
               Flexible(
-                child: ListView.separated(
+                child: GridView.builder(
                   shrinkWrap: true,
                   physics: const BouncingScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                  ),
                   itemCount: images.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final imageUrl =
                         "https://traders.testwebs.in${images[index].toString()}";
 
                     return Obx(() {
                       final isSelected = selectedImages.contains(imageUrl);
-                      return ListTile(
-                        contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 8),
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            imageUrl,
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              width: 60,
-                              height: 60,
-                              color: Colors.grey.shade300,
-                              child: const Icon(Icons.broken_image),
+                      return GestureDetector(
+                        onTap: () => isSelected
+                            ? selectedImages.remove(imageUrl)
+                            : selectedImages.add(imageUrl),
+                        child: Stack(
+                          children: [
+                            // Image Card
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? const Color(0xFF1A1A4F)
+                                      : Colors.grey.shade300,
+                                  width: isSelected ? 2 : 1,
+                                ),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.network(
+                                  imageUrl,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  errorBuilder: (_, __, ___) =>
+                                      const Icon(Icons.broken_image),
+                                ),
+                              ),
                             ),
-                          ),
+                            // Selection Overlay
+                            if (isSelected)
+                              Positioned.fill(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(
+                                      0xFF1A1A4F,
+                                    ).withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Icon(
+                                    Icons.check_circle,
+                                    color: Colors.white,
+                                    size: 28,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                        title: Text("Image ${index + 1}"),
-                        trailing: Checkbox(
-                          value: isSelected,
-                          onChanged: (_) {
-                            if (isSelected) {
-                              selectedImages.remove(imageUrl);
-                            } else {
-                              selectedImages.add(imageUrl);
-                            }
-                          },
-                          activeColor: const Color(0xFF1A1A4F),
-                        ),
-                        onTap: () {
-                          if (isSelected) {
-                            selectedImages.remove(imageUrl);
-                          } else {
-                            selectedImages.add(imageUrl);
-                          }
-                        },
                       );
                     });
                   },
                 ),
               ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
+
+            // --- Footer Buttons ---
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                TextButton(
-                  onPressed: () => Get.back(),
-                  child: const Text("Cancel"),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1A1A4F),
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Get.back(),
+                    child: const Text(
+                      "Cancel",
+                      style: TextStyle(color: Colors.grey),
+                    ),
                   ),
-                  onPressed: _shareImages,
-                  child: const Text(
-                    "Share",
-                    style: TextStyle(color: Colors.white),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: AppGradientButton(
+                    onPressed: _shareImages,
+                    text: "Share Now",
+                    icon: Icons.ios_share_rounded,
                   ),
                 ),
               ],
