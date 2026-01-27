@@ -50,7 +50,10 @@ class PdfInvoiceHelper {
                 crossAxisAlignment: pw.CrossAxisAlignment.end,
                 children: [
                   pw.Text(companyName, style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                  pw.Text(address),
+                  pw.SizedBox(
+                    height: 30, // Limit height to roughly 2 lines of text
+                    child: pw.Text(address, softWrap: true),
+                  ),
                   pw.Text('GSTIN: $gstNumber'),
                   pw.Text(contactNumber),
                 ],
@@ -117,7 +120,7 @@ class PdfInvoiceHelper {
 
               return [
                 item.product.name,
-                hsnCode, // Ab HSN code table mein dikhega
+                hsnCode,
                 item.quantity.toString(),
                 'Rs. ${item.unitPrice.toStringAsFixed(2)}',
                 'Rs. ${(item.quantity * item.unitPrice).toStringAsFixed(2)}',

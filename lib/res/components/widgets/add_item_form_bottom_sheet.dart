@@ -1,12 +1,11 @@
 import 'dart:io';
 import 'package:dmj_stock_manager/model/vendor_model.dart';
 import 'package:dmj_stock_manager/res/components/widgets/multi_image_picker_widget.dart';
+import 'package:dmj_stock_manager/res/components/widgets/custom_searchable_dropdown.dart';
 import 'package:dmj_stock_manager/utils/app_lists.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/vendor_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/dashboard_controller.dart';
-import 'package:drop_down_list/drop_down_list.dart';
-import 'package:drop_down_list/model/selected_list_item.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -19,19 +18,20 @@ class AddItemFormBottomSheet extends StatefulWidget {
 
 class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
   List<File> _selectedImages = [];
-  String? _selectedColor;
-  String? _selectedSize;
-  String? _selectedMaterial;
-  String? _selectedHsnCode;
+
+  // Using Rx for reactive dropdown selections
+  final Rx<String?> _selectedColor = Rx<String?>(null);
+  final Rx<String?> _selectedSize = Rx<String?>(null);
+  final Rx<String?> _selectedMaterial = Rx<String?>(null);
+  final Rx<String?> _selectedHsnCode = Rx<String?>(null);
+  final Rx<VendorModel?> _selectedVendor = Rx<VendorModel?>(null);
+  final Rx<dynamic> _selectedHsn = Rx<dynamic>(null);
+
   int? _selectedHsnId;
 
   final VendorController vendorController = Get.find<VendorController>();
-  final DashboardController dashboardController =
-      Get.find<DashboardController>();
+  final DashboardController dashboardController = Get.find<DashboardController>();
   final ItemController itemController = Get.find<ItemController>();
-
-  String? _selectedVendorName;
-  String? _selectedVendorId;
 
   // --- Theme Decoration Helper ---
   InputDecoration _getDecoration(String hint, IconData icon) {
@@ -91,7 +91,25 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                   // BASIC INFO SECTION
                   _buildSectionTitle("Basic Information", Icons.info_outline),
                   const SizedBox(height: 12),
-                  _buildVendorSelector(),
+
+                  // Vendor Dropdown
+                  CustomSearchableDropdown<VendorModel>(
+                    items: vendorController.vendors,
+                    selectedItem: _selectedVendor,
+                    itemAsString: (vendor) => vendor.vendorName ?? "Unknown",
+                    hintText: "Select Vendor*",
+                    prefixIcon: Icons.business_outlined,
+                    searchHint: "Search vendors...",
+                    onChanged: (vendor) {
+                      if (vendor != null) {
+                        dashboardController.setSelectedVendor(
+                          vendor.id.toString(),
+                          vendor.vendorName ?? "",
+                        );
+                      }
+                    },
+                  ),
+
                   const SizedBox(height: 12),
                   TextField(
                     controller: itemController.productName.value,
@@ -116,70 +134,77 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                     Icons.account_balance_wallet_outlined,
                   ),
                   const SizedBox(height: 12),
-                  Column(
-                    // <--- Row ki jagah Column kar diya
-                    children: [
-                      TextField(
-                        controller: itemController.purchasePrice.value,
-                        keyboardType: TextInputType.number,
-                        decoration: _getDecoration(
-                          "Purchase Price",
-                          Icons.payments_outlined,
-                        ),
-                      ),
-                      const SizedBox(height: 12), // Vertical spacing add ki
-                      TextField(
-                        controller: itemController.lowStockLimit.value,
-                        keyboardType: TextInputType.number,
-                        decoration: _getDecoration(
-                          "Low Stock Limit",
-                          Icons.warning_amber_rounded,
-                        ),
-                      ),
-                    ],
+                  TextField(
+                    controller: itemController.purchasePrice.value,
+                    keyboardType: TextInputType.number,
+                    decoration: _getDecoration(
+                      "Purchase Price",
+                      Icons.payments_outlined,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: itemController.lowStockLimit.value,
+                    keyboardType: TextInputType.number,
+                    decoration: _getDecoration(
+                      "Low Stock Limit",
+                      Icons.warning_amber_rounded,
+                    ),
                   ),
                   const SizedBox(height: 24),
 
                   // ATTRIBUTES SECTION
                   _buildSectionTitle("Attributes & Tax", Icons.style_outlined),
                   const SizedBox(height: 12),
-                  _buildActionDropdown(
+
+                  // Material Dropdown
+                  _buildSearchableDropdownWithAdd(
                     label: 'Material',
-                    items: List<String>.from(AppLists.materials),
-                    value: _selectedMaterial,
+                    items: AppLists.materials,
+                    selectedItem: _selectedMaterial,
                     icon: Icons.layers_outlined,
-                    onChanged: (val) => setState(() => _selectedMaterial = val),
                     onAdd: () => _showAddDialog(
                       "Material",
-                      (v) => AppLists.addMaterial(v),
-                      (v) => _selectedMaterial = v,
+                          (v) => AppLists.addMaterial(v),
+                          (v) => _selectedMaterial.value = v,
                     ),
                   ),
-                  _buildActionDropdown(
+
+                  const SizedBox(height: 12),
+
+                  // Color Dropdown
+                  _buildSearchableDropdownWithAdd(
                     label: 'Colour',
-                    items: List<String>.from(AppLists.colors),
-                    value: _selectedColor,
+                    items: AppLists.colors,
+                    selectedItem: _selectedColor,
                     icon: Icons.palette_outlined,
-                    onChanged: (val) => setState(() => _selectedColor = val),
                     onAdd: () => _showAddDialog(
                       "Color",
-                      (v) => AppLists.addColor(v),
-                      (v) => _selectedColor = v,
+                          (v) => AppLists.addColor(v),
+                          (v) => _selectedColor.value = v,
                     ),
                   ),
-                  _buildActionDropdown(
+
+                  const SizedBox(height: 12),
+
+                  // Size Dropdown
+                  _buildSearchableDropdownWithAdd(
                     label: 'Size',
-                    items: List<String>.from(AppLists.sizes),
-                    value: _selectedSize,
+                    items: AppLists.sizes,
+                    selectedItem: _selectedSize,
                     icon: Icons.straighten_outlined,
-                    onChanged: (val) => setState(() => _selectedSize = val),
                     onAdd: () => _showAddDialog(
                       "Size",
-                      (v) => AppLists.addSize(v),
-                      (v) => _selectedSize = v,
+                          (v) => AppLists.addSize(v),
+                          (v) => _selectedSize.value = v,
                     ),
                   ),
+
+                  const SizedBox(height: 12),
+
+                  // HSN Dropdown
                   _buildHsnDropdown(),
+
                   const SizedBox(height: 32),
                   _buildSubmitButton(),
                   const SizedBox(height: 12),
@@ -253,81 +278,61 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
     );
   }
 
-  Widget _buildVendorSelector() {
-    return Obx(() {
-      final isLoading = vendorController.isLoading.value;
-      return InkWell(
-        onTap: isLoading ? null : _openVendorPicker,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: Row(
-            children: [
-              const Icon(
-                Icons.business_outlined,
-                color: Color(0xFF1A1A4F),
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  _selectedVendorName ?? "Select Vendor*",
-                  style: TextStyle(
-                    color: _selectedVendorName == null
-                        ? Colors.grey.shade500
-                        : Colors.black87,
-                  ),
-                ),
-              ),
-              const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
-            ],
-          ),
-        ),
-      );
-    });
-  }
-
-  Widget _buildActionDropdown({
+  Widget _buildSearchableDropdownWithAdd({
     required String label,
     required List<String> items,
-    required String? value,
+    required Rx<String?> selectedItem,
     required IconData icon,
-    required ValueChanged<String?> onChanged,
     required VoidCallback onAdd,
   }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
+    return Row(
+      children: [
+        Expanded(
+          child: CustomSearchableDropdown<String>(
+            items: items,
+            selectedItem: selectedItem,
+            itemAsString: (item) => item,
+            hintText: "Select $label",
+            prefixIcon: icon,
+            searchHint: "Search $label...",
+          ),
+        ),
+        const SizedBox(width: 10),
+        Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1A4F).withOpacity(0.05),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            onPressed: onAdd,
+            icon: const Icon(Icons.add, color: Color(0xFF1A1A4F)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHsnDropdown() {
+    return Obx(() {
+      final hsnList = itemController.hsnList;
+
+      return Row(
         children: [
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: value,
-                  hint: Row(
-                    children: [
-                      Icon(icon, size: 20, color: const Color(0xFF1A1A4F)),
-                      const SizedBox(width: 12),
-                      Text("Select $label"),
-                    ],
-                  ),
-                  isExpanded: true,
-                  items: items
-                      .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                      .toList(),
-                  onChanged: onChanged,
-                ),
-              ),
+            child: CustomSearchableDropdown<dynamic>(
+              items: hsnList.toList(),
+              selectedItem: _selectedHsn,
+              itemAsString: (hsn) => hsn.hsnCode ?? "Unknown",
+              hintText: "Select HSN/SAC",
+              prefixIcon: Icons.description,
+              searchHint: "Search HSN codes...",
+              onChanged: (selectedHsnItem) {
+                if (selectedHsnItem != null) {
+                  _selectedHsn.value = selectedHsnItem;
+                  _selectedHsnCode.value = selectedHsnItem.hsnCode;
+                  _selectedHsnId = selectedHsnItem.id;
+                }
+              },
             ),
           ),
           const SizedBox(width: 10),
@@ -337,35 +342,11 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: IconButton(
-              onPressed: onAdd,
+              onPressed: () => _showAddHsnDialog(context),
               icon: const Icon(Icons.add, color: Color(0xFF1A1A4F)),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildHsnDropdown() {
-    return Obx(() {
-      final hsnList = itemController.hsnList;
-      return _buildActionDropdown(
-        label: 'HSN/SAC',
-        items: hsnList.map((e) => e.hsnCode ?? "").toList(),
-        value: _selectedHsnCode,
-        icon: Icons.description,
-        onChanged: (selectedCode) {
-          if (selectedCode != null) {
-            final selectedHsn = hsnList.firstWhere(
-              (hsn) => hsn.hsnCode == selectedCode,
-            );
-            setState(() {
-              _selectedHsnCode = selectedCode;
-              _selectedHsnId = selectedHsn.id;
-            });
-          }
-        },
-        onAdd: () => _showAddHsnDialog(context),
       );
     });
   }
@@ -383,12 +364,27 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
           elevation: 0,
         ),
         onPressed: () {
+          final vendor = _selectedVendor.value;
+          final color = _selectedColor.value;
+          final size = _selectedSize.value;
+          final material = _selectedMaterial.value;
+
+          if (vendor == null || color == null || size == null || material == null) {
+            Get.snackbar(
+              "Required Fields",
+              "Please fill all required fields",
+              backgroundColor: Colors.red,
+              colorText: Colors.white,
+            );
+            return;
+          }
+
           final imagesCopy = List<File>.from(_selectedImages);
           itemController.addProduct(
-            _selectedVendorId!,
-            _selectedColor!,
-            _selectedSize!,
-            _selectedMaterial!,
+            vendor.id.toString(),
+            color,
+            size,
+            material,
             itemController.purchasePrice.value.text,
             imagesCopy,
             _selectedHsnId.toString(),
@@ -409,34 +405,11 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
 
   // --- Logic Helpers ---
 
-  void _openVendorPicker() {
-    DropDownState(
-      dropDown: DropDown(
-        data: vendorController.vendors
-            .map((v) => SelectedListItem<VendorModel>(data: v))
-            .toList(),
-        onSelected: (selected) {
-          if (selected.isNotEmpty) {
-            final v = selected.first.data;
-            setState(() {
-              _selectedVendorName = v.vendorName;
-              _selectedVendorId = v.id.toString();
-            });
-            dashboardController.setSelectedVendor(
-              _selectedVendorId!,
-              _selectedVendorName!,
-            );
-          }
-        },
-      ),
-    ).showModal(context);
-  }
-
   void _showAddDialog(
-    String name,
-    Function(String) addToList,
-    Function(String) updateSelected,
-  ) {
+      String name,
+      Function(String) addToList,
+      Function(String) updateSelected,
+      ) {
     final controller = TextEditingController();
     Get.defaultDialog(
       title: "Add $name",
@@ -451,7 +424,7 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
         onPressed: () {
           if (controller.text.isNotEmpty) {
             addToList(controller.text);
-            setState(() => updateSelected(controller.text));
+            updateSelected(controller.text);
           }
           Get.back();
         },
@@ -510,13 +483,13 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
             final gst = double.tryParse(gstText) ?? 0.0;
             await itemController.addHsn(code, gst);
             final newHsn = itemController.hsnList.firstWhereOrNull(
-              (e) => e.hsnCode == code,
+                  (e) => e.hsnCode == code,
             );
             if (newHsn != null) {
-              setState(() {
-                _selectedHsnCode = newHsn.hsnCode;
-                _selectedHsnId = newHsn.id;
-              });
+              _selectedHsn.value = newHsn;
+              _selectedHsnCode.value = newHsn.hsnCode;
+              _selectedHsnId = newHsn.id;
+
               if (context.mounted) {
                 Navigator.of(context).pop();
               }
