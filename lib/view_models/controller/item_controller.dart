@@ -42,6 +42,13 @@ class ItemController extends GetxController with BaseController{
   final hsnList = <HsnGstModel>[].obs;
   Rx<ProductModel?> selectedProduct = Rx<ProductModel?>(null);
 
+  //image slider
+RxInt currentIndex = 0.obs;
+
+void updateIndex(int index){
+  currentIndex.value = index;
+}
+
   @override
   void onInit() {
     super.onInit();

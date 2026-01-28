@@ -19,6 +19,7 @@ void showBarcodeDialog(
   showDialog(
     context: context,
     builder: (context) => Dialog(
+      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Container(
         padding: const EdgeInsets.all(20),

@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 
-
 class ProductCard extends StatelessWidget {
   final int count;
   final ProductModel product;
@@ -182,9 +181,19 @@ class ProductCard extends StatelessWidget {
                           // Action Buttons (Share & Barcode)
                           Row(
                             children: [
-                              AppGradientButton(onPressed: onShare, width: 40, height:40, icon: FontAwesomeIcons.image,),
+                              AppGradientButton(
+                                onPressed: onShare,
+                                width: 40,
+                                height: 40,
+                                icon: FontAwesomeIcons.image,
+                              ),
                               const SizedBox(width: 10),
-                              AppGradientButton(onPressed: onView, width: 40, height:40, icon: FontAwesomeIcons.barcode,),
+                              AppGradientButton(
+                                onPressed: onView,
+                                width: 40,
+                                height: 40,
+                                icon: FontAwesomeIcons.barcode,
+                              ),
                               // // _buildActionButton(
                               // //   icon: FontAwesomeIcons.image,
                               // //   onTap: onShare,

@@ -84,12 +84,12 @@ class ImageShareDialog extends StatelessWidget {
                   child: const Icon(
                     Icons.share_rounded,
                     color: Color(0xFF1A1A4F),
-                    size: 20,
+                    size: 15,
                   ),
                 ),
                 const SizedBox(width: 12),
                 const Text(
-                  "Share Product Images",
+                  "Share Images",
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
