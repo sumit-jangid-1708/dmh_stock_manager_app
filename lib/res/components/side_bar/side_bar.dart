@@ -72,7 +72,7 @@ class Sidebar extends StatelessWidget {
                     _buildMenuItem(
                       icon: Icons.add_shopping_cart_rounded,
                       title: "Purchase",
-                      onTap: () => Get.to(const PurchaseScreen()),
+                      onTap: () => Get.to(()=> PurchaseScreen()),
                     ),
 
                     // 🔒 History Button is now hidden (Commented out/Removed)

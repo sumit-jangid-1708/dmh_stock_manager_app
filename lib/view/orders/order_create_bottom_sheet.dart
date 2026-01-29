@@ -1,5 +1,7 @@
 import 'package:dmj_stock_manager/model/channel_model.dart';
 import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
+import 'package:dmj_stock_manager/res/components/widgets/custom_text_field.dart';
+import 'package:dmj_stock_manager/utils/utils.dart';
 import 'package:dmj_stock_manager/view_models/controller/home_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/order_controller.dart';
@@ -17,32 +19,12 @@ class OrderCreateBottomSheet extends StatelessWidget {
   final OrderController orderController = Get.find<OrderController>();
   final ItemController itemController = Get.find<ItemController>();
 
-  // --- Reusable Input Decoration to Match Theme ---
-  InputDecoration _getInputDecoration(String hint, IconData icon) {
-    return InputDecoration(
-      hintText: hint,
-      prefixIcon: Icon(icon, color: const Color(0xFF1A1A4F), size: 20),
-      filled: true,
-      fillColor: Colors.grey.shade50,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade300),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade200),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF1A1A4F), width: 1.5),
-      ),
-    );
-  }
 
   // ✅ NEW: Open Scanner and Add Scanned Product
   Future<void> _openScannerAndAddProduct() async {
-    final ProductModel? scannedProduct = await Get.to(() => const QrScannerWidget());
+    final ProductModel? scannedProduct = await Get.to(
+      () => const QrScannerWidget(),
+    );
 
     if (scannedProduct != null) {
       orderController.addScannedProduct(scannedProduct);
@@ -103,35 +85,30 @@ class OrderCreateBottomSheet extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 12),
-                  TextField(
+                  AppTextField(
                     controller: orderController.channelOrderId,
-                    decoration: _getInputDecoration(
-                      "Channel Order ID",
-                      Icons.tag,
-                    ),
+                    hintText: "Channel Order ID",
+                    prefixIcon: Icons.tag,
                   ),
                   const SizedBox(height: 12),
-                  TextField(
+                  AppTextField(
                     controller: orderController.customerNameController,
-                    decoration: _getInputDecoration(
-                      "Customer Name",
-                      Icons.person_outline,
-                    ),
+                    hintText: "Customer Name",
+                    prefixIcon: Icons.person_outline,
                   ),
                   const SizedBox(height: 12),
-                  TextField(
+                  AppTextField(
                     controller: orderController.emailController,
-                    decoration: _getInputDecoration("Email", Icons.email),
+                    hintText: "Email",
+                    prefixIcon: Icons.email,
                   ),
                   const SizedBox(height: 12),
                   _buildPhoneField(),
                   const SizedBox(height: 12),
-                  TextField(
+                  AppTextField(
                     controller: orderController.remarkController,
-                    decoration: _getInputDecoration(
-                      "Remarks / Notes",
-                      Icons.notes,
-                    ),
+                    hintText: "Remarks",
+                    prefixIcon: Icons.notes,
                   ),
 
                   const SizedBox(height: 32),
@@ -159,7 +136,10 @@ class OrderCreateBottomSheet extends StatelessWidget {
                           // Manual Add Button
                           TextButton.icon(
                             onPressed: orderController.addItemRow,
-                            icon: const Icon(Icons.add_circle_outline, size: 20),
+                            icon: const Icon(
+                              Icons.add_circle_outline,
+                              size: 20,
+                            ),
                             label: const Text("Add"),
                             style: TextButton.styleFrom(
                               foregroundColor: const Color(0xFF1A1A4F),
@@ -236,7 +216,7 @@ class OrderCreateBottomSheet extends StatelessWidget {
 
   Widget _buildPhoneField() {
     return IntlPhoneField(
-      decoration: _getInputDecoration(
+      decoration: Utils.inputDecoration(
         "Phone Number",
         Icons.phone_android_outlined,
       ),
@@ -303,7 +283,7 @@ class OrderCreateBottomSheet extends StatelessWidget {
                         items: itemController.products,
                         selectedItem: item["product"] as Rx<ProductModel?>,
                         itemAsString: (product) =>
-                        "${product.name} | ${product.size} | ${product.color}",
+                            "${product.name} | ${product.size} | ${product.color}",
                         hintText: "Choose Product",
                         prefixIcon: Icons.inventory_2_outlined,
                         enableSearch: true,
@@ -332,9 +312,9 @@ class OrderCreateBottomSheet extends StatelessWidget {
                           (item["product"] as Rx<ProductModel?>).value = val;
                           if (val == null) return;
                           final priceController =
-                          item["purchasePrice"] as TextEditingController?;
+                              item["purchasePrice"] as TextEditingController?;
                           final skuController =
-                          item["skuId"] as TextEditingController?;
+                              item["skuId"] as TextEditingController?;
                           if (priceController != null) {
                             priceController.text = val.purchasePrice.toString();
                           }
@@ -410,24 +390,26 @@ class OrderCreateBottomSheet extends StatelessWidget {
   }
 
   Widget _buildSmallField(
-      TextEditingController ctrl,
-      String label,
-      IconData icon,
-      ) {
-    return TextField(
-      controller: ctrl,
-      keyboardType: TextInputType.number,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, size: 16),
-        filled: true,
-        fillColor: Colors.grey.shade50,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide.none,
-        ),
-      ),
-    );
+    TextEditingController ctrl,
+    String label,
+    IconData icon,
+  ) {
+    return
+      AppTextField(controller: ctrl, hintText: label, prefixIcon: icon);
+    //   TextField(
+    //   controller: ctrl,
+    //   keyboardType: TextInputType.number,
+    //   decoration: InputDecoration(
+    //     labelText: label,
+    //     prefixIcon: Icon(icon, size: 16),
+    //     filled: true,
+    //     fillColor: Colors.grey.shade50,
+    //     border: OutlineInputBorder(
+    //       borderRadius: BorderRadius.circular(10),
+    //       borderSide: BorderSide.none,
+    //     ),
+    //   ),
+    // );
   }
 
   Widget _buildFooterButtons() {
@@ -463,4 +445,3 @@ class OrderCreateBottomSheet extends StatelessWidget {
     );
   }
 }
-

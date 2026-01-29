@@ -1,8 +1,11 @@
 import 'package:dmj_stock_manager/model/product_model.dart';
 import 'package:dmj_stock_manager/model/vendor_model.dart';
+import 'package:dmj_stock_manager/res/components/widgets/custom_searchable_dropdown.dart';
+import 'package:dmj_stock_manager/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import '../../res/components/widgets/custom_text_field.dart';
 import '../../view_models/controller/item_controller.dart';
 import '../../view_models/controller/purchase_controller.dart';
 import '../../view_models/controller/vendor_controller.dart';
@@ -83,32 +86,27 @@ class AddPurchaseBottomSheet extends StatelessWidget {
               // Vendor Selection
               _sectionHeader("General Information"),
               const SizedBox(height: 12),
-              Obx(() => DropdownButtonFormField<VendorModel>(
-                initialValue: purchaseController.selectedVendor.value,
-                hint: const Text("Select Vendor"),
-                isExpanded: true,
-                decoration: _inputDecoration("Vendor *", Icons.person_outline),
-                items: vendorController.vendors.map((vendor) {
-                  return DropdownMenuItem<VendorModel>(
-                    value: vendor,
-                    child: Text(vendor.vendorName ?? "Unnamed"),
-                  );
-                }).toList(),
-                onChanged: (value) =>
-                purchaseController.selectedVendor.value = value,
-              )),
+
+              // ✅ Custom Searchable Dropdown for Vendor
+              CustomSearchableDropdown<VendorModel>(
+                items: vendorController.vendors,
+                selectedItem: purchaseController.selectedVendor,
+                itemAsString: (vendor) => vendor.vendorName ?? "Unnamed",
+                hintText: "Select Vendor *",
+                prefixIcon: Icons.person_outline,
+                searchHint: "Search vendors...",
+              ),
+
               const SizedBox(height: 16),
 
               // Bill Number + Bill Date
               Row(
                 children: [
                   Expanded(
-                    child: TextField(
+                    child: AppTextField(
                       controller: purchaseController.billNumberController,
-                      decoration: _inputDecoration(
-                        "Bill Number *",
-                        Icons.receipt_long,
-                      ),
+                      hintText: "Bill Number *",
+                      prefixIcon: Icons.receipt_long,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -116,17 +114,15 @@ class AddPurchaseBottomSheet extends StatelessWidget {
                     child: GestureDetector(
                       onTap: () => _selectDate(context, purchaseController.billDate),
                       child: AbsorbPointer(
-                        child: Obx(() => TextField(
-                          decoration: _inputDecoration(
-                            "Bill Date *",
-                            Icons.calendar_today_outlined,
-                          ),
+                        child: Obx(() => AppTextField(
                           controller: TextEditingController(
                             text: purchaseController.billDate.value != null
                                 ? DateFormat('dd MMM, yyyy').format(
                                 purchaseController.billDate.value!)
                                 : "",
                           ),
+                          hintText: "Bill Date *",
+                          prefixIcon: Icons.calendar_today_outlined,
                         )),
                       ),
                     ),
@@ -185,28 +181,21 @@ class AddPurchaseBottomSheet extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 10),
+
+                            // ✅ Custom Searchable Dropdown for Product
                             Expanded(
-                              child: Obx(() => DropdownButtonFormField<ProductModel>(
-                                isExpanded: true,
-                                initialValue: item.selectedProduct.value,
-                                hint: const Text("Select Product"),
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                                items: itemController.products.map((p) {
-                                  return DropdownMenuItem(
-                                    value: p,
-                                    child: Text(
-                                      "${p.name} | ${p.size} | ${p.color}",
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (val) =>
-                                item.selectedProduct.value = val,
-                              )),
+                              child: CustomSearchableDropdown<ProductModel>(
+                                items: itemController.products,
+                                selectedItem: item.selectedProduct,
+                                itemAsString: (p) =>
+                                "${p.name} | ${p.size} | ${p.color}",
+                                hintText: "Select Product",
+                                prefixIcon: Icons.inventory_2_outlined,
+                                searchHint: "Search products...",
+                                height: 50,
+                              ),
                             ),
+
                             IconButton(
                               icon: const Icon(
                                 Icons.delete_outline,
@@ -222,26 +211,20 @@ class AddPurchaseBottomSheet extends StatelessWidget {
                         Row(
                           children: [
                             Expanded(
-                              child: TextField(
+                              child: AppTextField(
                                 controller: item.quantityController,
+                                hintText: "Qty",
+                                prefixIcon: Icons.production_quantity_limits,
                                 keyboardType: TextInputType.number,
-                                decoration: _inputDecoration(
-                                  "Qty",
-                                  null,
-                                  isCompact: true,
-                                ),
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: TextField(
+                              child: AppTextField(
                                 controller: item.unitPriceController,
+                                hintText: "Price",
+                                prefixIcon: Icons.currency_rupee,
                                 keyboardType: TextInputType.number,
-                                decoration: _inputDecoration(
-                                  "Price",
-                                  null,
-                                  isCompact: true,
-                                ),
                               ),
                             ),
                           ],
@@ -255,14 +238,13 @@ class AddPurchaseBottomSheet extends StatelessWidget {
               const SizedBox(height: 16),
 
               // Description
-              TextField(
+              AppTextField(
                 controller: purchaseController.descriptionController,
+                hintText: "Description (Optional)",
+                prefixIcon: Icons.note_add_outlined,
                 maxLines: 2,
-                decoration: _inputDecoration(
-                  "Description (Optional)",
-                  Icons.note_add_outlined,
-                ),
               ),
+
               const SizedBox(height: 25),
 
               // Payment Details Section
@@ -279,35 +261,34 @@ class AddPurchaseBottomSheet extends StatelessWidget {
                 child: Column(
                   children: [
                     GestureDetector(
-                      onTap: () => _selectDate(context, purchaseController.paidDate),
+                      onTap: () =>
+                          _selectDate(context, purchaseController.paidDate),
                       child: AbsorbPointer(
-                        child: Obx(() => TextField(
-                          decoration: _inputDecoration(
-                            "Paid Date",
-                            Icons.event_available,
-                          ),
+                        child: Obx(() => AppTextField(
                           controller: TextEditingController(
                             text: purchaseController.paidDate.value != null
                                 ? DateFormat('dd MMM, yyyy').format(
                                 purchaseController.paidDate.value!)
                                 : "",
                           ),
+                          hintText: "Paid Date",
+                          prefixIcon: Icons.event_available,
                         )),
                       ),
                     ),
                     const SizedBox(height: 16),
-                    TextField(
+                    AppTextField(
                       controller: purchaseController.paidAmountController,
+                      hintText: "Paid Amount",
+                      prefixIcon: Icons.currency_rupee,
                       keyboardType: TextInputType.number,
-                      decoration: _inputDecoration(
-                        "Paid Amount",
-                        Icons.currency_rupee,
-                      ),
                     ),
                     const SizedBox(height: 16),
+
+                    // Status Dropdown (using Utils decoration)
                     Obx(() => DropdownButtonFormField<String>(
-                      initialValue: purchaseController.selectedStatus.value,
-                      decoration: _inputDecoration(
+                      value: purchaseController.selectedStatus.value,
+                      decoration: Utils.inputDecoration(
                         "Status *",
                         Icons.info_outline,
                       ),
@@ -368,11 +349,13 @@ class AddPurchaseBottomSheet extends StatelessWidget {
                       onPressed: purchaseController.isLoading.value
                           ? null
                           : () async {
-                        debugPrint("🔘 Create Purchase button clicked!");
+                        debugPrint(
+                            "🔘 Create Purchase button clicked!");
                         await purchaseController.addPurchaseBill(
                           onSuccess: () {
                             Navigator.pop(context);
-                            debugPrint("✅ Bottom sheet closed via Navigator.pop");
+                            debugPrint(
+                                "✅ Bottom sheet closed via Navigator.pop");
                           },
                         );
                       },
@@ -410,38 +393,6 @@ class AddPurchaseBottomSheet extends StatelessWidget {
         fontWeight: FontWeight.w800,
         color: Colors.grey.shade600,
         letterSpacing: 1.2,
-      ),
-    );
-  }
-
-  // Helper for Input Decoration
-  InputDecoration _inputDecoration(String label, IconData? icon,
-      {bool isCompact = false}) {
-    return InputDecoration(
-      labelText: label,
-      prefixIcon: icon != null
-          ? Icon(icon, size: 20, color: const Color(0xFF1A1A4F))
-          : null,
-      contentPadding: EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: isCompact ? 10 : 16,
-      ),
-      filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade300),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade200),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFF1A1A4F),
-          width: 1.5,
-        ),
       ),
     );
   }

@@ -1,5 +1,6 @@
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 // import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 
@@ -44,4 +45,31 @@ class Utils{
   static snackBar(String title, String message) {
     Get.snackbar(title, message);
   }
+
+  static InputDecoration inputDecoration(String hint, IconData icon){
+    return InputDecoration(
+      hintText: hint,
+      prefixIcon:Icon(icon, color: const Color(0xFF1A1A4F), size: 20,),
+      filled: true,
+      fillColor: Colors.grey.shade50,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade200),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF1A1A4F), width: 1.5),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1),
+      ),
+    );
+  }
+
 }

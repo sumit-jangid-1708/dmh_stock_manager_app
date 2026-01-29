@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:dmj_stock_manager/model/vendor_model.dart';
+import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
+import 'package:dmj_stock_manager/res/components/widgets/custom_text_field.dart';
 import 'package:dmj_stock_manager/res/components/widgets/multi_image_picker_widget.dart';
 import 'package:dmj_stock_manager/res/components/widgets/custom_searchable_dropdown.dart';
 import 'package:dmj_stock_manager/utils/app_lists.dart';
@@ -30,31 +32,9 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
   int? _selectedHsnId;
 
   final VendorController vendorController = Get.find<VendorController>();
-  final DashboardController dashboardController = Get.find<DashboardController>();
+  final DashboardController dashboardController =
+      Get.find<DashboardController>();
   final ItemController itemController = Get.find<ItemController>();
-
-  // --- Theme Decoration Helper ---
-  InputDecoration _getDecoration(String hint, IconData icon) {
-    return InputDecoration(
-      hintText: hint,
-      prefixIcon: Icon(icon, color: const Color(0xFF1A1A4F), size: 20),
-      filled: true,
-      fillColor: Colors.grey.shade50,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade200),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF1A1A4F), width: 1),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -111,20 +91,16 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                   ),
 
                   const SizedBox(height: 12),
-                  TextField(
+                  AppTextField(
                     controller: itemController.productName.value,
-                    decoration: _getDecoration(
-                      "Item Name*",
-                      Icons.inventory_2_outlined,
-                    ),
+                    hintText: "Item Name",
+                    prefixIcon: Icons.inventory_2_outlined,
                   ),
                   const SizedBox(height: 12),
-                  TextField(
+                  AppTextField(
                     controller: itemController.skuCode.value,
-                    decoration: _getDecoration(
-                      "SKU Code*",
-                      Icons.qr_code_scanner,
-                    ),
+                    hintText: "SKU Code",
+                    prefixIcon: Icons.qr_code_scanner,
                   ),
                   const SizedBox(height: 24),
 
@@ -134,22 +110,16 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                     Icons.account_balance_wallet_outlined,
                   ),
                   const SizedBox(height: 12),
-                  TextField(
+                  AppTextField(
                     controller: itemController.purchasePrice.value,
-                    keyboardType: TextInputType.number,
-                    decoration: _getDecoration(
-                      "Purchase Price",
-                      Icons.payments_outlined,
-                    ),
+                    hintText: "Purchase Price",
+                    prefixIcon: Icons.payments_outlined,
                   ),
                   const SizedBox(height: 12),
-                  TextField(
+                  AppTextField(
                     controller: itemController.lowStockLimit.value,
-                    keyboardType: TextInputType.number,
-                    decoration: _getDecoration(
-                      "Low Stock Limit",
-                      Icons.warning_amber_rounded,
-                    ),
+                    hintText: "Low Stock Limit",
+                    prefixIcon: Icons.warning_amber_rounded,
                   ),
                   const SizedBox(height: 24),
 
@@ -165,8 +135,8 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                     icon: Icons.layers_outlined,
                     onAdd: () => _showAddDialog(
                       "Material",
-                          (v) => AppLists.addMaterial(v),
-                          (v) => _selectedMaterial.value = v,
+                      (v) => AppLists.addMaterial(v),
+                      (v) => _selectedMaterial.value = v,
                     ),
                   ),
 
@@ -180,8 +150,8 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                     icon: Icons.palette_outlined,
                     onAdd: () => _showAddDialog(
                       "Color",
-                          (v) => AppLists.addColor(v),
-                          (v) => _selectedColor.value = v,
+                      (v) => AppLists.addColor(v),
+                      (v) => _selectedColor.value = v,
                     ),
                   ),
 
@@ -195,8 +165,8 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                     icon: Icons.straighten_outlined,
                     onAdd: () => _showAddDialog(
                       "Size",
-                          (v) => AppLists.addSize(v),
-                          (v) => _selectedSize.value = v,
+                      (v) => AppLists.addSize(v),
+                      (v) => _selectedSize.value = v,
                     ),
                   ),
 
@@ -355,21 +325,18 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
     return SizedBox(
       width: double.infinity,
       height: 54,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF1A1A4F),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 0,
-        ),
+      child: AppGradientButton(
+        text: "Add Product to Stock",
         onPressed: () {
           final vendor = _selectedVendor.value;
           final color = _selectedColor.value;
           final size = _selectedSize.value;
           final material = _selectedMaterial.value;
 
-          if (vendor == null || color == null || size == null || material == null) {
+          if (vendor == null ||
+              color == null ||
+              size == null ||
+              material == null) {
             Get.snackbar(
               "Required Fields",
               "Please fill all required fields",
@@ -391,14 +358,6 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
           );
           Get.back();
         },
-        child: const Text(
-          'Add Product to Stock',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
       ),
     );
   }
@@ -406,21 +365,21 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
   // --- Logic Helpers ---
 
   void _showAddDialog(
-      String name,
-      Function(String) addToList,
-      Function(String) updateSelected,
-      ) {
+    String name,
+    Function(String) addToList,
+    Function(String) updateSelected,
+  ) {
     final controller = TextEditingController();
     Get.defaultDialog(
+      backgroundColor: Colors.white,
       title: "Add $name",
-      content: TextField(
+      content: AppTextField(
         controller: controller,
-        decoration: _getDecoration("Enter $name", Icons.edit),
+        hintText: "Enter $name",
+        prefixIcon: Icons.edit,
       ),
-      confirm: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF1A1A4F),
-        ),
+
+      confirm: AppGradientButton(
         onPressed: () {
           if (controller.text.isNotEmpty) {
             addToList(controller.text);
@@ -428,7 +387,7 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
           }
           Get.back();
         },
-        child: const Text("Add", style: TextStyle(color: Colors.white)),
+        text: "Add",
       ),
     );
   }
@@ -443,15 +402,17 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
       radius: 16,
       content: Column(
         children: [
-          TextField(
+          AppTextField(
             controller: hsnController,
-            decoration: _getDecoration("HSN Code", Icons.pin),
+            hintText: "HSN Code",
+            prefixIcon: Icons.pin,
           ),
           const SizedBox(height: 10),
-          TextField(
+          AppTextField(
             controller: gstController,
+            hintText: "GST %",
+            prefixIcon: Icons.percent,
             keyboardType: TextInputType.number,
-            decoration: _getDecoration("GST %", Icons.percent),
           ),
         ],
       ),
@@ -463,11 +424,8 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
           ),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.transparent,
-            shadowColor: Colors.transparent,
-          ),
+        child: AppGradientButton(
+          text: "Save",
           onPressed: () async {
             final code = hsnController.text.trim();
             final gstText = gstController.text.trim();
@@ -483,7 +441,7 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
             final gst = double.tryParse(gstText) ?? 0.0;
             await itemController.addHsn(code, gst);
             final newHsn = itemController.hsnList.firstWhereOrNull(
-                  (e) => e.hsnCode == code,
+              (e) => e.hsnCode == code,
             );
             if (newHsn != null) {
               _selectedHsn.value = newHsn;
@@ -495,12 +453,11 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
               }
             }
           },
-          child: const Text("Save", style: TextStyle(color: Colors.white)),
         ),
       ),
       cancel: TextButton(
         onPressed: () => Navigator.of(context).pop(),
-        child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+        child: const Text("Cancel", style: TextStyle(color: Color(0xFF1A1A4F))),
       ),
     );
   }

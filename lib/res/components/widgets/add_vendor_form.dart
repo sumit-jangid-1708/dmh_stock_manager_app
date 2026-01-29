@@ -1,3 +1,4 @@
+import 'package:dmj_stock_manager/utils/utils.dart';
 import 'package:dmj_stock_manager/view_models/controller/vendor_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,33 +6,13 @@ import 'package:get/get.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:country_state_city_pro/country_state_city_pro.dart';
 
+import 'custom_text_field.dart';
+
 class AddVendorFormBottomSheet extends StatelessWidget {
   final VendorController vendorController = Get.find<VendorController>();
 
   AddVendorFormBottomSheet({super.key});
 
-  // --- Theme Decoration Helper (Matches Order & Item Sheets) ---
-  InputDecoration _getDecoration(String hint, IconData icon) {
-    return InputDecoration(
-      hintText: hint,
-      prefixIcon: Icon(icon, color: const Color(0xFF1A1A4F), size: 20),
-      filled: true,
-      fillColor: Colors.grey.shade50,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade200),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF1A1A4F), width: 1),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +46,7 @@ class AddVendorFormBottomSheet extends StatelessWidget {
 
             Flexible(
               child: Form(
-                key: vendorController.formKey, // ✅ Controller se use karo
+                key: vendorController.formKey,
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(24),
                   child: Column(
@@ -80,18 +61,20 @@ class AddVendorFormBottomSheet extends StatelessWidget {
                         Icons.contact_phone_outlined,
                       ),
                       const SizedBox(height: 12),
-                      TextFormField(
+
+                      // ✅ Using AppTextField
+                      AppTextField(
                         controller: vendorController.vendorNameController.value,
-                        decoration: _getDecoration(
-                          "Vendor Name*",
-                          Icons.business_outlined,
-                        ),
+                        hintText: "Vendor Name*",
+                        prefixIcon: Icons.business_outlined,
                         validator: (value) =>
                         value == null || value.isEmpty ? "Required" : null,
                       ),
+
                       const SizedBox(height: 12),
+
                       IntlPhoneField(
-                        decoration: _getDecoration(
+                        decoration: Utils.inputDecoration(
                           "Phone Number",
                           Icons.phone_android_outlined,
                         ).copyWith(prefixIcon: null),
@@ -101,13 +84,15 @@ class AddVendorFormBottomSheet extends StatelessWidget {
                           vendorController.phoneNumber.value = phone.number;
                         },
                       ),
+
                       const SizedBox(height: 12),
-                      TextFormField(
+
+                      // ✅ Using AppTextField
+                      AppTextField(
                         controller: vendorController.emailController.value,
-                        decoration: _getDecoration(
-                          "Email Address*",
-                          Icons.email_outlined,
-                        ),
+                        hintText: "Email Address*",
+                        prefixIcon: Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress,
                       ),
 
                       const SizedBox(height: 24),
@@ -118,22 +103,24 @@ class AddVendorFormBottomSheet extends StatelessWidget {
                         Icons.location_on_outlined,
                       ),
                       const SizedBox(height: 12),
-                      TextFormField(
+
+                      // ✅ Using AppTextField
+                      AppTextField(
                         controller: vendorController.addressController.value,
-                        decoration: _getDecoration(
-                          "Street Address",
-                          Icons.map_outlined,
-                        ),
+                        hintText: "Street Address",
+                        prefixIcon: Icons.map_outlined,
+                        maxLines: 2,
                       ),
+
                       const SizedBox(height: 12),
 
-                      // The Picker
+                      // CountryStateCityPicker (Can't use AppTextField - special widget)
                       CountryStateCityPicker(
                         country: vendorController.countryController.value,
                         state: vendorController.stateController.value,
                         city: vendorController.cityController.value,
                         dialogColor: Colors.white,
-                        textFieldDecoration: _getDecoration(
+                        textFieldDecoration: Utils.inputDecoration(
                           "Select Location",
                           Icons.public_outlined,
                         ).copyWith(
@@ -150,13 +137,13 @@ class AddVendorFormBottomSheet extends StatelessWidget {
                       ),
 
                       const SizedBox(height: 12),
-                      TextFormField(
+
+                      // ✅ Using AppTextField
+                      AppTextField(
                         controller: vendorController.pinCodeController.value,
+                        hintText: "Pin Code",
+                        prefixIcon: Icons.pin_drop_outlined,
                         keyboardType: TextInputType.number,
-                        decoration: _getDecoration(
-                          "Pin Code",
-                          Icons.pin_drop_outlined,
-                        ),
                       ),
 
                       const SizedBox(height: 24),
@@ -179,15 +166,18 @@ class AddVendorFormBottomSheet extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 16),
                             child: Column(
                               children: [
-                                TextFormField(
+                                // ✅ Using AppTextField
+                                AppTextField(
                                   controller: vendorController
                                       .firmNameController.value,
-                                  decoration: _getDecoration(
-                                    "Firm Name",
-                                    Icons.account_balance_outlined,
-                                  ),
+                                  hintText: "Firm Name",
+                                  prefixIcon: Icons.account_balance_outlined,
                                 ),
+
                                 const SizedBox(height: 12),
+
+                                // ✅ GST Number field with special formatting
+                                // Using TextFormField with custom decoration because of special requirements
                                 TextFormField(
                                   controller: vendorController
                                       .gstNumberController.value,
@@ -199,12 +189,62 @@ class AddVendorFormBottomSheet extends StatelessWidget {
                                       RegExp(r'[0-9A-Z]'),
                                     ),
                                   ],
-                                  decoration: _getDecoration(
-                                    "GST Number",
-                                    Icons.verified_user_outlined,
-                                  ).copyWith(counterText: "", errorText: vendorController.gstError.value.isEmpty
-                                      ? null
-                                      :vendorController.gstError.value),
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.black87,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: "GST Number",
+                                    hintStyle: TextStyle(
+                                      color: Colors.grey.shade400,
+                                      fontSize: 14,
+                                    ),
+                                    prefixIcon: const Icon(
+                                      Icons.verified_user_outlined,
+                                      color: Color(0xFF1A1A4F),
+                                      size: 20,
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.grey.shade50,
+                                    contentPadding:
+                                    const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 14,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius:
+                                      BorderRadius.circular(12),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius:
+                                      BorderRadius.circular(12),
+                                      borderSide: BorderSide(
+                                        color: Colors.grey.shade200,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius:
+                                      BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        color: Color(0xFF1A1A4F),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    errorBorder: OutlineInputBorder(
+                                      borderRadius:
+                                      BorderRadius.circular(12),
+                                      borderSide: const BorderSide(
+                                        color: Colors.redAccent,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    counterText: "",
+                                    errorText: vendorController
+                                        .gstError.value.isEmpty
+                                        ? null
+                                        : vendorController.gstError.value,
+                                  ),
                                   onChanged: vendorController.validateGST,
                                 ),
                               ],

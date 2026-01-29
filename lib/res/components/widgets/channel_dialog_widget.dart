@@ -1,4 +1,5 @@
 import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
+import 'package:dmj_stock_manager/res/components/widgets/custom_text_field.dart';
 import 'package:dmj_stock_manager/view_models/controller/home_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -50,35 +51,12 @@ class ChannelDialogWidget extends StatelessWidget {
             ),
 
             const SizedBox(height: 20),
-
-            TextField(
+            AppTextField(
               controller: homeController.nameController,
-              decoration: InputDecoration(
-                hintText: "Channel Name",
-                // prefixIcon: Icon(Icons.),
-                filled: true,
-                fillColor: Colors.grey.shade50,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade200),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: Color(0xFF1A1A4F),
-                    width: 1,
-                  ),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-              ),
+              hintText: "Channel Name",
+              prefixIcon: Icons.store_mall_directory_outlined,
             ),
+
             const SizedBox(height: 10),
           ],
         ),
@@ -94,11 +72,14 @@ class ChannelDialogWidget extends StatelessWidget {
             style: TextStyle(fontSize: 15, color: Color(0xFF1A1A4F)),
           ),
         ),
-        AppGradientButton(onPressed: (){
-          homeController.addChannels();
-        },
-        text: "Add", width: 90, height: 40,
-        )
+        AppGradientButton(
+          onPressed: () {
+            homeController.addChannels();
+          },
+          text: "Add",
+          width: 90,
+          height: 40,
+        ),
       ],
     );
   }

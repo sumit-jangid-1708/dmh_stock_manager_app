@@ -1,5 +1,6 @@
 import 'package:dmj_stock_manager/model/purchase_model.dart';
 import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
+import 'package:dmj_stock_manager/utils/utils.dart';
 import 'package:dmj_stock_manager/view/purchase_screen/add_purchase_bottom_sheet.dart';
 import 'package:dmj_stock_manager/view/purchase_screen/purchase_details.dart';
 import 'package:dmj_stock_manager/view_models/controller/purchase_controller.dart';
@@ -15,7 +16,7 @@ class PurchaseScreen extends StatelessWidget {
         Get.find<PurchaseController>();
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () => purchaseController.getPurchaseList(),
@@ -75,38 +76,9 @@ class PurchaseScreen extends StatelessWidget {
                           purchaseController.searchQuery.value =
                               value; // ← This triggers filtering
                         },
-                        decoration: InputDecoration(
-                          hintText: "Search bills, vendors, status...",
-                          prefixIcon: const Icon(
-                            Icons.search,
-                            color: Colors.grey,
-                          ),
-                          // suffixIcon: Obx(() => purchaseController.searchQuery.value.isNotEmpty
-                          //     ? IconButton(
-                          //   icon: const Icon(Icons.clear),
-                          //   onPressed: () => purchaseController.searchQuery.value = '',
-                          // )
-                          //     : null),
-                          filled: true,
-                          fillColor: Colors.white,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF1A1A4F),
-                              width: 2,
-                            ),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                          ),
+                        decoration: Utils.inputDecoration(
+                          "Search bills, vendors, status...",
+                          Icons.search,
                         ),
                       ),
                     ),
@@ -262,261 +234,194 @@ class PurchaseListCard extends StatelessWidget {
     final itemCount = purchase.items.length;
     final outstanding = purchase.totalAmount - purchase.paidAmount;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return InkWell(
+      onTap: () => Get.to(() => PurchaseDetails(purchase: purchase)),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
           children: [
-            // Vendor & Status Row
-            Row(
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF1A1A4F), Color(0xFF2D2D7F)],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF1A1A4F).withOpacity(0.3),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
+            // Vendor Avatar
+            Container(
+              width: 45,
+              height: 45,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF1A1A4F), Color(0xFF2D2D7F)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                _getVendorInitials(vendor.name),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 12),
+
+            // Main Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Vendor Name & Status
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          vendor.firmName,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1A1A4F),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getStatusColor(
+                            purchase.status,
+                          ).withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: _getStatusColor(purchase.status),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          purchase.status.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: _getStatusColor(purchase.status),
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    _getVendorInitials(vendor.name),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+
+                  const SizedBox(height: 6),
+
+                  // Bill Number & Items
+                  Row(
                     children: [
-                      Text(
-                        vendor.name,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Icon(
+                        Icons.receipt_outlined,
+                        size: 14,
+                        color: Colors.grey.shade600,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(width: 4),
                       Text(
-                        vendor.firmName,
+                        purchase.billNumber,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Icon(
+                        Icons.inventory_2_outlined,
+                        size: 14,
+                        color: Colors.grey.shade600,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        "$itemCount Items",
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey.shade600,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(purchase.status).withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: _getStatusColor(purchase.status),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Text(
-                    purchase.status.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: _getStatusColor(purchase.status),
-                    ),
-                  ),
-                ),
-              ],
-            ),
 
-            const SizedBox(height: 10),
+                  const SizedBox(height: 8),
 
-            // Bill Number & Items Count
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.blue.shade200),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.receipt,
-                          size: 16,
-                          color: Colors.blue.shade700,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Bill Number",
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.blue.shade700,
-                                ),
-                              ),
-                              Text(
-                                purchase.billNumber,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue.shade900,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A4F).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFF1A1A4F)),
-                  ),
-                  child: Column(
+                  // Amount Row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(
-                        Icons.inventory_2,
-                        size: 16,
-                        color: const Color(0xFF1A1A4F),
+                      // Total Amount
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Total",
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          Text(
+                            "₹${purchase.totalAmount.toStringAsFixed(0)}",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1A1A4F),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        "$itemCount Items",
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A1A4F),
+
+                      // Outstanding (if any)
+                      if (outstanding > 0)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              "Due",
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.red.shade700,
+                              ),
+                            ),
+                            Text(
+                              "₹${outstanding.toStringAsFixed(0)}",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red.shade700,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
                     ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
 
-            const SizedBox(height: 16),
-            Divider(height: 1, color: Colors.grey.shade200),
-            const SizedBox(height: 16),
-
-            // Amount Details
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Total Amount",
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      "₹ ${purchase.totalAmount.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1A1A4F),
-                      ),
-                    ),
-                  ],
-                ),
-                if (outstanding > 0)
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.red.shade200),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          "Outstanding",
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.red.shade700,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          "₹ ${outstanding.toStringAsFixed(2)}",
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.red.shade700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-
-            const SizedBox(height: 10),
-
-            // View Details Button
-            AppGradientButton(
-              onPressed: () {
-                Get.to(() => PurchaseDetails(purchase: purchase));
-              },
-              text: "View Full Details",
-              width: double.infinity,
-              height: 50,
+            // Arrow Icon
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 16,
+              color: Colors.grey.shade400,
             ),
           ],
         ),
