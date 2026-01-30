@@ -97,46 +97,46 @@ class BillingScreen extends StatelessWidget {
                           billingController.searchBills(value),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  SizedBox(
-                    height: 48,
-                    width: 48,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(20),
-                            ),
-                          ),
-                          builder: (BuildContext context) {
-                            return Padding(
-                              padding: EdgeInsets.only(
-                                bottom: MediaQuery.of(
-                                  context,
-                                ).viewInsets.bottom,
-                              ),
-                              child: const BillingFilterBottomSheet(),
-                            );
-                          },
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1A1A4F),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: EdgeInsets.zero,
-                      ),
-                      child: const FaIcon(
-                        FontAwesomeIcons.filter,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                    ),
-                  ),
+                  // const SizedBox(width: 10),
+                  // SizedBox(
+                  //   height: 48,
+                  //   width: 48,
+                  //   child: ElevatedButton(
+                  //     onPressed: () {
+                  //       showModalBottomSheet(
+                  //         context: context,
+                  //         isScrollControlled: true,
+                  //         shape: const RoundedRectangleBorder(
+                  //           borderRadius: BorderRadius.vertical(
+                  //             top: Radius.circular(20),
+                  //           ),
+                  //         ),
+                  //         builder: (BuildContext context) {
+                  //           return Padding(
+                  //             padding: EdgeInsets.only(
+                  //               bottom: MediaQuery.of(
+                  //                 context,
+                  //               ).viewInsets.bottom,
+                  //             ),
+                  //             child: const BillingFilterBottomSheet(),
+                  //           );
+                  //         },
+                  //       );
+                  //     },
+                  //     style: ElevatedButton.styleFrom(
+                  //       backgroundColor: const Color(0xFF1A1A4F),
+                  //       shape: RoundedRectangleBorder(
+                  //         borderRadius: BorderRadius.circular(8),
+                  //       ),
+                  //       padding: EdgeInsets.zero,
+                  //     ),
+                  //     child: const FaIcon(
+                  //       FontAwesomeIcons.filter,
+                  //       color: Colors.white,
+                  //       size: 22,
+                  //     ),
+                  //   ),
+                  // ),
                 ],
               ),
             ),
