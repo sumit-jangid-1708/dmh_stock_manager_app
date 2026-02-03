@@ -143,9 +143,9 @@ class _VendorDetailScreenState extends State<VendorDetailScreen> {
                                   const SizedBox(height: 4),
                                   Row(
                                     children: [
-                                      Icon(Icons.location_on, size: 14, color: Colors.grey.shade500),
+                                      Icon(Icons.business, size: 14, color: Colors.grey.shade500),
                                       const SizedBox(width: 4),
-                                      Text("${vendor.city}, ${vendor.state}",
+                                      Text(vendor.firm,
                                           style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontWeight: FontWeight.w500)),
                                     ],
                                   ),
@@ -171,6 +171,54 @@ class _VendorDetailScreenState extends State<VendorDetailScreen> {
                               "GSTIN: ${vendor.gstin}",
                               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.1),
                             ),
+                          ),
+                        ),
+                        Container(
+                          padding: EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Column(
+                            children: [
+                              // Phone
+                              if (vendor.mobile.isNotEmpty)
+                                _buildInfoRow(
+                                  Icons.phone,
+                                  vendor.mobile,
+                                  Colors.blue,
+                                ),
+
+                              // Email
+                              if (vendor.email.isNotEmpty) ...[
+                                SizedBox(height: 10),
+                                _buildInfoRow(
+                                  Icons.email,
+                                  vendor.email,
+                                  Colors.orange,
+                                ),
+                              ],
+
+                              // Address
+                              if (vendor.address.isNotEmpty ) ...[
+                                SizedBox(height: 10),
+                                _buildInfoRow(
+                                  Icons.location_on,
+                                  vendor.address,
+                                  Colors.red,
+                                ),
+                              ],
+
+                              // City/State/Country
+                              if (vendor.city.isNotEmpty && vendor.state.isNotEmpty && vendor.country.isNotEmpty) ...[
+                                SizedBox(height: 10),
+                                _buildInfoRow(
+                                  Icons.public,
+                                  "${vendor.city}, ${vendor.state}, ${vendor.country}",
+                                  Colors.purple,
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                       ],
@@ -234,6 +282,32 @@ class _VendorDetailScreenState extends State<VendorDetailScreen> {
           Text(title, style: TextStyle(fontSize: 11, color: Colors.grey.shade500, fontWeight: FontWeight.w600)),
         ],
       ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String text, Color iconColor) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: iconColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(icon, size: 14, color: iconColor),
+        ),
+        SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

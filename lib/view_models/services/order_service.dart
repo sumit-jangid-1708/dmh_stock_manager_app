@@ -1,6 +1,9 @@
 import 'package:dmj_stock_manager/data/network/network_api_service.dart';
 import 'package:dmj_stock_manager/res/app_url/app_url.dart';
 
+import '../../model/courier_return/courier_return_response.dart';
+import '../../model/customer_return/customer_return_response.dart';
+
 class OrderService{
   final NetworkApiServices _apiServices = NetworkApiServices();
 
@@ -14,15 +17,8 @@ class OrderService{
     return response;
   }
 
-  Future<dynamic> wpsReturnApi (data) async {
-    dynamic response = await _apiServices.postApi(data, AppUrl.wpsReturn);
-    return response;
-  }
 
-  Future<dynamic> customerReturnApi (data) async{
-    dynamic response = await _apiServices.postApi(data, AppUrl.customerReturn);
-    return response;
-  }
+
 
   Future<dynamic> returnOrderHistory(String reason, String condition) async {
     dynamic response = _apiServices.getApi(

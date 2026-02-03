@@ -14,6 +14,9 @@ import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
 import '../../data/app_exceptions.dart';
+import '../../model/courier_return/courier_return_response.dart';
+import '../../model/customer_return/customer_return_request.dart';
+import '../../model/customer_return/customer_return_response.dart';
 import '../../model/product_model.dart';
 import '../../model/return_order_history_model.dart';
 import '../../model/scan_product_response_model.dart';
@@ -136,18 +139,6 @@ class OrderController extends GetxController with BaseController{
           .map((item) => OrderDetailModel.fromJson(item))
           .toList();
       filteredOrders.assignAll(orders);
-    // } on AppExceptions catch (e) {
-    //   if (kDebugMode) {
-    //     print("❌ Exception Details: $e"); // full stack ya raw details
-    //   }
-    //   Get.snackbar(
-    //     "Error",
-    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-    //     duration: const Duration(seconds: 1),
-    //     snackPosition: SnackPosition.TOP,
-    //     backgroundColor: Colors.red,
-    //     colorText: Colors.white,
-    //   );
     } catch (e) {
       handleError(e, onRetry: () => getOrderList());
       print("Error fetching order list $e");
@@ -205,62 +196,37 @@ class OrderController extends GetxController with BaseController{
     }
   }
 
-  Future<void> wpsReturn({
-    required int productId,
-    required int quantity,
-    required String condition,
-    required int orderId,
-    required int channelId,
-  }) async {
-    try {
-      isLoading.value = true;
-      final body = {
-        "product_id": productId,
-        "quantity": quantity,
-        "condition": condition,
-        "order_id": orderId,
-        "channel_id": channelId,
-      };
-      final response = await orderService.wpsReturnApi(
-        body,
-      ); // create this in service
-      AppAlerts.success("WPS return completed");
-      getOrderList();
-    } catch (e) {
-      handleError(e);
-    } finally {
-      isLoading.value = false;
-    }
-  }
+  // Future<void> courierReturn({
+  //   required Map<String, dynamic> body,
+  // }) async {
+  //   try {
+  //     isLoading.value = true;
+  //     final CourierReturnResponse response =
+  //     await orderService.courierReturnApi(body);
+  //     Get.back();
+  //     AppAlerts.success(response.message);
+  //     getOrderList();
+  //   } catch (e) {
+  //     handleError(e);
+  //   } finally {
+  //     isLoading.value = false;
+  //   }
+  // }
 
-  Future<void> customerReturn({
-    required int orderId,
-    required int productId,
-    required int quantity,
-    required String condition,
-    required int channelId,
-  }) async {
-    try {
-      isLoading.value = true;
-      final body = {
-        "order_id": orderId,
-        "product_id": productId,
-        "quantity": quantity,
-        "condition": condition,
-        "channel_id": channelId,
-      };
-      final response = await orderService.customerReturnApi(body);
-      AppAlerts.success("Customer return completed");
-      getOrderList();
-    } catch (e) {
-      if (kDebugMode) {
-        print("❌ Exception Details: $e"); // full stack ya raw details
-      }
-      handleError(e);
-    } finally {
-      isLoading.value = false;
-    }
-  }
+  // Future<void> customerReturn(CustomerReturnRequest request) async {
+  //   try {
+  //     isLoading.value = true;
+  //     final response = await orderService.customerReturnApi(request.toJson());
+  //     Get.back();
+  //     AppAlerts.success(response.message);
+  //     getOrderList();
+  //   } catch (e) {
+  //     handleError(e);
+  //   } finally {
+  //     isLoading.value = false;
+  //   }
+  // }
+
 
   void setScannedSku(String sku) {
     final itemController = Get.find<ItemController>();
@@ -356,19 +322,6 @@ class OrderController extends GetxController with BaseController{
       handleError(e);
       if (kDebugMode) print("❌ Unexpected Error: $e");
       if (kDebugMode) print("❌ Error Type: ${e.runtimeType}");
-      // ✅ Close dialog first
-      // if (Get.isDialogOpen ?? false) {
-      //   Get.back();
-      // }
-      // await Future.delayed(const Duration(milliseconds: 300));
-      // Get.snackbar(
-      //   "Error",
-      //   "Failed to create bill: ${e.toString()}",
-      //   snackPosition: SnackPosition.TOP,
-      //   backgroundColor: Colors.red,
-      //   colorText: Colors.white,
-      //   duration: const Duration(seconds: 3),
-      // );
     } finally {
       isLoading.value = false;
     }
@@ -405,15 +358,12 @@ class OrderController extends GetxController with BaseController{
       final p = (item["product"] as Rx<ProductModel?>).value;
       return p?.id == product.id;
     });
-
     if (existingIndex != -1) {
       // Product exists - increment quantity
       final qtyController =
           items[existingIndex]["quantity"] as TextEditingController;
       int currentQty = int.tryParse(qtyController.text) ?? 0;
       qtyController.text = (currentQty + 1).toString();
-
-
       Get.snackbar(
         "Updated",
         "${product.name} quantity increased to ${currentQty + 1}",
@@ -447,11 +397,9 @@ class OrderController extends GetxController with BaseController{
 
   void addScannedProductFromScan(ScanProductModel scanProduct) {
     final itemController = Get.find<ItemController>();
-
     final product = itemController.products.firstWhereOrNull(
       (p) => p.sku == scanProduct.sku,
     );
-
     if (product == null) {
       Get.snackbar(
         "Not Found",
@@ -461,7 +409,6 @@ class OrderController extends GetxController with BaseController{
       );
       return;
     }
-
     addScannedProduct(product);
   }
 }

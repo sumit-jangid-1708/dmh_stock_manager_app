@@ -6,7 +6,9 @@ import 'package:dmj_stock_manager/view_models/controller/vendor_controller.dart'
 import 'package:dmj_stock_manager/view_models/controller/billing_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../res/components/widgets/courier_return_bottom_sheet.dart';
 import '../../res/components/widgets/create_bill_dialog_widget.dart';
+import '../../res/components/widgets/customer_return_bottom_sheet.dart';
 
 class OrderDetailScreen extends StatelessWidget {
   const OrderDetailScreen({super.key});
@@ -411,7 +413,7 @@ class OrderDetailScreen extends StatelessWidget {
                       Expanded(
                         child: AppGradientButton(
                           onPressed: () {
-                            showReturnDialog(context, order, true);
+                            showCourierReturnDialog(context, order);
                           },
                           text: "Courier Return",
                           height: 50,
@@ -421,7 +423,7 @@ class OrderDetailScreen extends StatelessWidget {
                       Expanded(
                         child: AppGradientButton(
                           onPressed: () {
-                            showReturnDialog(context, order, false);
+                            showCustomerReturnDialog(context, order);
                           },
                           text: "Customer Return",
                           height: 50,
@@ -493,249 +495,249 @@ double calculateTotalAmount(OrderDetailModel order) {
   return total;
 }
 
-void showReturnDialog(
-  BuildContext context,
-  OrderDetailModel order,
-  bool isWps,
-) {
-  final conditions = ["OK", "DAMAGED", "LOST"];
-  final selectedItems = <int, Map<String, dynamic>>{}.obs;
-  final screenWidth = MediaQuery.of(context).size.width;
-  final screenHeight = MediaQuery.of(context).size.height;
-  final isTablet = screenWidth >= 600;
-
-  Get.bottomSheet(
-    DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: isTablet ? 0.7 : 0.6,
-      minChildSize: 0.4,
-      maxChildSize: 0.95,
-      builder: (_, controller) {
-        return Container(
-          padding: EdgeInsets.all(screenWidth * 0.04),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: SingleChildScrollView(
-            controller: controller,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Select Return Items",
-                  style: TextStyle(
-                    fontSize: isTablet ? 20 : 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: screenHeight * 0.02),
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: order.items.length,
-                  itemBuilder: (context, index) {
-                    final item = order.items[index];
-                    final qtyController = TextEditingController(text: "0");
-
-                    return Card(
-                      margin: EdgeInsets.symmetric(
-                        vertical: screenHeight * 0.01,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(
-                          color: Colors.grey.shade300,
-                          width: 1.2,
-                        ),
-                      ),
-                      color: Colors.white,
-                      child: Padding(
-                        padding: EdgeInsets.all(screenWidth * 0.03),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Obx(() {
-                                  return Checkbox(
-                                    value: selectedItems.containsKey(
-                                      item.product.id,
-                                    ),
-                                    onChanged: (val) {
-                                      if (val == true) {
-                                        selectedItems[item.product.id] = {
-                                          "quantity": 0,
-                                          "condition": "OK",
-                                        };
-                                      } else {
-                                        selectedItems.remove(item.product.id);
-                                      }
-                                    },
-                                  );
-                                }),
-                                Expanded(
-                                  child: Text(
-                                    "${item.product.name} (Ordered: ${item.quantity})",
-                                    style: TextStyle(
-                                      fontSize: isTablet ? 16 : 14,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: screenHeight * 0.01),
-                            TextField(
-                              controller: qtyController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                labelText: "Return Quantity",
-                                border: const OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: screenWidth * 0.03,
-                                  vertical: isTablet ? 12 : 8,
-                                ),
-                                labelStyle: TextStyle(
-                                  fontSize: isTablet ? 14 : 12,
-                                ),
-                              ),
-                              style: TextStyle(fontSize: isTablet ? 14 : 12),
-                              onChanged: (val) {
-                                if (selectedItems.containsKey(
-                                  item.product.id,
-                                )) {
-                                  selectedItems[item.product.id]!["quantity"] =
-                                      int.tryParse(val) ?? 0;
-                                }
-                              },
-                            ),
-                            SizedBox(height: screenHeight * 0.01),
-                            Obx(() {
-                              return DropdownButtonFormField<String>(
-                                initialValue:
-                                    selectedItems[item
-                                        .product
-                                        .id]?["condition"],
-                                decoration: InputDecoration(
-                                  labelText: "Condition",
-                                  border: const OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(
-                                    horizontal: screenWidth * 0.03,
-                                    vertical: isTablet ? 12 : 8,
-                                  ),
-                                  labelStyle: TextStyle(
-                                    fontSize: isTablet ? 14 : 12,
-                                  ),
-                                ),
-                                style: TextStyle(fontSize: isTablet ? 14 : 12),
-                                items: conditions
-                                    .map(
-                                      (c) => DropdownMenuItem(
-                                        value: c,
-                                        child: Text(
-                                          c,
-                                          style: TextStyle(
-                                            fontSize: isTablet ? 14 : 12,
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: (val) {
-                                  if (selectedItems.containsKey(
-                                    item.product.id,
-                                  )) {
-                                    selectedItems[item
-                                            .product
-                                            .id]!["condition"] =
-                                        val ?? "OK";
-                                  }
-                                },
-                              );
-                            }),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                SizedBox(height: screenHeight * 0.03),
-                Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minWidth: 150,
-                      maxWidth: screenWidth * 0.5,
-                    ),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1A1A4F),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: screenWidth * 0.04,
-                          vertical: isTablet ? 16 : 12,
-                        ),
-                      ),
-                      onPressed: () {
-                        if (selectedItems.isEmpty) {
-                          Get.snackbar(
-                            "Error",
-                            "Please select at least one product",
-                            backgroundColor: Colors.red,
-                            colorText: Colors.white,
-                          );
-                          return;
-                        }
-                        selectedItems.forEach((productId, data) {
-                          final qty = data["quantity"] as int;
-                          final orderId = order.id;
-                          final channelId = order.channel;
-                          final condition = data["condition"] as String;
-
-                          if (isWps) {
-                            Get.find<OrderController>().wpsReturn(
-                              productId: productId,
-                              quantity: qty,
-                              condition: condition,
-                              orderId: orderId,
-                              channelId: channelId,
-                            );
-                          } else {
-                            Get.find<OrderController>().customerReturn(
-                              orderId: order.id,
-                              productId: productId,
-                              quantity: qty,
-                              condition: condition,
-                              channelId: order.channel,
-                            );
-                          }
-                        });
-                        Get.back();
-                        Get.snackbar(
-                          "Success",
-                          "Return submitted successfully ✅",
-                        );
-                      },
-                      child: Text(
-                        "Submit",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: isTablet ? 16 : 14,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    ),
-    isScrollControlled: true,
-  );
-}
+// void showReturnDialog(
+//   BuildContext context,
+//   OrderDetailModel order,
+//   bool isWps,
+// ) {
+//   final conditions = ["OK", "DAMAGED", "LOST"];
+//   final selectedItems = <int, Map<String, dynamic>>{}.obs;
+//   final screenWidth = MediaQuery.of(context).size.width;
+//   final screenHeight = MediaQuery.of(context).size.height;
+//   final isTablet = screenWidth >= 600;
+//
+//   Get.bottomSheet(
+//     DraggableScrollableSheet(
+//       expand: false,
+//       initialChildSize: isTablet ? 0.7 : 0.6,
+//       minChildSize: 0.4,
+//       maxChildSize: 0.95,
+//       builder: (_, controller) {
+//         return Container(
+//           padding: EdgeInsets.all(screenWidth * 0.04),
+//           decoration: const BoxDecoration(
+//             color: Colors.white,
+//             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+//           ),
+//           child: SingleChildScrollView(
+//             controller: controller,
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Text(
+//                   "Select Return Items",
+//                   style: TextStyle(
+//                     fontSize: isTablet ? 20 : 18,
+//                     fontWeight: FontWeight.bold,
+//                   ),
+//                 ),
+//                 SizedBox(height: screenHeight * 0.02),
+//                 ListView.builder(
+//                   shrinkWrap: true,
+//                   physics: const NeverScrollableScrollPhysics(),
+//                   itemCount: order.items.length,
+//                   itemBuilder: (context, index) {
+//                     final item = order.items[index];
+//                     final qtyController = TextEditingController(text: "0");
+//
+//                     return Card(
+//                       margin: EdgeInsets.symmetric(
+//                         vertical: screenHeight * 0.01,
+//                       ),
+//                       shape: RoundedRectangleBorder(
+//                         borderRadius: BorderRadius.circular(12),
+//                         side: BorderSide(
+//                           color: Colors.grey.shade300,
+//                           width: 1.2,
+//                         ),
+//                       ),
+//                       color: Colors.white,
+//                       child: Padding(
+//                         padding: EdgeInsets.all(screenWidth * 0.03),
+//                         child: Column(
+//                           crossAxisAlignment: CrossAxisAlignment.start,
+//                           children: [
+//                             Row(
+//                               children: [
+//                                 Obx(() {
+//                                   return Checkbox(
+//                                     value: selectedItems.containsKey(
+//                                       item.product.id,
+//                                     ),
+//                                     onChanged: (val) {
+//                                       if (val == true) {
+//                                         selectedItems[item.product.id] = {
+//                                           "quantity": 0,
+//                                           "condition": "OK",
+//                                         };
+//                                       } else {
+//                                         selectedItems.remove(item.product.id);
+//                                       }
+//                                     },
+//                                   );
+//                                 }),
+//                                 Expanded(
+//                                   child: Text(
+//                                     "${item.product.name} (Ordered: ${item.quantity})",
+//                                     style: TextStyle(
+//                                       fontSize: isTablet ? 16 : 14,
+//                                       fontWeight: FontWeight.w600,
+//                                     ),
+//                                     overflow: TextOverflow.ellipsis,
+//                                   ),
+//                                 ),
+//                               ],
+//                             ),
+//                             SizedBox(height: screenHeight * 0.01),
+//                             TextField(
+//                               controller: qtyController,
+//                               keyboardType: TextInputType.number,
+//                               decoration: InputDecoration(
+//                                 labelText: "Return Quantity",
+//                                 border: const OutlineInputBorder(),
+//                                 contentPadding: EdgeInsets.symmetric(
+//                                   horizontal: screenWidth * 0.03,
+//                                   vertical: isTablet ? 12 : 8,
+//                                 ),
+//                                 labelStyle: TextStyle(
+//                                   fontSize: isTablet ? 14 : 12,
+//                                 ),
+//                               ),
+//                               style: TextStyle(fontSize: isTablet ? 14 : 12),
+//                               onChanged: (val) {
+//                                 if (selectedItems.containsKey(
+//                                   item.product.id,
+//                                 )) {
+//                                   selectedItems[item.product.id]!["quantity"] =
+//                                       int.tryParse(val) ?? 0;
+//                                 }
+//                               },
+//                             ),
+//                             SizedBox(height: screenHeight * 0.01),
+//                             Obx(() {
+//                               return DropdownButtonFormField<String>(
+//                                 initialValue:
+//                                     selectedItems[item
+//                                         .product
+//                                         .id]?["condition"],
+//                                 decoration: InputDecoration(
+//                                   labelText: "Condition",
+//                                   border: const OutlineInputBorder(),
+//                                   contentPadding: EdgeInsets.symmetric(
+//                                     horizontal: screenWidth * 0.03,
+//                                     vertical: isTablet ? 12 : 8,
+//                                   ),
+//                                   labelStyle: TextStyle(
+//                                     fontSize: isTablet ? 14 : 12,
+//                                   ),
+//                                 ),
+//                                 style: TextStyle(fontSize: isTablet ? 14 : 12),
+//                                 items: conditions
+//                                     .map(
+//                                       (c) => DropdownMenuItem(
+//                                         value: c,
+//                                         child: Text(
+//                                           c,
+//                                           style: TextStyle(
+//                                             fontSize: isTablet ? 14 : 12,
+//                                           ),
+//                                         ),
+//                                       ),
+//                                     )
+//                                     .toList(),
+//                                 onChanged: (val) {
+//                                   if (selectedItems.containsKey(
+//                                     item.product.id,
+//                                   )) {
+//                                     selectedItems[item
+//                                             .product
+//                                             .id]!["condition"] =
+//                                         val ?? "OK";
+//                                   }
+//                                 },
+//                               );
+//                             }),
+//                           ],
+//                         ),
+//                       ),
+//                     );
+//                   },
+//                 ),
+//                 SizedBox(height: screenHeight * 0.03),
+//                 Center(
+//                   child: ConstrainedBox(
+//                     constraints: BoxConstraints(
+//                       minWidth: 150,
+//                       maxWidth: screenWidth * 0.5,
+//                     ),
+//                     child: ElevatedButton(
+//                       style: ElevatedButton.styleFrom(
+//                         backgroundColor: const Color(0xFF1A1A4F),
+//                         shape: RoundedRectangleBorder(
+//                           borderRadius: BorderRadius.circular(15),
+//                         ),
+//                         padding: EdgeInsets.symmetric(
+//                           horizontal: screenWidth * 0.04,
+//                           vertical: isTablet ? 16 : 12,
+//                         ),
+//                       ),
+//                       onPressed: () {
+//                         if (selectedItems.isEmpty) {
+//                           Get.snackbar(
+//                             "Error",
+//                             "Please select at least one product",
+//                             backgroundColor: Colors.red,
+//                             colorText: Colors.white,
+//                           );
+//                           return;
+//                         }
+//                         selectedItems.forEach((productId, data) {
+//                           final qty = data["quantity"] as int;
+//                           final orderId = order.id;
+//                           final channelId = order.channel;
+//                           final condition = data["condition"] as String;
+//
+//                           if (isWps) {
+//                             Get.find<OrderController>().wpsReturn(
+//                               productId: productId,
+//                               quantity: qty,
+//                               condition: condition,
+//                               orderId: orderId,
+//                               channelId: channelId,
+//                             );
+//                           } else {
+//                             Get.find<OrderController>().customerReturn(
+//                               orderId: order.id,
+//                               productId: productId,
+//                               quantity: qty,
+//                               condition: condition,
+//                               channelId: order.channel,
+//                             );
+//                           }
+//                         });
+//                         Get.back();
+//                         Get.snackbar(
+//                           "Success",
+//                           "Return submitted successfully ✅",
+//                         );
+//                       },
+//                       child: Text(
+//                         "Submit",
+//                         style: TextStyle(
+//                           color: Colors.white,
+//                           fontSize: isTablet ? 16 : 14,
+//                         ),
+//                         overflow: TextOverflow.ellipsis,
+//                       ),
+//                     ),
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           ),
+//         );
+//       },
+//     ),
+//     isScrollControlled: true,
+//   );
+// }

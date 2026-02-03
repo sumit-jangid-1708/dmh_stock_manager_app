@@ -39,6 +39,10 @@ class VendorsModel {
   final String country;
   final String gstin;
   final String? vendorLogo;
+  final String email;
+  final String mobile;
+  final String firm;
+  final String address;
 
   VendorsModel({
     required this.id,
@@ -48,6 +52,10 @@ class VendorsModel {
     required this.country,
     required this.gstin,
     this.vendorLogo,
+    required this.email,
+    required this.mobile,
+    required this.firm,
+    required this.address,
   });
 
   factory VendorsModel.fromJson(Map<String, dynamic> json) {
@@ -59,6 +67,10 @@ class VendorsModel {
       country: json['country'] ?? '',
       gstin: json['gstin'] ?? '',
       vendorLogo: json['vendor_logo'],
+      email: json['email'] ?? '',
+      mobile: json['mobile'] ?? '',
+      firm: json['firm'] ?? '',
+      address: json['address'] ?? '',
     );
   }
 }

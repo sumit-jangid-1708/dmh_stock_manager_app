@@ -76,8 +76,8 @@ class NetworkApiServices extends BaseApiServices {
           .timeout(const Duration(seconds: 30));
       // final contentType = response.headers['content-type'];
       // if (kDebugMode) {
-      //   print("🌐 API Response Status Code: ${response.statusCode}");
-      //   print("🌐 API Response Content-Type: $contentType");
+        print("🌐 API Response Status Code: ${response.statusCode}");
+        print("🌐 API Response Content-Type: $mergedHeaders");
       // }
       // // PDF case
       // if (contentType != null && contentType.contains('application/pdf')) {

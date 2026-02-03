@@ -2,7 +2,6 @@ import 'package:dmj_stock_manager/res/routes/routes_names.dart';
 import 'package:dmj_stock_manager/view/auth/auth_screen.dart';
 import 'package:dmj_stock_manager/view/billings/billing_screen.dart';
 import 'package:dmj_stock_manager/view/dashboard/dashboard.dart';
-import 'package:dmj_stock_manager/view/history/history_screen.dart';
 import 'package:dmj_stock_manager/view/home_screen/home_screen.dart';
 import 'package:dmj_stock_manager/view/items/items_screen.dart';
 import 'package:dmj_stock_manager/view/orders/order_detail_screen.dart';
@@ -49,11 +48,6 @@ class AppRoutes {
     //     page: ()=> VendorDetailScreen(),
     //     binding: VendorBinding()
     // ),
-    GetPage(
-      name: RouteName.historyScreen,
-      page: () => HistoryScreen(),
-      binding: OrderBinding(),
-    ),
     GetPage(
       name: RouteName.orderScreen,
       page: () => OrderScreen(),

@@ -8,7 +8,6 @@ class RouteName{
   static const String orderDetailScreen = "/orderDetail";
   static const String vendorScreen = "/vendorScreen";
   static const String vendorDetailScreen = '/vendorDetailScreen';
-  static const String historyScreen = '/historyScreen';
   static const String billingScreen = '/billingScreen';
   static const String billDetail = '/billDetail/';
   static const String settings = '/settings';
