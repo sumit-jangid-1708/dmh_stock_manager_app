@@ -16,7 +16,7 @@ void showCustomerReturnDialog(BuildContext context, OrderDetailModel order) {
 
   final selectedProduct = Rx<OrderItem?>(null);
   final qtyController = TextEditingController();
-  final refundAmountController = TextEditingController(text: "0");
+  final refundAmountController = TextEditingController();
   final reasonController = TextEditingController();
 
   final condition = Rx<CustomerReturnCondition?>(null);
@@ -127,7 +127,7 @@ void showCustomerReturnDialog(BuildContext context, OrderDetailModel order) {
               }).toList(),
               onChanged: (val) {
                 condition.value = val;
-                refundAmountController.clear();
+                refundAmountController.text="";
               },
             )),
 
@@ -229,8 +229,14 @@ void showCustomerReturnDialog(BuildContext context, OrderDetailModel order) {
                     return;
                   }
 
-                  final refundAmount =
-                      double.tryParse(refundAmountController.text) ?? 0;
+                  // final refundAmount =
+                  //     double.tryParse(refundAmountController.text) ?? 0;
+                  final refundText = refundAmountController.text.trim();
+                  if (refundText.isEmpty) {
+                    AppAlerts.error("Please enter refund amount");
+                    return;
+                  }
+                  final refundAmount = double.parse(refundText);
 
                   if (refundAmount <= 0) {
                     AppAlerts.error("Refund amount must be greater than 0");

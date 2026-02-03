@@ -18,6 +18,8 @@ class ReturnController extends GetxController with BaseController {
   @override
   void onInit() {
     super.onInit();
+    getCourierReturnList();
+    getCustomerReturnList();
   }
 
   /// ✅ Courier Return API
@@ -27,8 +29,8 @@ class ReturnController extends GetxController with BaseController {
   }) async {
     try {
       isLoading.value = true;
-      final CourierReturnResponse response =
-      await returnService.courierReturnApi(body);
+      final CourierReturnResponse response = await returnService
+          .courierReturnApi(body);
       // ✅ Close dialog
       Get.back();
       // ✅ Show success message
@@ -49,8 +51,8 @@ class ReturnController extends GetxController with BaseController {
   }) async {
     try {
       isLoading.value = true;
-      final CustomerReturnResponse response =
-      await returnService.customerReturnApi(request.toJson());
+      final CustomerReturnResponse response = await returnService
+          .customerReturnApi(request.toJson());
       // ✅ Close dialog
       Get.back();
       // ✅ Show success message
@@ -69,24 +71,17 @@ class ReturnController extends GetxController with BaseController {
     String? condition,
     String? claimStatus,
     String? claimResult,
-}) async {
+  }) async {
     try {
       isLoading.value = true;
       final response = await returnService.courierReturnList(
         condition: condition,
         claimStatus: claimStatus,
-        claimResult: claimResult
+        claimResult: claimResult,
       );
-      courierReturnList.value =response.map((v)=> CourierReturnListModel.fromJson(v)).toList();
-      // // ✅ Proper type casting from List<dynamic> to List<CourierReturnListModel>
-      // if (response is List) {
-      //   courierReturnList.value = response
-      //       .map((v) => CourierReturnListModel.fromJson(v as Map<String, dynamic>))
-      //       .toList();
-      //   print("✅ Courier returns loaded: ${courierReturnList.length}");
-      // } else {
-      //   print("❌ Response is not a list: ${response.runtimeType}");
-      // }
+      courierReturnList.value = response
+          .map((v) => CourierReturnListModel.fromJson(v))
+          .toList();
     } catch (e) {
       handleError(e);
       print("👌👌👌👌 Courier Return Error: $e");
@@ -96,11 +91,10 @@ class ReturnController extends GetxController with BaseController {
   }
 
   /// ✅ Get Customer Return List
-  Future<void> getCustomerReturnList(
-  {
- String? condition,
- String? refundStatus,
-}) async {
+  Future<void> getCustomerReturnList({
+    String? condition,
+    String? refundStatus,
+  }) async {
     try {
       isLoading.value = true;
       final response = await returnService.customerReturnList(
@@ -108,16 +102,9 @@ class ReturnController extends GetxController with BaseController {
         refundStatus: refundStatus,
       );
 
-      customerReturnList.value = response.map((e)=> CustomerReturnListModel.fromJson(e)).toList();
-      // ✅ Proper type casting from List<dynamic> to List<CustomerReturnListModel>
-      // if (response is List) {
-      //   customerReturnList.value = response
-      //       .map((v) => CustomerReturnListModel.fromJson(v as Map<String, dynamic>))
-      //       .toList();
-      //   print("✅ Customer returns loaded: ${customerReturnList.length}");
-      // } else {
-      //   print("❌ Response is not a list: ${response.runtimeType}");
-      // }
+      customerReturnList.value = response
+          .map((e) => CustomerReturnListModel.fromJson(e))
+          .toList();
     } catch (e) {
       handleError(e);
       print("🤖🤖🤖🤖 Customer Return Error: $e");

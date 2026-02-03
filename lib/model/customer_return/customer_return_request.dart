@@ -28,14 +28,16 @@ class CustomerReturnRequest {
       "condition": condition.apiValue,
     };
 
-    if (condition != CustomerReturnCondition.safe) {
-      if (refundAmount != null) {
-        data["refund_amount"] = refundAmount;
-      }
-      if (reason != null && reason!.isNotEmpty) {
-        data['reason'] = reason;
-      }
+    // ✅ ALWAYS send refund_amount for ALL conditions (SAFE, DAMAGED, LOST)
+    if (refundAmount != null) {
+      data["refund_amount"] = refundAmount;
     }
+
+    // ✅ ALWAYS send reason for ALL conditions
+    if (reason != null && reason!.isNotEmpty) {
+      data['reason'] = reason;
+    }
+
     return data;
   }
 }
