@@ -1,6 +1,6 @@
 import 'package:dmj_stock_manager/model/courier_return/courier_enums.dart';
 import 'package:dmj_stock_manager/model/courier_return/courier_return_request.dart';
-import 'package:dmj_stock_manager/model/order_model.dart';
+import 'package:dmj_stock_manager/model/order_models/order_model.dart';
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
 import 'package:dmj_stock_manager/utils/utils.dart';
 import 'package:dmj_stock_manager/view_models/controller/return_controller.dart';

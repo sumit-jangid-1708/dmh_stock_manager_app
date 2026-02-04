@@ -1,4 +1,4 @@
-import 'package:dmj_stock_manager/model/purchase_model.dart';
+import 'package:dmj_stock_manager/model/purchase_models/purchase_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';

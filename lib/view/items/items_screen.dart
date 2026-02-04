@@ -14,7 +14,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
-import '../../model/product_model.dart';
+import '../../model/product_models/product_model.dart';
 import '../../utils/app_alerts.dart';
 
 class ItemsScreen extends StatelessWidget {

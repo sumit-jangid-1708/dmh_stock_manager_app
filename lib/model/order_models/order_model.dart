@@ -54,20 +54,6 @@ class OrderDetailModel {
   }
 }
 
-// Map<String, dynamic> toJson() {
-//     return {
-//       'id': id,
-//       'items': items.map((e) => e.toJson()).toList(),
-//       'customer_name': customerName,
-//       'created_at': createdAt.toIso8601String(),
-//       'remarks': remarks,
-//       'channel': channel,
-//       'country_code': countryCode,
-//       'mobile': mobile,
-//     };
-//   }
-// }
-
 class OrderItem {
   final int id;
   final Product product;
@@ -94,16 +80,6 @@ class OrderItem {
   }
 }
 
-//   Map<String, dynamic> toJson() {
-//     return {
-//       'id': id,
-//       'product': product.toJson(),
-//       'quantity': quantity,
-//       'unit_price': unitPrice,
-//       'order': order,
-//     };
-//   }
-// }
 class Product {
   final int id;
   final int vendor;
@@ -157,22 +133,3 @@ class Product {
     );
   }
 }
-
-//   Map<String, dynamic> toJson() {
-//     return {
-//       'id': id,
-//       'vendor': vendor,
-//       'prefix_code': prefixCode,
-//       'name': name,
-//       'size': size,
-//       'color': color,
-//       'material': material,
-//       'serial': serial,
-//       'sku': sku,
-//       'barcode': barcode,
-//       'barcode_image': barcodeImage,
-//       'product_image_variants': productImageVariants,
-//       'unit_purchase_price': unitPurchasePrice,
-//     };
-//   }
-// }

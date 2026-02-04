@@ -1,5 +1,5 @@
 import 'package:dmj_stock_manager/data/app_exceptions.dart';
-import 'package:dmj_stock_manager/model/vendor_model.dart';
+import 'package:dmj_stock_manager/model/vendor_model/vendor_model.dart';
 import 'package:dmj_stock_manager/utils/utils.dart';
 import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
 import 'package:dmj_stock_manager/view_models/services/vendor_service.dart';
@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../model/vender_overview_model.dart';
+import '../../model/vendor_model/vender_overview_model.dart';
 
 class VendorController extends GetxController with BaseController{
   var expandedList = <bool>[].obs;

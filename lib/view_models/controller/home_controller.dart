@@ -1,4 +1,4 @@
-import 'package:dmj_stock_manager/model/bestselling_products_model.dart';
+import 'package:dmj_stock_manager/model/product_models/bestselling_products_model.dart';
 import 'package:dmj_stock_manager/model/channel_model.dart';
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
 import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../data/app_exceptions.dart';
-import '../../model/stock_details_model.dart';
+import '../../model/stock_inventory_models/stock_details_model.dart';
 
 class HomeController extends GetxController with BaseController{
   final HomeService _homeService = HomeService();

@@ -1,13 +1,12 @@
 import 'package:dmj_stock_manager/model/customer_return/customer_return_enum.dart';
 import 'package:dmj_stock_manager/model/customer_return/customer_return_request.dart';
-import 'package:dmj_stock_manager/model/order_model.dart';
+import 'package:dmj_stock_manager/model/order_models/order_model.dart';
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
 import 'package:dmj_stock_manager/utils/utils.dart';
 import 'package:dmj_stock_manager/view_models/controller/return_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/order_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import 'custom_text_field.dart';
 
 void showCustomerReturnDialog(BuildContext context, OrderDetailModel order) {

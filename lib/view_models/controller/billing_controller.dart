@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../data/app_exceptions.dart';
-import '../../model/bill_response_model.dart';
+import '../../model/bills_model/bill_response_model.dart';
 
 class BillingController extends GetxController with BaseController{
   final BillingService billingService = BillingService();

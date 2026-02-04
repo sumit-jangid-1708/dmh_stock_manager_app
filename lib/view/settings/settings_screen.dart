@@ -156,19 +156,19 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withOpacity(0.3)),
-            ),
-            child: const Icon(
-              Icons.tune_rounded,
-              color: Colors.white,
-              size: 24,
-            ),
-          ),
+          // Container(
+          //   padding: const EdgeInsets.all(12),
+          //   decoration: BoxDecoration(
+          //     color: Colors.white.withOpacity(0.2),
+          //     shape: BoxShape.circle,
+          //     border: Border.all(color: Colors.white.withOpacity(0.3)),
+          //   ),
+          //   child: const Icon(
+          //     Icons.tune_rounded,
+          //     color: Colors.white,
+          //     size: 24,
+          //   ),
+          // ),
         ],
       ),
     );

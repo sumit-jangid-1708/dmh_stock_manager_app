@@ -1,11 +1,11 @@
-import 'package:dmj_stock_manager/model/order_model.dart';
 import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/view_models/controller/home_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/order_controller.dart';
-import 'package:dmj_stock_manager/view_models/controller/vendor_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/billing_controller.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../model/order_models/order_detail_ui_model.dart';
 import '../../res/components/widgets/courier_return_bottom_sheet.dart';
 import '../../res/components/widgets/create_bill_dialog_widget.dart';
 import '../../res/components/widgets/customer_return_bottom_sheet.dart';
@@ -19,35 +19,49 @@ class OrderDetailScreen extends StatelessWidget {
 
     final orderController = Get.find<OrderController>();
     final homeController = Get.find<HomeController>();
-    final vendorController = Get.find<VendorController>();
     final billingController = Get.find<BillingController>();
 
-    return Obx(() {
-      final order = orderController.orders.firstWhereOrNull(
-        (o) => o.id == orderId,
-      );
+    // ✅ Load merged order detail (old + new API)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      orderController.loadOrderDetail(orderId);
+    });
 
-      if (order == null) {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      }
+    return Scaffold(
+      backgroundColor: Colors.grey.shade50,
+      body: SafeArea(
+        child: Obx(() {
+          // ✅ Loading state
+          if (orderController.isLoadingDetail.value) {
+            return const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF1A1A4F),
+              ),
+            );
+          }
 
-      // ✅ Check if bill already exists for this order
-      final bool hasBill = billingController.bills.any(
-        (bill) => bill.items.any((item) => item.order == orderId),
-      );
+          // ✅ Get UI Model (merged data)
+          final order = orderController.orderDetailUI.value;
 
-      // ✅ Check payment status - only hide if fully PAID
-      final bool isPaid = order.paidStatus.toLowerCase() == 'paid';
+          if (order == null) {
+            return const Center(
+              child: Text("Order not found"),
+            );
+          }
 
-      // ✅ Show button only if no bill exists OR bill exists but not fully paid
-      final bool showCreateBillButton = !hasBill || !isPaid;
+          // ✅ Check if bill already exists for this order
+          final bool hasBill = billingController.bills.any(
+                (bill) => bill.items.any((item) => item.order == orderId),
+          );
 
-      return Scaffold(
-        backgroundColor: Colors.grey.shade50,
-        body: SafeArea(
-          child: RefreshIndicator(
+          // ✅ Check payment status - only hide if fully PAID
+          final bool isPaid = order.paidStatus.toLowerCase() == 'paid';
+
+          // ✅ Show button only if no bill exists OR bill exists but not fully paid
+          final bool showCreateBillButton = !hasBill || !isPaid;
+
+          return RefreshIndicator(
             onRefresh: () async {
-              await orderController.getOrderList();
+              await orderController.loadOrderDetail(orderId);
               await billingController.refreshBills();
             },
             child: SingleChildScrollView(
@@ -77,13 +91,12 @@ class OrderDetailScreen extends StatelessWidget {
                       if (showCreateBillButton)
                         AppGradientButton(
                           onPressed: () {
-                            showCreateBillDialog(context, order.id);
+                            showCreateBillDialog(context, order.orderId);
                           },
                           icon: Icons.receipt_long,
                           text: "Create Bill",
                         )
                       else
-                        // ✅ Show "Bill Paid" badge only when fully paid
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -105,11 +118,7 @@ class OrderDetailScreen extends StatelessWidget {
                           child: const Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.check_circle,
-                                color: Colors.white,
-                                size: 18,
-                              ),
+                              Icon(Icons.check_circle, color: Colors.white, size: 18),
                               SizedBox(width: 8),
                               Text(
                                 "Bill Paid",
@@ -134,7 +143,7 @@ class OrderDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "Order #${order.id} • ${order.createdAt.toLocal().toString().split(' ')[0]}",
+                    "Order #${order.orderId} • ${order.createdAt.toLocal().toString().split(' ')[0]}",
                     style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 20),
@@ -165,7 +174,7 @@ class OrderDetailScreen extends StatelessWidget {
                         _buildDivider(),
                         _buildStatItem(
                           "Total",
-                          "₹${calculateTotalAmount(order).toStringAsFixed(2)}",
+                          "₹${_calculateTotal(order).toStringAsFixed(2)}",
                           Icons.currency_rupee,
                         ),
                       ],
@@ -194,25 +203,13 @@ class OrderDetailScreen extends StatelessWidget {
                       children: [
                         const Text(
                           "Customer Info",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 12),
                         _buildInfoRow("Name", order.customerName),
-                        _buildInfoRow(
-                          "Mobile",
-                          "${order.countryCode ?? ''}${order.mobile ?? ''}",
-                        ),
-                        _buildInfoRow(
-                          "Email",
-                          order.customerEmail ?? "No Email",
-                        ),
-                        _buildInfoRow(
-                          "Channel ID",
-                          order.channelOrderId ?? "-",
-                        ),
+                        _buildInfoRow("Mobile", "${order.countryCode}${order.mobile}"),
+                        _buildInfoRow("Email", order.customerEmail ?? "No Email"),
+                        _buildInfoRow("Channel ID", order.channelOrderId ?? "-"),
                         _buildInfoRow("Remarks", order.remarks ?? "No remarks"),
                       ],
                     ),
@@ -227,14 +224,13 @@ class OrderDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  // 📋 Items List
+                  // 📋 Items List (from NEW API with barcodes)
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: order.items.length,
                     itemBuilder: (context, index) {
                       final item = order.items[index];
-                      final product = item.product;
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
@@ -255,62 +251,57 @@ class OrderDetailScreen extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Product Name
+                              Text(
+                                item.productName,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1A1A4F),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+
+                              // SKU & Stock
                               Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Product Image
-                                  if (product.productImageVariants.isNotEmpty)
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.network(
-                                        "https://traders.testwebs.in${product.productImageVariants.first}",
-                                        height: 70,
-                                        width: 70,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) => Container(
-                                          height: 70,
-                                          width: 70,
-                                          color: Colors.grey.shade200,
-                                          child: const Icon(
-                                            Icons.image_not_supported,
-                                            color: Colors.grey,
-                                          ),
-                                        ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue.shade50,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      "SKU: ${item.sku}",
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.blue.shade700,
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: item.stockLeft > 0 ? Colors.green.shade50 : Colors.red.shade50,
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Text(
-                                          product.name ?? "Unnamed Product",
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                        Icon(
+                                          Icons.inventory_2,
+                                          size: 12,
+                                          color: item.stockLeft > 0 ? Colors.green.shade700 : Colors.red.shade700,
                                         ),
-                                        const SizedBox(height: 6),
+                                        const SizedBox(width: 4),
                                         Text(
-                                          "SKU: ${product.sku}",
+                                          "Stock: ${item.stockLeft}",
                                           style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                        Text(
-                                          "Vendor: ${vendorController.getVendorNameById(product.vendor)}",
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                        Text(
-                                          "Size: ${product.size} | Color: ${product.color} | Material: ${product.material}",
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey.shade600,
+                                            fontSize: 11,
+                                            color: item.stockLeft > 0 ? Colors.green.shade700 : Colors.red.shade700,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                       ],
@@ -318,85 +309,146 @@ class OrderDetailScreen extends StatelessWidget {
                                   ),
                                 ],
                               ),
+
                               const SizedBox(height: 12),
+                              Divider(color: Colors.grey.shade200, height: 1),
+                              const SizedBox(height: 12),
+
+                              // Quantity, Price, Subtotal
                               Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        "Quantity",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade600,
-                                        ),
-                                      ),
-                                      Text(
-                                        "${item.quantity}",
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
+                                      Text("Quantity", style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                                      Text("${item.quantity}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                                     ],
                                   ),
                                   Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        "Unit Price",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade600,
-                                        ),
-                                      ),
-                                      Text(
-                                        "₹${item.unitPrice}",
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
+                                      Text("Unit Price", style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                                      Text("₹${item.unitPrice.toStringAsFixed(2)}", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                                     ],
                                   ),
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
+                                      Text("Subtotal", style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
                                       Text(
-                                        "Subtotal",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade600,
-                                        ),
-                                      ),
-                                      Text(
-                                        "₹${(double.tryParse(item.unitPrice.toString()) ?? 0) * (item.quantity ?? 0)}",
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF1A1A4F),
-                                        ),
+                                        "₹${(item.unitPrice * item.quantity).toStringAsFixed(2)}",
+                                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A1A4F)),
                                       ),
                                     ],
                                   ),
                                 ],
                               ),
-                              if (product.barcodeImage.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 12),
-                                  child: Align(
-                                    alignment: Alignment.center,
-                                    child: Image.network(
-                                      "https://traders.testwebs.in${product.barcodeImage}",
-                                      height: 50,
-                                      fit: BoxFit.contain,
-                                    ),
+
+                              // ✅ Barcodes Section with proper image URL handling
+                              if (item.barcodes.isNotEmpty) ...[
+                                const SizedBox(height: 16),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade50,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.grey.shade200),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(Icons.qr_code, size: 16, color: Colors.grey.shade700),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            "Barcodes (${item.barcodes.length})",
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.grey.shade700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      ...item.barcodes.map((barcode) {
+                                        // ✅ Construct proper image URL
+                                        final imageUrl = barcode.image.startsWith('http')
+                                            ? barcode.image
+                                            : "https://traders.testwebs.in${barcode.image}";
+
+                                        if (kDebugMode) {
+                                          print("🖼️ Barcode: ${barcode.barcode}");
+                                          print("🖼️ Image URL: $imageUrl");
+                                        }
+
+                                        return Container(
+                                          margin: const EdgeInsets.only(bottom: 8),
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(6),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                barcode.barcode,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontFamily: 'monospace',
+                                                ),
+                                              ),
+                                              if (barcode.image.isNotEmpty) ...[
+                                                const SizedBox(height: 8),
+                                                Center(
+                                                  child: Image.network(
+                                                    imageUrl,
+                                                    height: 60,
+                                                    fit: BoxFit.contain,
+                                                    loadingBuilder: (context, child, loadingProgress) {
+                                                      if (loadingProgress == null) return child;
+                                                      return SizedBox(
+                                                        height: 60,
+                                                        child: Center(
+                                                          child: CircularProgressIndicator(
+                                                            value: loadingProgress.expectedTotalBytes != null
+                                                                ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                                                : null,
+                                                            strokeWidth: 2,
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                    errorBuilder: (context, error, stackTrace) {
+                                                      if (kDebugMode) {
+                                                        print("❌ Image load error: $error");
+                                                        print("❌ Failed URL: $imageUrl");
+                                                      }
+                                                      return Column(
+                                                        children: [
+                                                          const Icon(Icons.broken_image, color: Colors.grey, size: 40),
+                                                          Text(
+                                                            "Image not available",
+                                                            style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                                                          ),
+                                                        ],
+                                                      );
+                                                    },
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ],
                                   ),
                                 ),
+                              ],
                             ],
                           ),
                         ),
@@ -413,7 +465,10 @@ class OrderDetailScreen extends StatelessWidget {
                       Expanded(
                         child: AppGradientButton(
                           onPressed: () {
-                            showCourierReturnDialog(context, order);
+                            final oldOrder = orderController.orders.firstWhereOrNull((o) => o.id == orderId);
+                            if (oldOrder != null) {
+                              showCourierReturnDialog(context, oldOrder);
+                            }
                           },
                           text: "Courier Return",
                           height: 50,
@@ -423,7 +478,10 @@ class OrderDetailScreen extends StatelessWidget {
                       Expanded(
                         child: AppGradientButton(
                           onPressed: () {
-                            showCustomerReturnDialog(context, order);
+                            final oldOrder = orderController.orders.firstWhereOrNull((o) => o.id == orderId);
+                            if (oldOrder != null) {
+                              showCustomerReturnDialog(context, oldOrder);
+                            }
                           },
                           text: "Customer Return",
                           height: 50,
@@ -435,36 +493,24 @@ class OrderDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
-          ),
-        ),
-      );
-    });
+          );
+        }),
+      ),
+    );
   }
 
-  // Helper Widgets
   Widget _buildStatItem(String label, String value, IconData icon) {
     return Column(
       children: [
         Icon(icon, color: Colors.white70, size: 24),
         const SizedBox(height: 6),
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white70, fontSize: 11),
-        ),
+        Text(value, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 11)),
       ],
     );
   }
 
-  Widget _buildDivider() =>
-      Container(height: 40, width: 1, color: Colors.white24);
+  Widget _buildDivider() => Container(height: 40, width: 1, color: Colors.white24);
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
@@ -473,271 +519,19 @@ class OrderDetailScreen extends StatelessWidget {
         text: TextSpan(
           style: const TextStyle(fontSize: 14, color: Colors.black87),
           children: [
-            TextSpan(
-              text: "$label: ",
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
+            TextSpan(text: "$label: ", style: const TextStyle(fontWeight: FontWeight.w600)),
             TextSpan(text: value.isEmpty ? "-" : value),
           ],
         ),
       ),
     );
   }
-}
 
-double calculateTotalAmount(OrderDetailModel order) {
-  double total = 0;
-  for (var item in order.items) {
-    final unitPrice = double.tryParse(item.unitPrice.toString()) ?? 0;
-    final quantity = item.quantity ?? 0;
-    total += unitPrice * quantity;
+  double _calculateTotal(OrderDetailUIModel order) {
+    double total = 0;
+    for (var item in order.items) {
+      total += item.unitPrice * item.quantity;
+    }
+    return total;
   }
-  return total;
 }
-
-// void showReturnDialog(
-//   BuildContext context,
-//   OrderDetailModel order,
-//   bool isWps,
-// ) {
-//   final conditions = ["OK", "DAMAGED", "LOST"];
-//   final selectedItems = <int, Map<String, dynamic>>{}.obs;
-//   final screenWidth = MediaQuery.of(context).size.width;
-//   final screenHeight = MediaQuery.of(context).size.height;
-//   final isTablet = screenWidth >= 600;
-//
-//   Get.bottomSheet(
-//     DraggableScrollableSheet(
-//       expand: false,
-//       initialChildSize: isTablet ? 0.7 : 0.6,
-//       minChildSize: 0.4,
-//       maxChildSize: 0.95,
-//       builder: (_, controller) {
-//         return Container(
-//           padding: EdgeInsets.all(screenWidth * 0.04),
-//           decoration: const BoxDecoration(
-//             color: Colors.white,
-//             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-//           ),
-//           child: SingleChildScrollView(
-//             controller: controller,
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Text(
-//                   "Select Return Items",
-//                   style: TextStyle(
-//                     fontSize: isTablet ? 20 : 18,
-//                     fontWeight: FontWeight.bold,
-//                   ),
-//                 ),
-//                 SizedBox(height: screenHeight * 0.02),
-//                 ListView.builder(
-//                   shrinkWrap: true,
-//                   physics: const NeverScrollableScrollPhysics(),
-//                   itemCount: order.items.length,
-//                   itemBuilder: (context, index) {
-//                     final item = order.items[index];
-//                     final qtyController = TextEditingController(text: "0");
-//
-//                     return Card(
-//                       margin: EdgeInsets.symmetric(
-//                         vertical: screenHeight * 0.01,
-//                       ),
-//                       shape: RoundedRectangleBorder(
-//                         borderRadius: BorderRadius.circular(12),
-//                         side: BorderSide(
-//                           color: Colors.grey.shade300,
-//                           width: 1.2,
-//                         ),
-//                       ),
-//                       color: Colors.white,
-//                       child: Padding(
-//                         padding: EdgeInsets.all(screenWidth * 0.03),
-//                         child: Column(
-//                           crossAxisAlignment: CrossAxisAlignment.start,
-//                           children: [
-//                             Row(
-//                               children: [
-//                                 Obx(() {
-//                                   return Checkbox(
-//                                     value: selectedItems.containsKey(
-//                                       item.product.id,
-//                                     ),
-//                                     onChanged: (val) {
-//                                       if (val == true) {
-//                                         selectedItems[item.product.id] = {
-//                                           "quantity": 0,
-//                                           "condition": "OK",
-//                                         };
-//                                       } else {
-//                                         selectedItems.remove(item.product.id);
-//                                       }
-//                                     },
-//                                   );
-//                                 }),
-//                                 Expanded(
-//                                   child: Text(
-//                                     "${item.product.name} (Ordered: ${item.quantity})",
-//                                     style: TextStyle(
-//                                       fontSize: isTablet ? 16 : 14,
-//                                       fontWeight: FontWeight.w600,
-//                                     ),
-//                                     overflow: TextOverflow.ellipsis,
-//                                   ),
-//                                 ),
-//                               ],
-//                             ),
-//                             SizedBox(height: screenHeight * 0.01),
-//                             TextField(
-//                               controller: qtyController,
-//                               keyboardType: TextInputType.number,
-//                               decoration: InputDecoration(
-//                                 labelText: "Return Quantity",
-//                                 border: const OutlineInputBorder(),
-//                                 contentPadding: EdgeInsets.symmetric(
-//                                   horizontal: screenWidth * 0.03,
-//                                   vertical: isTablet ? 12 : 8,
-//                                 ),
-//                                 labelStyle: TextStyle(
-//                                   fontSize: isTablet ? 14 : 12,
-//                                 ),
-//                               ),
-//                               style: TextStyle(fontSize: isTablet ? 14 : 12),
-//                               onChanged: (val) {
-//                                 if (selectedItems.containsKey(
-//                                   item.product.id,
-//                                 )) {
-//                                   selectedItems[item.product.id]!["quantity"] =
-//                                       int.tryParse(val) ?? 0;
-//                                 }
-//                               },
-//                             ),
-//                             SizedBox(height: screenHeight * 0.01),
-//                             Obx(() {
-//                               return DropdownButtonFormField<String>(
-//                                 initialValue:
-//                                     selectedItems[item
-//                                         .product
-//                                         .id]?["condition"],
-//                                 decoration: InputDecoration(
-//                                   labelText: "Condition",
-//                                   border: const OutlineInputBorder(),
-//                                   contentPadding: EdgeInsets.symmetric(
-//                                     horizontal: screenWidth * 0.03,
-//                                     vertical: isTablet ? 12 : 8,
-//                                   ),
-//                                   labelStyle: TextStyle(
-//                                     fontSize: isTablet ? 14 : 12,
-//                                   ),
-//                                 ),
-//                                 style: TextStyle(fontSize: isTablet ? 14 : 12),
-//                                 items: conditions
-//                                     .map(
-//                                       (c) => DropdownMenuItem(
-//                                         value: c,
-//                                         child: Text(
-//                                           c,
-//                                           style: TextStyle(
-//                                             fontSize: isTablet ? 14 : 12,
-//                                           ),
-//                                         ),
-//                                       ),
-//                                     )
-//                                     .toList(),
-//                                 onChanged: (val) {
-//                                   if (selectedItems.containsKey(
-//                                     item.product.id,
-//                                   )) {
-//                                     selectedItems[item
-//                                             .product
-//                                             .id]!["condition"] =
-//                                         val ?? "OK";
-//                                   }
-//                                 },
-//                               );
-//                             }),
-//                           ],
-//                         ),
-//                       ),
-//                     );
-//                   },
-//                 ),
-//                 SizedBox(height: screenHeight * 0.03),
-//                 Center(
-//                   child: ConstrainedBox(
-//                     constraints: BoxConstraints(
-//                       minWidth: 150,
-//                       maxWidth: screenWidth * 0.5,
-//                     ),
-//                     child: ElevatedButton(
-//                       style: ElevatedButton.styleFrom(
-//                         backgroundColor: const Color(0xFF1A1A4F),
-//                         shape: RoundedRectangleBorder(
-//                           borderRadius: BorderRadius.circular(15),
-//                         ),
-//                         padding: EdgeInsets.symmetric(
-//                           horizontal: screenWidth * 0.04,
-//                           vertical: isTablet ? 16 : 12,
-//                         ),
-//                       ),
-//                       onPressed: () {
-//                         if (selectedItems.isEmpty) {
-//                           Get.snackbar(
-//                             "Error",
-//                             "Please select at least one product",
-//                             backgroundColor: Colors.red,
-//                             colorText: Colors.white,
-//                           );
-//                           return;
-//                         }
-//                         selectedItems.forEach((productId, data) {
-//                           final qty = data["quantity"] as int;
-//                           final orderId = order.id;
-//                           final channelId = order.channel;
-//                           final condition = data["condition"] as String;
-//
-//                           if (isWps) {
-//                             Get.find<OrderController>().wpsReturn(
-//                               productId: productId,
-//                               quantity: qty,
-//                               condition: condition,
-//                               orderId: orderId,
-//                               channelId: channelId,
-//                             );
-//                           } else {
-//                             Get.find<OrderController>().customerReturn(
-//                               orderId: order.id,
-//                               productId: productId,
-//                               quantity: qty,
-//                               condition: condition,
-//                               channelId: order.channel,
-//                             );
-//                           }
-//                         });
-//                         Get.back();
-//                         Get.snackbar(
-//                           "Success",
-//                           "Return submitted successfully ✅",
-//                         );
-//                       },
-//                       child: Text(
-//                         "Submit",
-//                         style: TextStyle(
-//                           color: Colors.white,
-//                           fontSize: isTablet ? 16 : 14,
-//                         ),
-//                         overflow: TextOverflow.ellipsis,
-//                       ),
-//                     ),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         );
-//       },
-//     ),
-//     isScrollControlled: true,
-//   );
-// }

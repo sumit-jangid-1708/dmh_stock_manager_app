@@ -1,4 +1,4 @@
-import 'package:dmj_stock_manager/model/purchase_model.dart';
+import 'package:dmj_stock_manager/model/purchase_models/purchase_model.dart';
 import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/utils/utils.dart';
 import 'package:dmj_stock_manager/view/purchase_screen/add_purchase_bottom_sheet.dart';

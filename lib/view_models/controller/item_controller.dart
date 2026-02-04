@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:dmj_stock_manager/model/hsn_model.dart';
-import 'package:dmj_stock_manager/model/product_model.dart';
+import 'package:dmj_stock_manager/model/product_models/hsn_model.dart';
+import 'package:dmj_stock_manager/model/product_models/product_model.dart';
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
 import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
 import 'package:dmj_stock_manager/view_models/services/items_service%20.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../model/product_model.dart';
+import '../../model/product_models/product_model.dart';
 
 
 class OrderItems {

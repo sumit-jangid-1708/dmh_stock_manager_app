@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../data/app_exceptions.dart';
-import '../../model/low_stock_product_model.dart';
+import '../../model/product_models/low_stock_product_model.dart';
 import '../../res/assets/images_assets.dart';
 
 class DashboardController extends GetxController with WidgetsBindingObserver, BaseController{

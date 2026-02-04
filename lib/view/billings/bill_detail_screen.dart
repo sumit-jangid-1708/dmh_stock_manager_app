@@ -4,7 +4,7 @@ import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import '../../model/bill_response_model.dart';
+import '../../model/bills_model/bill_response_model.dart';
 
 class BillDetailScreen extends StatelessWidget {
   BillDetailScreen({super.key});

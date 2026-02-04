@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../model/vender_overview_model.dart';
+import '../../../model/vendor_model/vender_overview_model.dart';
 class PastProductsTable extends StatelessWidget {
   final List<PastOrderModel> pastProducts;
 

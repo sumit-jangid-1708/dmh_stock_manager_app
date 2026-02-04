@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:dmj_stock_manager/model/product_model.dart';
+import 'package:dmj_stock_manager/model/product_models/product_model.dart';
 import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
 import 'package:flutter/material.dart';

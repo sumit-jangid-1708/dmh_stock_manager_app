@@ -1,5 +1,5 @@
-import 'package:dmj_stock_manager/model/product_model.dart';
-import 'package:dmj_stock_manager/model/vendor_model.dart';
+import 'package:dmj_stock_manager/model/product_models/product_model.dart';
+import 'package:dmj_stock_manager/model/vendor_model/vendor_model.dart';
 import 'package:dmj_stock_manager/res/components/widgets/custom_searchable_dropdown.dart';
 import 'package:dmj_stock_manager/utils/utils.dart';
 import 'package:flutter/material.dart';

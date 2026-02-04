@@ -1,4 +1,4 @@
-import 'package:dmj_stock_manager/model/vendor_model.dart';
+import 'package:dmj_stock_manager/model/vendor_model/vendor_model.dart';
 import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
 import 'package:dmj_stock_manager/view_models/services/purchase_service.dart';
 import 'package:flutter/foundation.dart';
@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../data/app_exceptions.dart';
-import '../../model/product_model.dart';
-import '../../model/purchase_model.dart';
+import '../../model/product_models/product_model.dart';
+import '../../model/purchase_models/purchase_model.dart';
 import '../../utils/app_alerts.dart';
 
 class PurchaseItem {

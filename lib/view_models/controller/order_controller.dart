@@ -1,5 +1,5 @@
-import 'package:dmj_stock_manager/model/create_bill_model.dart';
-import 'package:dmj_stock_manager/model/order_model.dart';
+import 'package:dmj_stock_manager/model/bills_model/create_bill_model.dart';
+import 'package:dmj_stock_manager/model/order_models/order_model.dart';
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
 import 'package:dmj_stock_manager/utils/utils.dart';
 import 'package:dmj_stock_manager/view/billings/billing_screen.dart';
@@ -17,9 +17,11 @@ import '../../data/app_exceptions.dart';
 import '../../model/courier_return/courier_return_response.dart';
 import '../../model/customer_return/customer_return_request.dart';
 import '../../model/customer_return/customer_return_response.dart';
-import '../../model/product_model.dart';
-import '../../model/return_order_history_model.dart';
-import '../../model/scan_product_response_model.dart';
+import '../../model/order_models/order_detail_adapter.dart';
+import '../../model/order_models/order_detail_ui_model.dart';
+import '../../model/product_models/product_model.dart';
+import '../../model/order_models/return_order_history_model.dart';
+import '../../model/product_models/scan_product_response_model.dart';
 import '../../view/orders/order_create_bottom_sheet.dart';
 import 'auth/auth_controller.dart';
 
@@ -53,6 +55,9 @@ class OrderController extends GetxController with BaseController{
 
   var filteredOrders = <OrderDetailModel>[].obs;
   RxString emailError = ''.obs;
+
+  final orderDetailUI = Rxn<OrderDetailUIModel>();
+  var isLoadingDetail = false.obs;
 
   // Form Logic Methods
   void addItemRow() {
@@ -189,44 +194,12 @@ class OrderController extends GetxController with BaseController{
     } catch (e) {
       handleError(e);
       if (kDebugMode) {
-        print("❌ Exception Details: $e"); // full stack ya raw details
+        print("❌ Exception Details: $e");
       }
     } finally {
       isLoading.value = false;
     }
   }
-
-  // Future<void> courierReturn({
-  //   required Map<String, dynamic> body,
-  // }) async {
-  //   try {
-  //     isLoading.value = true;
-  //     final CourierReturnResponse response =
-  //     await orderService.courierReturnApi(body);
-  //     Get.back();
-  //     AppAlerts.success(response.message);
-  //     getOrderList();
-  //   } catch (e) {
-  //     handleError(e);
-  //   } finally {
-  //     isLoading.value = false;
-  //   }
-  // }
-
-  // Future<void> customerReturn(CustomerReturnRequest request) async {
-  //   try {
-  //     isLoading.value = true;
-  //     final response = await orderService.customerReturnApi(request.toJson());
-  //     Get.back();
-  //     AppAlerts.success(response.message);
-  //     getOrderList();
-  //   } catch (e) {
-  //     handleError(e);
-  //   } finally {
-  //     isLoading.value = false;
-  //   }
-  // }
-
 
   void setScannedSku(String sku) {
     final itemController = Get.find<ItemController>();
@@ -272,7 +245,7 @@ class OrderController extends GetxController with BaseController{
     } catch (e) {
       handleError(e, onRetry: ()=> getReturnOrderHistory(reason, condition));
       if (kDebugMode) {
-        print("❌ Exception Details: $e"); // full stack ya raw details
+        print("❌ Exception Details: $e");
       }
     } finally {
       isLoading.value = false;
@@ -410,5 +383,33 @@ class OrderController extends GetxController with BaseController{
       return;
     }
     addScannedProduct(product);
+  }
+
+  Future<void> loadOrderDetail(int orderId) async {
+    try {
+      isLoadingDetail.value = true;
+      final oldOrder = orders.firstWhereOrNull((o) => o.id == orderId);
+      if (oldOrder == null) {
+        final response = await orderService.getOrderDetailApi();
+        final List<dynamic> data = response;
+        final allOrders = data.map((item) => OrderDetailModel.fromJson(item)).toList();
+        final fetchedOrder = allOrders.firstWhereOrNull((o) => o.id == orderId);
+
+        if (fetchedOrder == null) {
+          throw Exception("Order not found");
+        }
+        final newOrder = await orderService.getOrderDetailById(orderId);
+        orderDetailUI.value = OrderDetailAdapter.merge(fetchedOrder, newOrder);
+      } else {
+        final newOrder = await orderService.getOrderDetailById(orderId);
+        orderDetailUI.value = OrderDetailAdapter.merge(oldOrder, newOrder);
+      }
+      debugPrint("✅ Order detail loaded successfully");
+    } catch (e) {
+      handleError(e);
+      debugPrint("❌ Error loading order detail: $e");
+    } finally {
+      isLoadingDetail.value = false;
+    }
   }
 }

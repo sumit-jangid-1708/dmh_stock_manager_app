@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../model/bestselling_products_model.dart';
-import '../../model/stock_details_model.dart';
+import '../../model/product_models/bestselling_products_model.dart';
+import '../../model/stock_inventory_models/stock_details_model.dart';
 import '../../view_models/controller/home_controller.dart';
 
 class LowStockScreen extends StatelessWidget {

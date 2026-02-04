@@ -4,7 +4,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
-import '../../model/bill_response_model.dart';
+import '../../model/bills_model/bill_response_model.dart';
 import '../../res/components/widgets/billing_filter_bottom_sheet.dart';
 import '../../res/components/widgets/billng_cards_widget.dart';
 import 'bill_detail_screen.dart';

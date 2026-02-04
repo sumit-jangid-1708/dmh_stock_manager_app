@@ -1,7 +1,7 @@
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import '../../model/bill_response_model.dart';
+import '../../model/bills_model/bill_response_model.dart';
 import '../../view_models/controller/item_controller.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:get/get.dart';

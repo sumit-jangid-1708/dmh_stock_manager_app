@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:dmj_stock_manager/model/vendor_model.dart';
+import 'package:dmj_stock_manager/model/vendor_model/vendor_model.dart';
 import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/res/components/widgets/custom_text_field.dart';
 import 'package:dmj_stock_manager/res/components/widgets/multi_image_picker_widget.dart';

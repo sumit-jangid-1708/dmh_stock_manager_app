@@ -1,10 +1,10 @@
-import 'package:dmj_stock_manager/model/scan_product_response_model.dart';
+import 'package:dmj_stock_manager/model/product_models/scan_product_response_model.dart';
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
 import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../data/app_exceptions.dart';
-import '../../model/generate_barcode_model.dart';
+import '../../model/vendor_model/generate_barcode_model.dart';
 import '../services/util_service.dart';
 import 'order_controller.dart';
 

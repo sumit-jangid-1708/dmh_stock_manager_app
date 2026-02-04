@@ -19,15 +19,16 @@ class StockButtonRow extends StatelessWidget {
           stockButton("View Inventory", (){
             Get.to(StockScreen());
           }),
+          stockButton("Return Order", (){
+            Get.to(ReturnOrderHistoryScreen());
+          }),
           stockButton("Sales History", (){
             dashboardController.changeTab(3);
           }),
           stockButton("Purchase History", (){
             Get.to(PurchaseScreen());
           }),
-          stockButton("Return Order", (){
-            Get.to(ReturnOrderHistoryScreen());
-          }),
+
         ],
       ),
     );

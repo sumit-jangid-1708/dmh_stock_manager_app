@@ -9,7 +9,7 @@ import 'package:dmj_stock_manager/res/components/scanner/qr_scanner_widget.dart'
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
-import '../../model/product_model.dart';
+import '../../model/product_models/product_model.dart';
 import '../../res/components/widgets/custom_searchable_dropdown.dart';
 
 class OrderCreateBottomSheet extends StatelessWidget {
