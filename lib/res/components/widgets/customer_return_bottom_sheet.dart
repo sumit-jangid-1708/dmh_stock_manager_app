@@ -7,6 +7,7 @@ import 'package:dmj_stock_manager/view_models/controller/return_controller.dart'
 import 'package:dmj_stock_manager/view_models/controller/order_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../routes/routes_names.dart';
 import 'custom_text_field.dart';
 
 void showCustomerReturnDialog(BuildContext context, OrderDetailModel order) {
@@ -264,6 +265,7 @@ void showCustomerReturnDialog(BuildContext context, OrderDetailModel order) {
                     onSuccess: () {
                       // Refresh order list after success
                       orderController.getOrderList();
+                      Get.toNamed(RouteName.returnScreen);
                     },
                   );
                 },

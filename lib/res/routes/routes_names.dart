@@ -11,4 +11,5 @@ class RouteName{
   static const String billingScreen = '/billingScreen';
   static const String billDetail = '/billDetail/';
   static const String settings = '/settings';
+  static const String returnScreen = "/returnScreen";
 }

@@ -444,7 +444,7 @@ class OrderDetailScreen extends StatelessWidget {
                                             ],
                                           ),
                                         );
-                                      }).toList(),
+                                      }),
                                     ],
                                   ),
                                 ),
