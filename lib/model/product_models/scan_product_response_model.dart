@@ -1,15 +1,24 @@
 class ScanProductResponseModel {
-  final int? serialScanned;
+  final String? barcodeScanned;
+  final String? sku;
+  final String? serialScanned;
+  final int? stockLeft;
   final ScanProductModel? product;
 
   ScanProductResponseModel({
+    this.barcodeScanned,
+    this.sku,
     this.serialScanned,
+    this.stockLeft,
     this.product,
   });
 
   factory ScanProductResponseModel.fromJson(Map<String, dynamic> json) {
     return ScanProductResponseModel(
-      serialScanned: json['serial_scanned'],
+      barcodeScanned: json['barcode_scanned'],
+      sku: json['sku'],
+      serialScanned: json['serial_scanned']?.toString(),
+      stockLeft: json['stock_left'],
       product: json['product'] != null
           ? ScanProductModel.fromJson(json['product'])
           : null,
@@ -18,18 +27,22 @@ class ScanProductResponseModel {
 
   Map<String, dynamic> toJson() {
     return {
+      'barcode_scanned': barcodeScanned,
+      'sku': sku,
       'serial_scanned': serialScanned,
+      'stock_left': stockLeft,
       'product': product?.toJson(),
     };
   }
 }
 
 
+
 class ScanProductModel {
   final int? id;
   final VendorModel? vendor;
   final InventoryModel? inventory;
-  final List<dynamic>? damagedInventory;
+  final List<dynamic> damagedInventory;
   final String? prefixCode;
   final String? name;
   final String? size;
@@ -40,7 +53,7 @@ class ScanProductModel {
   final String? barcode;
   final String? barcodeImage;
   final String? productImage;
-  final List<String>? productImageVariants;
+  final List<String> productImageVariants;
   final String? unitPurchasePrice;
   final int? hsn;
 
@@ -48,7 +61,7 @@ class ScanProductModel {
     this.id,
     this.vendor,
     this.inventory,
-    this.damagedInventory,
+    required this.damagedInventory,
     this.prefixCode,
     this.name,
     this.size,
@@ -59,7 +72,7 @@ class ScanProductModel {
     this.barcode,
     this.barcodeImage,
     this.productImage,
-    this.productImageVariants,
+    required this.productImageVariants,
     this.unitPurchasePrice,
     this.hsn,
   });
@@ -84,9 +97,8 @@ class ScanProductModel {
       barcode: json['barcode'],
       barcodeImage: json['barcode_image'],
       productImage: json['product_image'],
-      productImageVariants: json['product_image_variants'] != null
-          ? List<String>.from(json['product_image_variants'])
-          : [],
+      productImageVariants:
+      (json['product_image_variants'] as List?)?.cast<String>() ?? [],
       unitPurchasePrice: json['unit_purchase_price'],
       hsn: json['hsn'],
     );

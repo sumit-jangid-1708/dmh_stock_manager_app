@@ -300,12 +300,6 @@ class StockScreen extends StatelessWidget {
                           if (product?.sku != null)
                             Row(
                               children: [
-                                Icon(
-                                  Icons.qr_code,
-                                  size: 12,
-                                  color: Colors.grey,
-                                ),
-                                SizedBox(width: 4),
                                 Text(
                                   "SKU: ${product!.sku}",
                                   style: TextStyle(

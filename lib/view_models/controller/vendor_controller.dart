@@ -15,7 +15,7 @@ class VendorController extends GetxController with BaseController{
   var filteredVendors = <VendorModel>[].obs;
   final searchBar = TextEditingController();
 
-  final formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   Rx<VendorOverviewModel?> vendorOverview = Rx<VendorOverviewModel?>(null);
   //fields

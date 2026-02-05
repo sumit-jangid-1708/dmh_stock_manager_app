@@ -19,11 +19,9 @@ class OrderCreateBottomSheet extends StatelessWidget {
   final OrderController orderController = Get.find<OrderController>();
   final ItemController itemController = Get.find<ItemController>();
 
-
-  // ✅ NEW: Open Scanner and Add Scanned Product
   Future<void> _openScannerAndAddProduct() async {
     final ProductModel? scannedProduct = await Get.to(
-      () => const QrScannerWidget(),
+          () => const QrScannerWidget(),
     );
 
     if (scannedProduct != null) {
@@ -38,129 +36,173 @@ class OrderCreateBottomSheet extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Drag Handle
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(10),
+      child: Form(
+        key: orderController.formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag Handle
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
             ),
-          ),
 
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(),
-                  const SizedBox(height: 24),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(),
+                    const SizedBox(height: 24),
 
-                  // SECTION: CUSTOMER INFO
-                  _buildSectionTitle(
-                    "Order Details",
-                    Icons.assignment_outlined,
-                  ),
-                  const SizedBox(height: 12),
+                    // SECTION: CUSTOMER INFO
+                    _buildSectionTitle("Order Details", Icons.assignment_outlined),
+                    const SizedBox(height: 12),
 
-                  // Channel Dropdown with Search
-                  CustomSearchableDropdown<ChannelModel>(
-                    items: homeController.channels,
-                    selectedItem: orderController.selectedChannel,
-                    itemAsString: (channel) => channel.name,
-                    hintText: "Select Channel",
-                    prefixIcon: Icons.store_outlined,
-                    enableSearch: true,
-                    searchHint: "Search channels...",
-                    onChanged: (val) {
-                      orderController.selectedChannel.value = val;
-                    },
-                  ),
+                    // Channel Dropdown
+                    CustomSearchableDropdown<ChannelModel>(
+                      items: homeController.channels,
+                      selectedItem: orderController.selectedChannel,
+                      itemAsString: (channel) => channel.name,
+                      hintText: "Select Channel",
+                      prefixIcon: Icons.store_outlined,
+                      enableSearch: true,
+                      searchHint: "Search channels...",
+                      onChanged: (val) {
+                        orderController.selectedChannel.value = val;
+                      },
+                    ),
 
-                  const SizedBox(height: 12),
-                  AppTextField(
-                    controller: orderController.channelOrderId,
-                    hintText: "Channel Order ID",
-                    prefixIcon: Icons.tag,
-                  ),
-                  const SizedBox(height: 12),
-                  AppTextField(
-                    controller: orderController.customerNameController,
-                    hintText: "Customer Name",
-                    prefixIcon: Icons.person_outline,
-                  ),
-                  const SizedBox(height: 12),
-                  AppTextField(
-                    controller: orderController.emailController,
-                    hintText: "Email",
-                    prefixIcon: Icons.email,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildPhoneField(),
-                  const SizedBox(height: 12),
-                  AppTextField(
-                    controller: orderController.remarkController,
-                    hintText: "Remarks",
-                    prefixIcon: Icons.notes,
-                  ),
+                    const SizedBox(height: 12),
 
-                  const SizedBox(height: 32),
+                    // Channel Order ID
+                    AppTextField(
+                      controller: orderController.channelOrderId,
+                      hintText: "Channel Order ID",
+                      prefixIcon: Icons.tag,
+                    ),
 
-                  // SECTION: ITEMS
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildSectionTitle(
-                        "Product Items",
-                        Icons.shopping_bag_outlined,
-                      ),
-                      Row(
-                        children: [
-                          // ✅ Scan Button
-                          TextButton.icon(
-                            onPressed: _openScannerAndAddProduct,
-                            icon: const Icon(Icons.qr_code_scanner, size: 20),
-                            label: const Text("Scan"),
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.blue,
+                    const SizedBox(height: 12),
+
+                    // Customer Name
+                    AppTextField(
+                      controller: orderController.customerNameController,
+                      hintText: "Customer Name*",
+                      prefixIcon: Icons.person_outline,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return "Customer name is required";
+                        }
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Email with validation
+                    AppTextField(
+                      controller: orderController.emailController,
+                      hintText: "Email*",
+                      prefixIcon: Icons.email,
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return "Email is required";
+                        }
+                        if (!Utils.isEmailValid(value)) {
+                          return "Enter a valid email address";
+                        }
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Phone Field
+                    IntlPhoneField(
+                      decoration: Utils.inputDecoration(
+                        "Phone Number*",
+                        Icons.phone_android_outlined,
+                      ).copyWith(prefixIcon: null),
+                      initialCountryCode: 'IN',
+                      onChanged: (phone) {
+                        orderController.countryCode.value = phone.countryCode;
+                        orderController.phoneNumber.value = phone.number;
+                      },
+                      validator: (phone) {
+                        if (phone == null || phone.number.isEmpty) {
+                          return "Phone number is required";
+                        }
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Remarks
+                    AppTextField(
+                      controller: orderController.remarkController,
+                      hintText: "Remarks",
+                      prefixIcon: Icons.notes,
+                      maxLines: 2,
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // SECTION: ITEMS
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildSectionTitle(
+                          "Product Items",
+                          Icons.shopping_bag_outlined,
+                        ),
+                        Row(
+                          children: [
+                            // Scan Button
+                            TextButton.icon(
+                              onPressed: _openScannerAndAddProduct,
+                              icon: const Icon(Icons.qr_code_scanner, size: 20),
+                              label: const Text("Scan"),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.blue,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          // Manual Add Button
-                          TextButton.icon(
-                            onPressed: orderController.addItemRow,
-                            icon: const Icon(
-                              Icons.add_circle_outline,
-                              size: 20,
+                            const SizedBox(width: 8),
+                            // Manual Add Button
+                            TextButton.icon(
+                              onPressed: orderController.addItemRow,
+                              icon: const Icon(Icons.add_circle_outline, size: 20),
+                              label: const Text("Add"),
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(0xFF1A1A4F),
+                              ),
                             ),
-                            label: const Text("Add"),
-                            style: TextButton.styleFrom(
-                              foregroundColor: const Color(0xFF1A1A4F),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  _buildItemsList(),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _buildItemsList(),
 
-                  const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
-                  // ACTION BUTTONS
-                  _buildFooterButtons(),
-                ],
+                    // ACTION BUTTONS
+                    _buildFooterButtons(),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -214,20 +256,6 @@ class OrderCreateBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildPhoneField() {
-    return IntlPhoneField(
-      decoration: Utils.inputDecoration(
-        "Phone Number",
-        Icons.phone_android_outlined,
-      ),
-      initialCountryCode: 'IN',
-      onChanged: (phone) {
-        orderController.countryCode.value = phone.countryCode;
-        orderController.phoneNumber.value = phone.number;
-      },
-    );
-  }
-
   Widget _buildItemsList() {
     return Obx(() {
       return Column(
@@ -257,7 +285,6 @@ class OrderCreateBottomSheet extends StatelessWidget {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // --- Product Info Header (SKU & Purchase Price) ---
                       if (product != null)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 10),
@@ -278,12 +305,11 @@ class OrderCreateBottomSheet extends StatelessWidget {
                           ),
                         ),
 
-                      // --- Product Dropdown with Search ---
                       CustomSearchableDropdown<ProductModel>(
                         items: itemController.products,
                         selectedItem: item["product"] as Rx<ProductModel?>,
                         itemAsString: (product) =>
-                            "${product.name} | ${product.size} | ${product.color}",
+                        "${product.name} | ${product.size} | ${product.color}",
                         hintText: "Choose Product",
                         prefixIcon: Icons.inventory_2_outlined,
                         enableSearch: true,
@@ -312,9 +338,9 @@ class OrderCreateBottomSheet extends StatelessWidget {
                           (item["product"] as Rx<ProductModel?>).value = val;
                           if (val == null) return;
                           final priceController =
-                              item["purchasePrice"] as TextEditingController?;
+                          item["purchasePrice"] as TextEditingController?;
                           final skuController =
-                              item["skuId"] as TextEditingController?;
+                          item["skuId"] as TextEditingController?;
                           if (priceController != null) {
                             priceController.text = val.purchasePrice.toString();
                           }
@@ -328,7 +354,6 @@ class OrderCreateBottomSheet extends StatelessWidget {
                 }),
                 const SizedBox(height: 12),
 
-                // --- Quantity and Sale Price Inputs ---
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -366,7 +391,6 @@ class OrderCreateBottomSheet extends StatelessWidget {
     });
   }
 
-  // Helper widget to build the SKU and Purchase Price tags
   Widget _buildInfoTag(String text, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -390,26 +414,16 @@ class OrderCreateBottomSheet extends StatelessWidget {
   }
 
   Widget _buildSmallField(
-    TextEditingController ctrl,
-    String label,
-    IconData icon,
-  ) {
-    return
-      AppTextField(controller: ctrl, hintText: label, prefixIcon: icon);
-    //   TextField(
-    //   controller: ctrl,
-    //   keyboardType: TextInputType.number,
-    //   decoration: InputDecoration(
-    //     labelText: label,
-    //     prefixIcon: Icon(icon, size: 16),
-    //     filled: true,
-    //     fillColor: Colors.grey.shade50,
-    //     border: OutlineInputBorder(
-    //       borderRadius: BorderRadius.circular(10),
-    //       borderSide: BorderSide.none,
-    //     ),
-    //   ),
-    // );
+      TextEditingController ctrl,
+      String label,
+      IconData icon,
+      ) {
+    return AppTextField(
+      controller: ctrl,
+      hintText: label,
+      prefixIcon: icon,
+      keyboardType: TextInputType.number,
+    );
   }
 
   Widget _buildFooterButtons() {
@@ -429,17 +443,20 @@ class OrderCreateBottomSheet extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 16),
-
         Expanded(
           flex: 2,
-          child: AppGradientButton(
-            onPressed: () {
+          child: Obx(() => AppGradientButton(
+            onPressed: orderController.isLoading.value
+                ? null
+                : () {
+              // ✅ Form validation will happen in createOrder()
               orderController.createOrder();
-              Get.back();
             },
             height: 50,
-            text: "Submit Order",
-          ),
+            text: orderController.isLoading.value
+                ? "Creating..."
+                : "Submit Order",
+          )),
         ),
       ],
     );

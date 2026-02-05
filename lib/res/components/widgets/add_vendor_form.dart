@@ -88,12 +88,27 @@ class AddVendorFormBottomSheet extends StatelessWidget {
                       const SizedBox(height: 12),
 
                       // ✅ Using AppTextField
-                      AppTextField(
-                        controller: vendorController.emailController.value,
-                        hintText: "Email Address*",
-                        prefixIcon: Icons.email_outlined,
-                        keyboardType: TextInputType.emailAddress,
+                      Obx(() {
+                        return AppTextField(
+                          controller: vendorController.emailController.value,
+                          hintText: "Email Address*",
+                          prefixIcon: Icons.email_outlined,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (value == null || value
+                                .trim()
+                                .isEmpty) {
+                              return "Email is required";
+                            }
+                            if (!Utils.isEmailValid(value)) {
+                              return "Enter a valid email address";
+                            }
+                            return null; // ✅ valid
+                          },
+                        );
+                      }
                       ),
+
 
                       const SizedBox(height: 24),
 

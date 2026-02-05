@@ -137,13 +137,13 @@ class TotalStockScreen extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(10.0),
         child: Row(
           children: [
             // Product Icon Container
             Container(
-              height: 50,
-              width: 50,
+              height: 45,
+              width: 45,
               decoration: BoxDecoration(
                 color: const Color(0xFF1A1A4F).withOpacity(0.05),
                 borderRadius: BorderRadius.circular(14),

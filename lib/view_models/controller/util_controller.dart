@@ -25,7 +25,8 @@ class UtilController extends GetxController with BaseController {
   var barcodeGenerationLoading = false.obs;
   var scannedProduct = Rxn<ScanProductResponseModel>();
   var foundProduct = Rxn<ScanProductModel>();
-  var serialScanned = RxnInt();
+  // var serialScanned = RxnInt();
+  var serialScanned = RxnString();
   var generatedBarcodes = Rxn<BarcodeListResponseModel>();
   RxBool isPrinting = false.obs;
   RxInt progress = 0.obs;
@@ -38,14 +39,16 @@ class UtilController extends GetxController with BaseController {
     isLoading.value = true;
     scannedProduct.value = null;
     foundProduct.value = null;
-    serialScanned.value = 0;
+    serialScanned.value = "";
 
     try {
       final response = await utilService.barcodeScan(barcode);
       final scanResponse = ScanProductResponseModel.fromJson(response);
       scannedProduct.value = scanResponse;
       foundProduct.value = scanResponse.product;
-      serialScanned.value = scanResponse.serialScanned ?? 0;
+      serialScanned.value = scanResponse.serialScanned;
+
+      // serialScanned.value = scanResponse.serialScanned ?? 0;
 
       if (scanResponse.product != null) {
         orderController.addScannedProductFromScan(scanResponse.product!);

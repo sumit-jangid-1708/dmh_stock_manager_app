@@ -2,7 +2,7 @@
 <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 <uses-permission android:name="android.permission.CAMERA"/>
     <application
-        android:label="dmj_stock_manager"
+        android:label="DMH Stock Manager"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

@@ -263,7 +263,9 @@ class OrderDetailScreen extends StatelessWidget {
                               const SizedBox(height: 8),
 
                               // SKU & Stock
-                              Row(
+                              Column(
+                                // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -280,7 +282,7 @@ class OrderDetailScreen extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(height: 8),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
