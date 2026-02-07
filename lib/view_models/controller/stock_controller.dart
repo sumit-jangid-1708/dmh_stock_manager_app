@@ -33,18 +33,6 @@ class StockController extends GetxController with BaseController{
           .toList();
 
       inventoryList.sort((a, b)=> b.id.compareTo(a.id));
-
-    // }on AppExceptions catch (e) {
-    //   if (kDebugMode) {
-    //     print("❌ Exception Details: $e"); // full stack ya raw details
-    //   }
-    //   Get.snackbar(
-    //     "Error", e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-    //     duration: const Duration(seconds: 1),
-    //     snackPosition: SnackPosition.TOP,
-    //     backgroundColor: Colors.red,
-    //     colorText: Colors.white,
-    //   );
     } catch (e) {
       print("Error fetching Inventory: $e");
       handleError(e, onRetry: ()=> fetchInventoryList());
@@ -71,26 +59,8 @@ class StockController extends GetxController with BaseController{
       final response = await stockService.addProductQuantity(data);
       final product = InventoryModel.formJson(response);
       inventoryList.add(product);
-      await fetchInventoryList();
+      fetchInventoryList();
       AppAlerts.success("Quantity added successfully");
-      // Get.snackbar(
-      //   "Success",
-      //   "Quantity added successfully",
-      //   snackPosition: SnackPosition.TOP,
-      //   backgroundColor: Colors.green,
-      //   colorText: Colors.white,
-      // );
-    // } on AppExceptions catch (e) {
-    //   if (kDebugMode) {
-    //     print("❌ Exception Details: $e"); // full stack ya raw details
-    //   }
-    //   Get.snackbar(
-    //     "Error", e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-    //     duration: const Duration(seconds: 1),
-    //     snackPosition: SnackPosition.TOP,
-    //     backgroundColor: Colors.red,
-    //     colorText: Colors.white,
-    //   );
     }catch (e) {
       if (kDebugMode) {
         print("🚩 Add Inventory Error ❌ Exception Details: $e"); // full stack ya raw details
@@ -117,25 +87,14 @@ class StockController extends GetxController with BaseController{
 
     try {
       final response = await stockService.inventoryAdjustApi(data);
-      // Agar success mila to
       if (response["new_quantity"] != null) {
         AppAlerts.success("Inventory adjusted. New qty: ${response["new_quantity"]}");
       }
-      fetchInventoryList(); // refresh karo
-    // }on AppExceptions catch (e) {
-    //   if (kDebugMode) {
-    //     print("❌ Exception Details: $e"); // full stack ya raw details
-    //   }
-    //   Get.snackbar(
-    //     "Error", e.toString(),
-    //     duration: const Duration(seconds: 1),
-    //     snackPosition: SnackPosition.TOP,
-    //     backgroundColor: Colors.red,
-    //     colorText: Colors.white,
-    //   );
+      fetchInventoryList();
+
     } catch (e) {
       if (kDebugMode) {
-        print("❌ Exception Details: $e"); // full stack ya raw details
+        print("❌ Exception Details: $e");
       }
       handleError(e);
     } finally {

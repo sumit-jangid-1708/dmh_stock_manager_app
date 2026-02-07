@@ -30,8 +30,15 @@ class OrderService{
     return response;
   }
 
-  Future<OrderDetailByIdModel> getOrderDetailById(int orderId)async{
-    final response = await _apiServices.getApi("${AppUrl.orders}$orderId");
-    return OrderDetailByIdModel.fromJson(response);
+  // Future<OrderDetailByIdModel> getOrderDetailById(int orderId)async{
+  //   final response = await _apiServices.getApi("${AppUrl.orderBarcode}$orderId");
+  //   return OrderDetailByIdModel.fromJson(response);
+  // }
+
+  /// ✅ Updated to use OrderBarcodeResponse
+  Future<OrderBarcodeResponse> getOrderBarcodes(int orderId) async {
+    final response = await _apiServices.getApi("${AppUrl.orderBarcode}$orderId");
+    return OrderBarcodeResponse.fromJson(response);
   }
+
 }

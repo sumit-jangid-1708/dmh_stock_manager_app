@@ -1,4 +1,5 @@
 import 'package:dmj_stock_manager/model/bills_model/create_bill_model.dart';
+import 'package:dmj_stock_manager/model/order_models/create_order_response_model.dart';
 import 'package:dmj_stock_manager/model/order_models/order_model.dart';
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
 import 'package:dmj_stock_manager/utils/utils.dart';
@@ -6,6 +7,7 @@ import 'package:dmj_stock_manager/view/billings/billing_screen.dart';
 import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/billing_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
+import 'package:dmj_stock_manager/view_models/controller/stock_controller.dart';
 import 'package:dmj_stock_manager/view_models/services/order_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -22,9 +24,12 @@ import '../../view/orders/order_create_bottom_sheet.dart';
 class OrderController extends GetxController with BaseController {
   final OrderService orderService = OrderService();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-  late final BillingController billingController = Get.find<BillingController>();
+  late final BillingController billingController =
+      Get.find<BillingController>();
+  final StockController stockController = Get.find<StockController>();
 
   var orders = <OrderDetailModel>[].obs;
+  var createOrderResponse = <CreateOrderResponseModel>[].obs;
   var isLoading = false.obs;
   var scannedSku = "".obs;
 
@@ -85,14 +90,11 @@ class OrderController extends GetxController with BaseController {
     emailError.value = "";
     scannedSku.value = "";
 
-    // Sirf text clear karein, dispose nahi
     customerNameController.text = "";
     channelOrderId.text = "";
     emailController.text = "";
     remarkController.text = "";
 
-    // Items list ko sirf clear karein.
-    // Widgets remove hote hi memory apne aap manage ho jayegi.
     items.clear();
 
     if (formKey.currentState != null) {
@@ -103,7 +105,6 @@ class OrderController extends GetxController with BaseController {
   }
 
   /// ✅ Remove single item row WITHOUT disposing
-
 
   /// ✅ Remove single item row
   void removeItemRow(int index) {
@@ -161,7 +162,9 @@ class OrderController extends GetxController with BaseController {
       isLoading.value = true;
       final response = await orderService.getOrderDetailApi();
       final List<dynamic> data = response;
-      orders.value = data.map((item) => OrderDetailModel.fromJson(item)).toList();
+      orders.value = data
+          .map((item) => OrderDetailModel.fromJson(item))
+          .toList();
       filteredOrders.assignAll(orders);
     } catch (e) {
       handleError(e, onRetry: () => getOrderList());
@@ -179,19 +182,30 @@ class OrderController extends GetxController with BaseController {
       AppAlerts.error("Please enter phone number");
       return;
     }
+
     try {
       isLoading.value = true;
+
+      print("🟡 createOrder() STARTED");
+
       List<Map<String, dynamic>> itemList = items.map((item) {
         final productRx = item["product"] as Rx<ProductModel?>?;
         final product = productRx?.value;
         final qtyController = item["quantity"] as TextEditingController;
         final priceController = item["unitPrice"] as TextEditingController;
+
+        print("🟢 Item Debug → "
+            "productId: ${product?.id}, "
+            "qty: ${qtyController.text}, "
+            "price: ${priceController.text}");
+
         return {
           "product": product?.id,
           "quantity": int.tryParse(qtyController.text) ?? 0,
           "unit_price": priceController.text,
         };
       }).toList();
+
       final data = {
         "channel": selectedChannel.value?.id,
         "customer_name": customerNameController.text,
@@ -202,20 +216,47 @@ class OrderController extends GetxController with BaseController {
         "country_code": countryCode.value,
         "mobile": phoneNumber.value,
       };
+
+      print("🟣 CREATE ORDER PAYLOAD ↓↓↓");
+      print(data);
+
       final response = await orderService.createOrderApi(data);
-      final order = OrderDetailModel.fromJson(response);
-      orders.add(order);
-      // ✅ CLOSE BOTTOM SHEET
+
+      print("🟣 CREATE ORDER API RESPONSE ↓↓↓");
+      print(response);
+
+      // 🔴 VERY IMPORTANT: before model parsing
+      print("🔍 Checking response fields:");
+      print("id: ${response['id']}");
+      print("channel: ${response['channel']}");
+      print("paid_status: ${response['paid_status']}");
+      print("created_at: ${response['created_at']}");
+      print("items: ${response['items']}");
+
+      final order = CreateOrderResponseModel.fromJson(response);
+
+      print("✅ Order parsed successfully → orderId: ${order.order.id}");
+
+      createOrderResponse.add(order);
+
       if (Get.isBottomSheetOpen ?? false) {
         Get.back();
       }
+
       AppAlerts.success("Order created successfully ✅");
+
       clearForm();
       getOrderList();
-    } catch (e) {
+      stockController.fetchInventoryList();
+
+    } catch (e, s) {
+      print("❌ CREATE ORDER FAILED");
+      print("Error: $e");
+      print("StackTrace: $s");
       handleError(e);
     } finally {
       isLoading.value = false;
+      print("🟡 createOrder() FINISHED");
     }
   }
 
@@ -223,7 +264,7 @@ class OrderController extends GetxController with BaseController {
   void setScannedSku(String sku) {
     final itemController = Get.find<ItemController>();
     final product = itemController.products.firstWhereOrNull(
-          (p) => p.sku == sku,
+      (p) => p.sku == sku,
     );
 
     if (product != null) {
@@ -233,7 +274,8 @@ class OrderController extends GetxController with BaseController {
       });
 
       if (existingIndex != -1) {
-        final qtyController = items[existingIndex]["quantity"] as TextEditingController;
+        final qtyController =
+            items[existingIndex]["quantity"] as TextEditingController;
         int currentQty = int.tryParse(qtyController.text) ?? 0;
         qtyController.text = (currentQty + 1).toString();
       } else {
@@ -300,7 +342,9 @@ class OrderController extends GetxController with BaseController {
       }
 
       if (Get.isDialogOpen ?? false) Get.back();
-      AppAlerts.success(apiResponse.message.isEmpty ? "Bill Created" : apiResponse.message);
+      AppAlerts.success(
+        apiResponse.message.isEmpty ? "Bill Created" : apiResponse.message,
+      );
       debugPrint("✅ Snackbar shown");
 
       await getOrderList();
@@ -348,7 +392,8 @@ class OrderController extends GetxController with BaseController {
     });
 
     if (existingIndex != -1) {
-      final qtyController = items[existingIndex]["quantity"] as TextEditingController;
+      final qtyController =
+          items[existingIndex]["quantity"] as TextEditingController;
       int currentQty = int.tryParse(qtyController.text) ?? 0;
       qtyController.text = (currentQty + 1).toString();
       Get.snackbar(
@@ -384,7 +429,7 @@ class OrderController extends GetxController with BaseController {
   void addScannedProductFromScan(ScanProductModel scanProduct) {
     final itemController = Get.find<ItemController>();
     final product = itemController.products.firstWhereOrNull(
-          (p) => p.sku == scanProduct.sku,
+      (p) => p.sku == scanProduct.sku,
     );
     if (product == null) {
       Get.snackbar(
@@ -398,26 +443,42 @@ class OrderController extends GetxController with BaseController {
     addScannedProduct(product);
   }
 
+  // ✅ Add this method to your OrderController
+
   Future<void> loadOrderDetail(int orderId) async {
     try {
       isLoadingDetail.value = true;
+      // 1️⃣ Get old order (from existing orders list or fetch)
       final oldOrder = orders.firstWhereOrNull((o) => o.id == orderId);
-
       if (oldOrder == null) {
+        // Order not in list, fetch all orders
         final response = await orderService.getOrderDetailApi();
         final List<dynamic> data = response;
-        final allOrders = data.map((item) => OrderDetailModel.fromJson(item)).toList();
+        final allOrders = data
+            .map((item) => OrderDetailModel.fromJson(item))
+            .toList();
         final fetchedOrder = allOrders.firstWhereOrNull((o) => o.id == orderId);
 
         if (fetchedOrder == null) {
           throw Exception("Order not found");
         }
-        final newOrder = await orderService.getOrderDetailById(orderId);
-        orderDetailUI.value = OrderDetailAdapter.merge(fetchedOrder, newOrder);
+        // 2️⃣ Get barcode data from NEW API
+        final barcodeResponse = await orderService.getOrderBarcodes(orderId);
+        // 3️⃣ MERGE both into UI Model
+        orderDetailUI.value = OrderDetailAdapter.merge(
+          fetchedOrder,
+          barcodeResponse,
+        );
       } else {
-        final newOrder = await orderService.getOrderDetailById(orderId);
-        orderDetailUI.value = OrderDetailAdapter.merge(oldOrder, newOrder);
+        // 2️⃣ Get barcode data from NEW API
+        final barcodeResponse = await orderService.getOrderBarcodes(orderId);
+        // 3️⃣ MERGE both into UI Model
+        orderDetailUI.value = OrderDetailAdapter.merge(
+          oldOrder,
+          barcodeResponse,
+        );
       }
+
       debugPrint("✅ Order detail loaded successfully");
     } catch (e) {
       handleError(e);
@@ -426,4 +487,33 @@ class OrderController extends GetxController with BaseController {
       isLoadingDetail.value = false;
     }
   }
+
+  // Future<void> loadOrderDetail(int orderId) async {
+  //   try {
+  //     isLoadingDetail.value = true;
+  //     final oldOrder = orders.firstWhereOrNull((o) => o.id == orderId);
+  //
+  //     if (oldOrder == null) {
+  //       final response = await orderService.getOrderDetailApi();
+  //       final List<dynamic> data = response;
+  //       final allOrders = data.map((item) => OrderDetailModel.fromJson(item)).toList();
+  //       final fetchedOrder = allOrders.firstWhereOrNull((o) => o.id == orderId);
+  //
+  //       if (fetchedOrder == null) {
+  //         throw Exception("Order not found");
+  //       }
+  //       final newOrder = await orderService.getOrderDetailById(orderId);
+  //       orderDetailUI.value = OrderDetailAdapter.merge(fetchedOrder, newOrder);
+  //     } else {
+  //       final newOrder = await orderService.getOrderDetailById(orderId);
+  //       orderDetailUI.value = OrderDetailAdapter.merge(oldOrder, newOrder);
+  //     }
+  //     debugPrint("✅ Order detail loaded successfully");
+  //   } catch (e) {
+  //     handleError(e);
+  //     debugPrint("❌ Error loading order detail: $e");
+  //   } finally {
+  //     isLoadingDetail.value = false;
+  //   }
+  // }
 }

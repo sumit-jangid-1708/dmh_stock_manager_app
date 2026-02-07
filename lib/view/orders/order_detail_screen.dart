@@ -283,32 +283,32 @@ class OrderDetailScreen extends StatelessWidget {
                                     ),
                                   ),
                                   const SizedBox(height: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: item.stockLeft > 0 ? Colors.green.shade50 : Colors.red.shade50,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.inventory_2,
-                                          size: 12,
-                                          color: item.stockLeft > 0 ? Colors.green.shade700 : Colors.red.shade700,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          "Stock: ${item.stockLeft}",
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: item.stockLeft > 0 ? Colors.green.shade700 : Colors.red.shade700,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                  // Container(
+                                  //   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  //   decoration: BoxDecoration(
+                                  //     color: item.stockLeft > 0 ? Colors.green.shade50 : Colors.red.shade50,
+                                  //     borderRadius: BorderRadius.circular(6),
+                                  //   ),
+                                  //   child: Row(
+                                  //     mainAxisSize: MainAxisSize.min,
+                                  //     children: [
+                                  //       Icon(
+                                  //         Icons.inventory_2,
+                                  //         size: 12,
+                                  //         color: item.stockLeft > 0 ? Colors.green.shade700 : Colors.red.shade700,
+                                  //       ),
+                                  //       const SizedBox(width: 4),
+                                  //       Text(
+                                  //         "Stock: ${item.stockLeft}",
+                                  //         style: TextStyle(
+                                  //           fontSize: 11,
+                                  //           color: item.stockLeft > 0 ? Colors.green.shade700 : Colors.red.shade700,
+                                  //           fontWeight: FontWeight.w600,
+                                  //         ),
+                                  //       ),
+                                  //     ],
+                                  //   ),
+                                  // ),
                                 ],
                               ),
 
@@ -348,6 +348,9 @@ class OrderDetailScreen extends StatelessWidget {
                               ),
 
                               // ✅ Barcodes Section with proper image URL handling
+                              // ✅ Replace the barcode section in OrderDetailScreen with this:
+
+// ✅ Barcodes Section - showing barcode number and serial
                               if (item.barcodes.isNotEmpty) ...[
                                 const SizedBox(height: 16),
                                 Container(
@@ -375,82 +378,162 @@ class OrderDetailScreen extends StatelessWidget {
                                         ],
                                       ),
                                       const SizedBox(height: 12),
-                                      ...item.barcodes.map((barcode) {
-                                        // ✅ Construct proper image URL
-                                        final imageUrl = barcode.image.startsWith('http')
-                                            ? barcode.image
-                                            : "https://traders.testwebs.in${barcode.image}";
 
-                                        if (kDebugMode) {
-                                          print("🖼️ Barcode: ${barcode.barcode}");
-                                          print("🖼️ Image URL: $imageUrl");
-                                        }
-
-                                        return Container(
-                                          margin: const EdgeInsets.only(bottom: 8),
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(6),
-                                          ),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                barcode.barcode,
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w600,
-                                                  fontFamily: 'monospace',
+                                      // ✅ Display barcode items in a grid
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: item.barcodes.map((barcodeItem) {
+                                          return Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(8),
+                                              border: Border.all(color: Colors.blue.shade200),
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                // Barcode number
+                                                Text(
+                                                  barcodeItem.barcode,
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontFamily: 'monospace',
+                                                    color: Color(0xFF1A1A4F),
+                                                  ),
                                                 ),
-                                              ),
-                                              if (barcode.image.isNotEmpty) ...[
-                                                const SizedBox(height: 8),
-                                                Center(
-                                                  child: Image.network(
-                                                    imageUrl,
-                                                    height: 60,
-                                                    fit: BoxFit.contain,
-                                                    loadingBuilder: (context, child, loadingProgress) {
-                                                      if (loadingProgress == null) return child;
-                                                      return SizedBox(
-                                                        height: 60,
-                                                        child: Center(
-                                                          child: CircularProgressIndicator(
-                                                            value: loadingProgress.expectedTotalBytes != null
-                                                                ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                                                                : null,
-                                                            strokeWidth: 2,
-                                                          ),
-                                                        ),
-                                                      );
-                                                    },
-                                                    errorBuilder: (context, error, stackTrace) {
-                                                      if (kDebugMode) {
-                                                        print("❌ Image load error: $error");
-                                                        print("❌ Failed URL: $imageUrl");
-                                                      }
-                                                      return Column(
-                                                        children: [
-                                                          const Icon(Icons.broken_image, color: Colors.grey, size: 40),
-                                                          Text(
-                                                            "Image not available",
-                                                            style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
-                                                          ),
-                                                        ],
-                                                      );
-                                                    },
+                                                const SizedBox(height: 4),
+                                                // Serial number
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.blue.shade50,
+                                                    borderRadius: BorderRadius.circular(4),
+                                                  ),
+                                                  child: Text(
+                                                    "Serial: ${barcodeItem.serial}",
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.w600,
+                                                      color: Colors.blue.shade700,
+                                                    ),
                                                   ),
                                                 ),
                                               ],
-                                            ],
-                                          ),
-                                        );
-                                      }),
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ),
                                     ],
                                   ),
                                 ),
                               ],
+                              // if (item.barcodes.isNotEmpty) ...[
+                              //   const SizedBox(height: 16),
+                              //   Container(
+                              //     padding: const EdgeInsets.all(12),
+                              //     decoration: BoxDecoration(
+                              //       color: Colors.grey.shade50,
+                              //       borderRadius: BorderRadius.circular(8),
+                              //       border: Border.all(color: Colors.grey.shade200),
+                              //     ),
+                              //     child: Column(
+                              //       crossAxisAlignment: CrossAxisAlignment.start,
+                              //       children: [
+                              //         Row(
+                              //           children: [
+                              //             Icon(Icons.qr_code, size: 16, color: Colors.grey.shade700),
+                              //             const SizedBox(width: 8),
+                              //             Text(
+                              //               "Barcodes (${item.barcodes.length})",
+                              //               style: TextStyle(
+                              //                 fontSize: 13,
+                              //                 fontWeight: FontWeight.bold,
+                              //                 color: Colors.grey.shade700,
+                              //               ),
+                              //             ),
+                              //           ],
+                              //         ),
+                              //         const SizedBox(height: 12),
+                              //         ...item.barcodes.map((barcode) {
+                              //           // ✅ Construct proper image URL
+                              //           final imageUrl = barcode.image.startsWith('http')
+                              //               ? barcode.image
+                              //               : "https://traders.testwebs.in${barcode.image}";
+                              //
+                              //           if (kDebugMode) {
+                              //             print("🖼️ Barcode: ${barcode.barcode}");
+                              //             print("🖼️ Image URL: $imageUrl");
+                              //           }
+                              //
+                              //           return Container(
+                              //             margin: const EdgeInsets.only(bottom: 8),
+                              //             padding: const EdgeInsets.all(8),
+                              //             decoration: BoxDecoration(
+                              //               color: Colors.white,
+                              //               borderRadius: BorderRadius.circular(6),
+                              //             ),
+                              //             child: Column(
+                              //               crossAxisAlignment: CrossAxisAlignment.start,
+                              //               children: [
+                              //                 Text(
+                              //                   barcode.barcode,
+                              //                   style: const TextStyle(
+                              //                     fontSize: 12,
+                              //                     fontWeight: FontWeight.w600,
+                              //                     fontFamily: 'monospace',
+                              //                   ),
+                              //                 ),
+                              //                 if (barcode.image.isNotEmpty) ...[
+                              //                   const SizedBox(height: 8),
+                              //                   Center(
+                              //                     child: Image.network(
+                              //                       imageUrl,
+                              //                       height: 60,
+                              //                       fit: BoxFit.contain,
+                              //                       loadingBuilder: (context, child, loadingProgress) {
+                              //                         if (loadingProgress == null) return child;
+                              //                         return SizedBox(
+                              //                           height: 60,
+                              //                           child: Center(
+                              //                             child: CircularProgressIndicator(
+                              //                               value: loadingProgress.expectedTotalBytes != null
+                              //                                   ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                              //                                   : null,
+                              //                               strokeWidth: 2,
+                              //                             ),
+                              //                           ),
+                              //                         );
+                              //                       },
+                              //                       errorBuilder: (context, error, stackTrace) {
+                              //                         if (kDebugMode) {
+                              //                           print("❌ Image load error: $error");
+                              //                           print("❌ Failed URL: $imageUrl");
+                              //                         }
+                              //                         return Column(
+                              //                           children: [
+                              //                             const Icon(Icons.broken_image, color: Colors.grey, size: 40),
+                              //                             Text(
+                              //                               "Image not available",
+                              //                               style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                              //                             ),
+                              //                           ],
+                              //                         );
+                              //                       },
+                              //                     ),
+                              //                   ),
+                              //                 ],
+                              //               ],
+                              //             ),
+                              //           );
+                              //         }),
+                              //       ],
+                              //     ),
+                              //   ),
+                              // ],
                             ],
                           ),
                         ),

@@ -30,4 +30,7 @@ class AppUrl {
   // customer return
   static const String customerReturn = "$baseUrl/customer-return/";
   static const String customerReturnList = "$baseUrl/customer-return-list/";
+
+
+  static const String orderBarcode="$baseUrl/order-barcodes/";
 }

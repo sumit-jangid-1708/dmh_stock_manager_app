@@ -17,11 +17,12 @@ class DashboardBinding extends Bindings {
     Get.put<UtilController>(UtilController(), permanent: true);
     Get.put(PurchaseController(), permanent: true);
     // Get.lazyPut(() => PurchaseController());
+    Get.put<StockController>(StockController(), permanent: true);
     Get.put(OrderController());
     Get.lazyPut(() => HomeController());
     Get.lazyPut(() => VendorController());
     Get.lazyPut(() => ItemController());
-    Get.lazyPut(() => StockController());
+
 
   }
 }
