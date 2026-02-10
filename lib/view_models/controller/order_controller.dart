@@ -2,6 +2,7 @@ import 'package:dmj_stock_manager/model/bills_model/create_bill_model.dart';
 import 'package:dmj_stock_manager/model/order_models/create_order_response_model.dart';
 import 'package:dmj_stock_manager/model/order_models/order_model.dart';
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
+import 'package:dmj_stock_manager/utils/barcode_utils.dart';
 import 'package:dmj_stock_manager/utils/utils.dart';
 import 'package:dmj_stock_manager/view/billings/billing_screen.dart';
 import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
@@ -27,6 +28,8 @@ class OrderController extends GetxController with BaseController {
   late final BillingController billingController =
       Get.find<BillingController>();
   final StockController stockController = Get.find<StockController>();
+  final Map<String, Uint8List> barcodeCache ={};
+
 
   var orders = <OrderDetailModel>[].obs;
   var createOrderResponse = <CreateOrderResponseModel>[].obs;
@@ -488,6 +491,19 @@ class OrderController extends GetxController with BaseController {
     }
   }
 
+  Future<Uint8List> getBarcodeImage(String sku) async{
+    if (barcodeCache.containsKey(sku)){
+      return barcodeCache[sku]!;
+    }
+
+    final barcodeImage = await generateBarcodePng(sku);
+    barcodeCache[sku] = barcodeImage;
+    return barcodeImage;
+  }
+
+  void clearBarcodeCache(){
+    barcodeCache.clear();
+  }
   // Future<void> loadOrderDetail(int orderId) async {
   //   try {
   //     isLoadingDetail.value = true;

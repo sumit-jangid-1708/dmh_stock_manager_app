@@ -10,7 +10,7 @@ import 'package:get/get.dart';
 import '../../data/app_exceptions.dart';
 import '../../model/stock_inventory_models/stock_details_model.dart';
 
-class HomeController extends GetxController with BaseController{
+class HomeController extends GetxController with BaseController {
   final HomeService _homeService = HomeService();
 
   var totalStock = 0.obs;
@@ -39,9 +39,9 @@ class HomeController extends GetxController with BaseController{
 
   void fetchStats() {
     // 🔗 Call your API service here
-    totalStock.value = 54;
-    lowStock.value = 2;
-    outOfStock.value = 1;
+    totalStock.value = 0;
+    lowStock.value = 0;
+    outOfStock.value = 0;
   }
 
   Future<void> getChannels() async {
@@ -50,21 +50,21 @@ class HomeController extends GetxController with BaseController{
       final response = await _homeService.getChannelApi();
       final List<dynamic> data = response;
       channels.value = data.map((item) => ChannelModel.fromJson(item)).toList();
-    // } on AppExceptions catch (e) {
-    //   if (kDebugMode) {
-    //     print("❌ Exception Details: $e"); // full stack ya raw details
-    //   }
-    //   Get.snackbar(
-    //     "Error",
-    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-    //     duration: const Duration(seconds: 1),
-    //     snackPosition: SnackPosition.TOP,
-    //     backgroundColor: Colors.red,
-    //     colorText: Colors.white,
-    //   );
+      // } on AppExceptions catch (e) {
+      //   if (kDebugMode) {
+      //     print("❌ Exception Details: $e"); // full stack ya raw details
+      //   }
+      //   Get.snackbar(
+      //     "Error",
+      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+      //     duration: const Duration(seconds: 1),
+      //     snackPosition: SnackPosition.TOP,
+      //     backgroundColor: Colors.red,
+      //     colorText: Colors.white,
+      //   );
     } catch (e) {
       print("Error fetching Channels: $e");
-      handleError(e, onRetry: ()=> getChannels());
+      handleError(e, onRetry: () => getChannels());
     }
   }
 
@@ -84,27 +84,27 @@ class HomeController extends GetxController with BaseController{
     Map data = {"name": nameController.text.trim()};
     try {
       isLoading.value = true;
-      final response = await _homeService.addChannelApi(data);// ✅ API Call
-      final channel = ChannelModel.fromJson(response);// ✅ Parse response
+      final response = await _homeService.addChannelApi(data); // ✅ API Call
+      final channel = ChannelModel.fromJson(response); // ✅ Parse response
       channels.add(channel); // ✅ Update list
-      nameController.clear();// ✅ Cleanup
+      nameController.clear(); // ✅ Cleanup
       if (Get.isDialogOpen ?? false) Get.back();
       AppAlerts.success("Channel added successfully");
-    // } on AppExceptions catch (e) {
-    //   if (kDebugMode) {
-    //     print("❌ Channel API Error: $e"); // ✅ Backend / API errors
-    //   }
-    //   Get.snackbar(
-    //     "Error",
-    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-    //     duration: const Duration(seconds: 1),
-    //     snackPosition: SnackPosition.TOP,
-    //     backgroundColor: Colors.red,
-    //     colorText: Colors.white,
-    //   );
+      // } on AppExceptions catch (e) {
+      //   if (kDebugMode) {
+      //     print("❌ Channel API Error: $e"); // ✅ Backend / API errors
+      //   }
+      //   Get.snackbar(
+      //     "Error",
+      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+      //     duration: const Duration(seconds: 1),
+      //     snackPosition: SnackPosition.TOP,
+      //     backgroundColor: Colors.red,
+      //     colorText: Colors.white,
+      //   );
     } catch (e) {
       if (kDebugMode) {
-        print("❌ Channel Unexpected Error: $e");// ❌ Unexpected crash
+        print("❌ Channel Unexpected Error: $e"); // ❌ Unexpected crash
       }
       handleError(e);
       // Get.snackbar(
@@ -133,24 +133,24 @@ class HomeController extends GetxController with BaseController{
       print(
         "🦄 First Product: ${stockDetails.isNotEmpty ? stockDetails.first.name : 'No Data'}",
       );
-    // } on AppExceptions catch (e) {
-    //   if (kDebugMode) {
-    //     print("❌ Exception Details: $e"); // full stack ya raw details
-    //   }
-    //   Get.snackbar(
-    //     "Error",
-    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-    //     duration: const Duration(seconds: 1),
-    //     snackPosition: SnackPosition.TOP,
-    //     backgroundColor: Colors.red,
-    //     colorText: Colors.white,
-    //   );
+      // } on AppExceptions catch (e) {
+      //   if (kDebugMode) {
+      //     print("❌ Exception Details: $e"); // full stack ya raw details
+      //   }
+      //   Get.snackbar(
+      //     "Error",
+      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+      //     duration: const Duration(seconds: 1),
+      //     snackPosition: SnackPosition.TOP,
+      //     backgroundColor: Colors.red,
+      //     colorText: Colors.white,
+      //   );
     } catch (e) {
       if (kDebugMode) {
         print("❌ Exception Details: $e"); // full stack ya raw details
       }
       print("Error fetching Stock details: $e");
-      handleError(e, onRetry: ()=> getStockDetail());
+      handleError(e, onRetry: () => getStockDetail());
     } finally {
       isLoading.value = false;
     }
@@ -180,21 +180,21 @@ class HomeController extends GetxController with BaseController{
         print("✅ Best Selling Products Count: ${result.count}");
         print("✅ Low Stock: $lowStockCount, Out of Stock: $outOfStockCount");
       }
-    // } on AppExceptions catch (e) {
-    //   if (kDebugMode) {
-    //     print("❌ Exception: $e");
-    //   }
-    //   Get.snackbar(
-    //     "Error",
-    //     "Failed to fetch best selling products",
-    //     backgroundColor: Colors.red,
-    //     colorText: Colors.white,
-    //   );
+      // } on AppExceptions catch (e) {
+      //   if (kDebugMode) {
+      //     print("❌ Exception: $e");
+      //   }
+      //   Get.snackbar(
+      //     "Error",
+      //     "Failed to fetch best selling products",
+      //     backgroundColor: Colors.red,
+      //     colorText: Colors.white,
+      //   );
     } catch (e) {
       if (kDebugMode) {
         print("❌ Error: $e");
       }
-      handleError(e, onRetry: ()=> getBestSellingProducts(limit: limit));
+      handleError(e, onRetry: () => getBestSellingProducts(limit: limit));
     } finally {
       isLoading.value = false;
     }

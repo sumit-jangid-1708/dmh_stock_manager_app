@@ -2,13 +2,13 @@ import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.
 import 'package:dmj_stock_manager/view_models/controller/home_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/order_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/billing_controller.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../model/order_models/order_detail_ui_model.dart';
 import '../../res/components/widgets/courier_return_bottom_sheet.dart';
 import '../../res/components/widgets/create_bill_dialog_widget.dart';
 import '../../res/components/widgets/customer_return_bottom_sheet.dart';
+import 'dart:typed_data';
 
 class OrderDetailScreen extends StatelessWidget {
   const OrderDetailScreen({super.key});
@@ -21,7 +21,6 @@ class OrderDetailScreen extends StatelessWidget {
     final homeController = Get.find<HomeController>();
     final billingController = Get.find<BillingController>();
 
-    // ✅ Load merged order detail (old + new API)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       orderController.loadOrderDetail(orderId);
     });
@@ -30,33 +29,23 @@ class OrderDetailScreen extends StatelessWidget {
       backgroundColor: Colors.grey.shade50,
       body: SafeArea(
         child: Obx(() {
-          // ✅ Loading state
           if (orderController.isLoadingDetail.value) {
             return const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFF1A1A4F),
-              ),
+              child: CircularProgressIndicator(color: Color(0xFF1A1A4F)),
             );
           }
 
-          // ✅ Get UI Model (merged data)
           final order = orderController.orderDetailUI.value;
 
           if (order == null) {
-            return const Center(
-              child: Text("Order not found"),
-            );
+            return const Center(child: Text("Order not found"));
           }
 
-          // ✅ Check if bill already exists for this order
           final bool hasBill = billingController.bills.any(
                 (bill) => bill.items.any((item) => item.order == orderId),
           );
 
-          // ✅ Check payment status - only hide if fully PAID
           final bool isPaid = order.paidStatus.toLowerCase() == 'paid';
-
-          // ✅ Show button only if no bill exists OR bill exists but not fully paid
           final bool showCreateBillButton = !hasBill || !isPaid;
 
           return RefreshIndicator(
@@ -69,7 +58,7 @@ class OrderDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 🎨 Header with Back & Create Bill
+                  // Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -86,8 +75,6 @@ class OrderDetailScreen extends StatelessWidget {
                           padding: EdgeInsets.zero,
                         ),
                       ),
-
-                      // ✅ Conditionally show Create Bill button or Paid badge
                       if (showCreateBillButton)
                         AppGradientButton(
                           onPressed: () {
@@ -136,7 +123,7 @@ class OrderDetailScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // 📝 Order Header
+                  // Order Header
                   const Text(
                     "Order Details",
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
@@ -148,7 +135,7 @@ class OrderDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
 
-                  // 📊 Gradient Stats Bar
+                  // Stats Bar
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -183,7 +170,7 @@ class OrderDetailScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // 👤 Customer Info Card
+                  // Customer Info
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -217,14 +204,14 @@ class OrderDetailScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // 📦 Items List Header
+                  // Items List Header
                   const Text(
                     "Ordered Items",
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
 
-                  // 📋 Items List (from NEW API with barcodes)
+                  // Items List
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -262,54 +249,21 @@ class OrderDetailScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 8),
 
-                              // SKU & Stock
-                              Column(
-                                // mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue.shade50,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      "SKU: ${item.sku}",
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.blue.shade700,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
+                              // SKU Badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  "SKU: ${item.sku}",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.blue.shade700,
+                                    fontWeight: FontWeight.w600,
                                   ),
-                                  const SizedBox(height: 8),
-                                  // Container(
-                                  //   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  //   decoration: BoxDecoration(
-                                  //     color: item.stockLeft > 0 ? Colors.green.shade50 : Colors.red.shade50,
-                                  //     borderRadius: BorderRadius.circular(6),
-                                  //   ),
-                                  //   child: Row(
-                                  //     mainAxisSize: MainAxisSize.min,
-                                  //     children: [
-                                  //       Icon(
-                                  //         Icons.inventory_2,
-                                  //         size: 12,
-                                  //         color: item.stockLeft > 0 ? Colors.green.shade700 : Colors.red.shade700,
-                                  //       ),
-                                  //       const SizedBox(width: 4),
-                                  //       Text(
-                                  //         "Stock: ${item.stockLeft}",
-                                  //         style: TextStyle(
-                                  //           fontSize: 11,
-                                  //           color: item.stockLeft > 0 ? Colors.green.shade700 : Colors.red.shade700,
-                                  //           fontWeight: FontWeight.w600,
-                                  //         ),
-                                  //       ),
-                                  //     ],
-                                  //   ),
-                                  // ),
-                                ],
+                                ),
                               ),
 
                               const SizedBox(height: 12),
@@ -347,10 +301,7 @@ class OrderDetailScreen extends StatelessWidget {
                                 ],
                               ),
 
-                              // ✅ Barcodes Section with proper image URL handling
-                              // ✅ Replace the barcode section in OrderDetailScreen with this:
-
-// ✅ Barcodes Section - showing barcode number and serial
+                              // ✅ Barcodes Section with Images
                               if (item.barcodes.isNotEmpty) ...[
                                 const SizedBox(height: 16),
                                 Container(
@@ -379,161 +330,94 @@ class OrderDetailScreen extends StatelessWidget {
                                       ),
                                       const SizedBox(height: 12),
 
-                                      // ✅ Display barcode items in a grid
-                                      Wrap(
-                                        spacing: 8,
-                                        runSpacing: 8,
-                                        children: item.barcodes.map((barcodeItem) {
-                                          return Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius: BorderRadius.circular(8),
-                                              border: Border.all(color: Colors.blue.shade200),
-                                            ),
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                // Barcode number
-                                                Text(
-                                                  barcodeItem.barcode,
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontFamily: 'monospace',
-                                                    color: Color(0xFF1A1A4F),
+                                      // ✅ Barcode Items with Images
+                                      ...item.barcodes.map((barcodeItem) {
+                                        return Container(
+                                          margin: const EdgeInsets.only(bottom: 12),
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(color: Colors.blue.shade200),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              // Barcode Number
+                                              Text(
+                                                barcodeItem.barcode,
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontFamily: 'monospace',
+                                                  color: Color(0xFF1A1A4F),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+
+                                              // Serial Number
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.blue.shade50,
+                                                  borderRadius: BorderRadius.circular(4),
+                                                ),
+                                                child: Text(
+                                                  "Serial: ${barcodeItem.serial}",
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.blue.shade700,
                                                   ),
                                                 ),
-                                                const SizedBox(height: 4),
-                                                // Serial number
-                                                Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.blue.shade50,
-                                                    borderRadius: BorderRadius.circular(4),
-                                                  ),
-                                                  child: Text(
-                                                    "Serial: ${barcodeItem.serial}",
-                                                    style: TextStyle(
-                                                      fontSize: 10,
-                                                      fontWeight: FontWeight.w600,
-                                                      color: Colors.blue.shade700,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        }).toList(),
-                                      ),
+                                              ),
+
+                                              const SizedBox(height: 8),
+
+                                              // ✅ Barcode Image (Simple)
+                                              FutureBuilder<Uint8List>(
+                                                future: orderController.getBarcodeImage(barcodeItem.barcode),
+                                                builder: (context, snapshot) {
+                                                  if (snapshot.connectionState == ConnectionState.waiting) {
+                                                    return const SizedBox(
+                                                      height: 60,
+                                                      child: Center(
+                                                        child: SizedBox(
+                                                          height: 20,
+                                                          width: 20,
+                                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }
+
+                                                  if (snapshot.hasError || !snapshot.hasData) {
+                                                    return const SizedBox(
+                                                      height: 60,
+                                                      child: Center(
+                                                        child: Text(
+                                                          "Failed to generate barcode",
+                                                          style: TextStyle(fontSize: 10, color: Colors.grey),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }
+
+                                                  return Image.memory(
+                                                    snapshot.data!,
+                                                    height: 60,
+                                                    fit: BoxFit.contain,
+                                                  );
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }),
                                     ],
                                   ),
                                 ),
                               ],
-                              // if (item.barcodes.isNotEmpty) ...[
-                              //   const SizedBox(height: 16),
-                              //   Container(
-                              //     padding: const EdgeInsets.all(12),
-                              //     decoration: BoxDecoration(
-                              //       color: Colors.grey.shade50,
-                              //       borderRadius: BorderRadius.circular(8),
-                              //       border: Border.all(color: Colors.grey.shade200),
-                              //     ),
-                              //     child: Column(
-                              //       crossAxisAlignment: CrossAxisAlignment.start,
-                              //       children: [
-                              //         Row(
-                              //           children: [
-                              //             Icon(Icons.qr_code, size: 16, color: Colors.grey.shade700),
-                              //             const SizedBox(width: 8),
-                              //             Text(
-                              //               "Barcodes (${item.barcodes.length})",
-                              //               style: TextStyle(
-                              //                 fontSize: 13,
-                              //                 fontWeight: FontWeight.bold,
-                              //                 color: Colors.grey.shade700,
-                              //               ),
-                              //             ),
-                              //           ],
-                              //         ),
-                              //         const SizedBox(height: 12),
-                              //         ...item.barcodes.map((barcode) {
-                              //           // ✅ Construct proper image URL
-                              //           final imageUrl = barcode.image.startsWith('http')
-                              //               ? barcode.image
-                              //               : "https://traders.testwebs.in${barcode.image}";
-                              //
-                              //           if (kDebugMode) {
-                              //             print("🖼️ Barcode: ${barcode.barcode}");
-                              //             print("🖼️ Image URL: $imageUrl");
-                              //           }
-                              //
-                              //           return Container(
-                              //             margin: const EdgeInsets.only(bottom: 8),
-                              //             padding: const EdgeInsets.all(8),
-                              //             decoration: BoxDecoration(
-                              //               color: Colors.white,
-                              //               borderRadius: BorderRadius.circular(6),
-                              //             ),
-                              //             child: Column(
-                              //               crossAxisAlignment: CrossAxisAlignment.start,
-                              //               children: [
-                              //                 Text(
-                              //                   barcode.barcode,
-                              //                   style: const TextStyle(
-                              //                     fontSize: 12,
-                              //                     fontWeight: FontWeight.w600,
-                              //                     fontFamily: 'monospace',
-                              //                   ),
-                              //                 ),
-                              //                 if (barcode.image.isNotEmpty) ...[
-                              //                   const SizedBox(height: 8),
-                              //                   Center(
-                              //                     child: Image.network(
-                              //                       imageUrl,
-                              //                       height: 60,
-                              //                       fit: BoxFit.contain,
-                              //                       loadingBuilder: (context, child, loadingProgress) {
-                              //                         if (loadingProgress == null) return child;
-                              //                         return SizedBox(
-                              //                           height: 60,
-                              //                           child: Center(
-                              //                             child: CircularProgressIndicator(
-                              //                               value: loadingProgress.expectedTotalBytes != null
-                              //                                   ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                              //                                   : null,
-                              //                               strokeWidth: 2,
-                              //                             ),
-                              //                           ),
-                              //                         );
-                              //                       },
-                              //                       errorBuilder: (context, error, stackTrace) {
-                              //                         if (kDebugMode) {
-                              //                           print("❌ Image load error: $error");
-                              //                           print("❌ Failed URL: $imageUrl");
-                              //                         }
-                              //                         return Column(
-                              //                           children: [
-                              //                             const Icon(Icons.broken_image, color: Colors.grey, size: 40),
-                              //                             Text(
-                              //                               "Image not available",
-                              //                               style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
-                              //                             ),
-                              //                           ],
-                              //                         );
-                              //                       },
-                              //                     ),
-                              //                   ),
-                              //                 ],
-                              //               ],
-                              //             ),
-                              //           );
-                              //         }),
-                              //       ],
-                              //     ),
-                              //   ),
-                              // ],
                             ],
                           ),
                         ),
@@ -543,7 +427,7 @@ class OrderDetailScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // 🔄 Return Buttons
+                  // Return Buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -620,3 +504,133 @@ class OrderDetailScreen extends StatelessWidget {
     return total;
   }
 }
+// Container(
+//   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+//   decoration: BoxDecoration(
+//     color: item.stockLeft > 0 ? Colors.green.shade50 : Colors.red.shade50,
+//     borderRadius: BorderRadius.circular(6),
+//   ),
+//   child: Row(
+//     mainAxisSize: MainAxisSize.min,
+//     children: [
+//       Icon(
+//         Icons.inventory_2,
+//         size: 12,
+//         color: item.stockLeft > 0 ? Colors.green.shade700 : Colors.red.shade700,
+//       ),
+//       const SizedBox(width: 4),
+//       Text(
+//         "Stock: ${item.stockLeft}",
+//         style: TextStyle(
+//           fontSize: 11,
+//           color: item.stockLeft > 0 ? Colors.green.shade700 : Colors.red.shade700,
+//           fontWeight: FontWeight.w600,
+//         ),
+//       ),
+//     ],
+//   ),
+// ),
+
+// if (item.barcodes.isNotEmpty) ...[
+//   const SizedBox(height: 16),
+//   Container(
+//     padding: const EdgeInsets.all(12),
+//     decoration: BoxDecoration(
+//       color: Colors.grey.shade50,
+//       borderRadius: BorderRadius.circular(8),
+//       border: Border.all(color: Colors.grey.shade200),
+//     ),
+//     child: Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         Row(
+//           children: [
+//             Icon(Icons.qr_code, size: 16, color: Colors.grey.shade700),
+//             const SizedBox(width: 8),
+//             Text(
+//               "Barcodes (${item.barcodes.length})",
+//               style: TextStyle(
+//                 fontSize: 13,
+//                 fontWeight: FontWeight.bold,
+//                 color: Colors.grey.shade700,
+//               ),
+//             ),
+//           ],
+//         ),
+//         const SizedBox(height: 12),
+//         ...item.barcodes.map((barcode) {
+//           // ✅ Construct proper image URL
+//           final imageUrl = barcode.image.startsWith('http')
+//               ? barcode.image
+//               : "https://traders.testwebs.in${barcode.image}";
+//
+//           if (kDebugMode) {
+//             print("🖼️ Barcode: ${barcode.barcode}");
+//             print("🖼️ Image URL: $imageUrl");
+//           }
+//
+//           return Container(
+//             margin: const EdgeInsets.only(bottom: 8),
+//             padding: const EdgeInsets.all(8),
+//             decoration: BoxDecoration(
+//               color: Colors.white,
+//               borderRadius: BorderRadius.circular(6),
+//             ),
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Text(
+//                   barcode.barcode,
+//                   style: const TextStyle(
+//                     fontSize: 12,
+//                     fontWeight: FontWeight.w600,
+//                     fontFamily: 'monospace',
+//                   ),
+//                 ),
+//                 if (barcode.image.isNotEmpty) ...[
+//                   const SizedBox(height: 8),
+//                   Center(
+//                     child: Image.network(
+//                       imageUrl,
+//                       height: 60,
+//                       fit: BoxFit.contain,
+//                       loadingBuilder: (context, child, loadingProgress) {
+//                         if (loadingProgress == null) return child;
+//                         return SizedBox(
+//                           height: 60,
+//                           child: Center(
+//                             child: CircularProgressIndicator(
+//                               value: loadingProgress.expectedTotalBytes != null
+//                                   ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+//                                   : null,
+//                               strokeWidth: 2,
+//                             ),
+//                           ),
+//                         );
+//                       },
+//                       errorBuilder: (context, error, stackTrace) {
+//                         if (kDebugMode) {
+//                           print("❌ Image load error: $error");
+//                           print("❌ Failed URL: $imageUrl");
+//                         }
+//                         return Column(
+//                           children: [
+//                             const Icon(Icons.broken_image, color: Colors.grey, size: 40),
+//                             Text(
+//                               "Image not available",
+//                               style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+//                             ),
+//                           ],
+//                         );
+//                       },
+//                     ),
+//                   ),
+//                 ],
+//               ],
+//             ),
+//           );
+//         }),
+//       ],
+//     ),
+//   ),
+// ],
