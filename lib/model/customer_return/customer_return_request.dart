@@ -1,3 +1,45 @@
+// // lib/model/customer_return/customer_return_request.dart
+//
+// import 'package:dmj_stock_manager/model/customer_return/customer_return_enum.dart';
+//
+// class CustomerReturnRequest {
+//   final int orderId;
+//   final int productId;
+//   final int quantity;
+//   final CustomerReturnCondition condition;
+//   final double? refundAmount;
+//   final String? reason;
+//
+//   CustomerReturnRequest({
+//     required this.orderId,
+//     required this.productId,
+//     required this.quantity,
+//     required this.condition,
+//     this.refundAmount,
+//     this.reason,
+//   });
+//
+//   Map<String, dynamic> toJson() {
+//     final Map<String, dynamic> data = {
+//       "order_id": orderId,
+//       "product_id": productId,
+//       "quantity": quantity,
+//       "condition": condition.apiValue,
+//     };
+//
+//     if (refundAmount != null) {
+//       data["refund_amount"] = refundAmount;
+//     }
+//
+//     if (reason != null && reason!.isNotEmpty) {
+//       data['reason'] = reason;
+//     }
+//
+//     return data;
+//   }
+// }
+
+
 import 'package:dmj_stock_manager/model/customer_return/customer_return_enum.dart';
 
 class CustomerReturnRequest {

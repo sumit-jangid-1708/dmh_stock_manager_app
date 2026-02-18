@@ -198,6 +198,7 @@ class ItemDetailScreen extends StatelessWidget {
                             child: Column(
                               children: [
                                 Image.network(
+                                  // "http://192.168.1.8:8000${product.barcodeImage}",
                                   "https://traders.testwebs.in${product.barcodeImage}",
                                   height: 60,
                                   errorBuilder: (_, __, ___) => const Icon(Icons.barcode_reader, size: 40, color: Colors.grey),

@@ -4,11 +4,10 @@ import 'package:dmj_stock_manager/view_models/controller/order_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/billing_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../model/order_models/order_detail_ui_model.dart';
 import '../../res/components/widgets/courier_return_bottom_sheet.dart';
 import '../../res/components/widgets/create_bill_dialog_widget.dart';
 import '../../res/components/widgets/customer_return_bottom_sheet.dart';
-import 'dart:typed_data';
+import '../../view_models/services/other_services/barcode_pdf_service.dart';
 
 class OrderDetailScreen extends StatelessWidget {
   const OrderDetailScreen({super.key});
@@ -35,7 +34,8 @@ class OrderDetailScreen extends StatelessWidget {
             );
           }
 
-          final order = orderController.orderDetailUI.value;
+          // ✅ Naya model directly use karo
+          final order = orderController.orderDetail.value;
 
           if (order == null) {
             return const Center(child: Text("Order not found"));
@@ -58,7 +58,7 @@ class OrderDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header
+                  // ── Header ──────────────────────────────────────────────
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -77,22 +77,15 @@ class OrderDetailScreen extends StatelessWidget {
                       ),
                       if (showCreateBillButton)
                         AppGradientButton(
-                          onPressed: () {
-                            showCreateBillDialog(context, order.orderId);
-                          },
+                          onPressed: () => showCreateBillDialog(context, order.orderId),
                           icon: Icons.receipt_long,
                           text: "Create Bill",
                         )
                       else
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Colors.green, Colors.green],
-                            ),
+                            color: Colors.green,
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
@@ -123,7 +116,7 @@ class OrderDetailScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // Order Header
+                  // ── Order Title ──────────────────────────────────────────
                   const Text(
                     "Order Details",
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
@@ -135,7 +128,7 @@ class OrderDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
 
-                  // Stats Bar
+                  // ── Stats Bar ────────────────────────────────────────────
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -149,13 +142,14 @@ class OrderDetailScreen extends StatelessWidget {
                       children: [
                         _buildStatItem(
                           "Total Items",
-                          order.items.length.toString(),
+                          order.totalItems.toString(),
                           Icons.shopping_bag,
                         ),
                         _buildDivider(),
                         _buildStatItem(
                           "Channel",
-                          homeController.getChannelNameById(order.channel),
+                          order.channel,
+                          // homeController.getChannelNameById(order.channel),
                           Icons.store,
                         ),
                         _buildDivider(),
@@ -170,7 +164,7 @@ class OrderDetailScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // Customer Info
+                  // ── Customer Info ────────────────────────────────────────
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -195,29 +189,46 @@ class OrderDetailScreen extends StatelessWidget {
                         const SizedBox(height: 12),
                         _buildInfoRow("Name", order.customerName),
                         _buildInfoRow("Mobile", "${order.countryCode}${order.mobile}"),
-                        _buildInfoRow("Email", order.customerEmail ?? "No Email"),
-                        _buildInfoRow("Channel ID", order.channelOrderId ?? "-"),
-                        _buildInfoRow("Remarks", order.remarks ?? "No remarks"),
+                        _buildInfoRow("Email", order.customerEmail.isEmpty ? "No Email" : order.customerEmail),
+                        _buildInfoRow("Channel ID", order.channelOrderId.isEmpty ? "-" : order.channelOrderId),
+                        _buildInfoRow("Remarks", order.remarks.isEmpty ? "No remarks" : order.remarks),
+
+                        // ✅ Payment info agar available ho
+                        if (order.paymentMethod != null) ...[
+                          const Divider(height: 20),
+                          const Text(
+                            "Payment Info",
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildInfoRow("Method", order.paymentMethod!),
+                          if (order.paymentDate != null)
+                            _buildInfoRow(
+                              "Date",
+                              order.paymentDate!.toLocal().toString().split(' ')[0],
+                            ),
+                          if (order.transactionId != null)
+                            _buildInfoRow("Transaction ID", order.transactionId!),
+                        ],
                       ],
                     ),
                   ),
 
                   const SizedBox(height: 20),
 
-                  // Items List Header
+                  // ── Items List ───────────────────────────────────────────
                   const Text(
                     "Ordered Items",
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
 
-                  // Items List
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: order.items.length,
                     itemBuilder: (context, index) {
-                      final item = order.items[index];
+                      final item = order.items[index]; // OrderItemModel
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
@@ -257,7 +268,7 @@ class OrderDetailScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  "SKU: ${item.sku}",
+                                  "SKU: ${item.productSku}",
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: Colors.blue.shade700,
@@ -270,7 +281,7 @@ class OrderDetailScreen extends StatelessWidget {
                               Divider(color: Colors.grey.shade200, height: 1),
                               const SizedBox(height: 12),
 
-                              // Quantity, Price, Subtotal
+                              // Qty / Unit Price / Subtotal
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
@@ -278,14 +289,20 @@ class OrderDetailScreen extends StatelessWidget {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text("Quantity", style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-                                      Text("${item.quantity}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                      Text(
+                                        "${item.orderedQuantity}",
+                                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                      ),
                                     ],
                                   ),
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text("Unit Price", style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-                                      Text("₹${item.unitPrice.toStringAsFixed(2)}", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                      Text(
+                                        "₹${item.unitPrice.toStringAsFixed(2)}",
+                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                      ),
                                     ],
                                   ),
                                   Column(
@@ -293,19 +310,24 @@ class OrderDetailScreen extends StatelessWidget {
                                     children: [
                                       Text("Subtotal", style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
                                       Text(
-                                        "₹${(item.unitPrice * item.quantity).toStringAsFixed(2)}",
-                                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1A1A4F)),
+                                        "₹${item.totalPrice.toStringAsFixed(2)}",
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF1A1A4F),
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ],
                               ),
 
-                              // ✅ Barcodes Section with Images
-                              if (item.barcodes.isNotEmpty) ...[
-                                const SizedBox(height: 16),
+                              const SizedBox(height: 12),
+
+                              // ✅ Product Barcode (item-level)
+                              if (item.productBarcode.isNotEmpty) ...[
                                 Container(
-                                  padding: const EdgeInsets.all(12),
+                                  padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
                                     color: Colors.grey.shade50,
                                     borderRadius: BorderRadius.circular(8),
@@ -319,7 +341,77 @@ class OrderDetailScreen extends StatelessWidget {
                                           Icon(Icons.qr_code, size: 16, color: Colors.grey.shade700),
                                           const SizedBox(width: 8),
                                           Text(
-                                            "Barcodes (${item.barcodes.length})",
+                                            "Product Barcode",
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.grey.shade700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        item.productBarcode,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          fontFamily: 'monospace',
+                                          color: Color(0xFF1A1A4F),
+                                        ),
+                                      ),
+                                      if (item.productBarcodeImage.isNotEmpty) ...[
+                                        const SizedBox(height: 8),
+                                        Center(
+                                          child: Image.network(
+                                            item.productBarcodeImage,
+                                            height: 60,
+                                            fit: BoxFit.contain,
+                                            loadingBuilder: (context, child, progress) {
+                                              if (progress == null) return child;
+                                              return const SizedBox(
+                                                height: 60,
+                                                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                                              );
+                                            },
+                                            errorBuilder: (context, error, stack) {
+                                              return const SizedBox(
+                                                height: 40,
+                                                child: Center(
+                                                  child: Text(
+                                                    "Image not available",
+                                                    style: TextStyle(fontSize: 10, color: Colors.grey),
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
+
+                              // ✅ Serials Section
+                              if (item.serials.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade50,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.grey.shade200),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(Icons.numbers, size: 16, color: Colors.grey.shade700),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            "Serials (${item.serials.length})",
                                             style: TextStyle(
                                               fontSize: 13,
                                               fontWeight: FontWeight.bold,
@@ -329,11 +421,9 @@ class OrderDetailScreen extends StatelessWidget {
                                         ],
                                       ),
                                       const SizedBox(height: 12),
-
-                                      // ✅ Barcode Items with Images
-                                      ...item.barcodes.map((barcodeItem) {
+                                      ...item.serials.map((serial) {
                                         return Container(
-                                          margin: const EdgeInsets.only(bottom: 12),
+                                          margin: const EdgeInsets.only(bottom: 10),
                                           padding: const EdgeInsets.all(10),
                                           decoration: BoxDecoration(
                                             color: Colors.white,
@@ -343,19 +433,7 @@ class OrderDetailScreen extends StatelessWidget {
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              // Barcode Number
-                                              Text(
-                                                barcodeItem.barcode,
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontFamily: 'monospace',
-                                                  color: Color(0xFF1A1A4F),
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-
-                                              // Serial Number
+                                              // Serial Number Badge
                                               Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                                 decoration: BoxDecoration(
@@ -363,53 +441,47 @@ class OrderDetailScreen extends StatelessWidget {
                                                   borderRadius: BorderRadius.circular(4),
                                                 ),
                                                 child: Text(
-                                                  "Serial: ${barcodeItem.serial}",
+                                                  serial.serialNumber,
                                                   style: TextStyle(
-                                                    fontSize: 10,
+                                                    fontSize: 11,
                                                     fontWeight: FontWeight.w600,
+                                                    fontFamily: 'monospace',
                                                     color: Colors.blue.shade700,
                                                   ),
                                                 ),
                                               ),
 
-                                              const SizedBox(height: 8),
-
-                                              // ✅ Barcode Image (Simple)
-                                              FutureBuilder<Uint8List>(
-                                                future: orderController.getBarcodeImage(barcodeItem.barcode),
-                                                builder: (context, snapshot) {
-                                                  if (snapshot.connectionState == ConnectionState.waiting) {
-                                                    return const SizedBox(
-                                                      height: 60,
-                                                      child: Center(
-                                                        child: SizedBox(
-                                                          height: 20,
-                                                          width: 20,
-                                                          child: CircularProgressIndicator(strokeWidth: 2),
-                                                        ),
-                                                      ),
-                                                    );
-                                                  }
-
-                                                  if (snapshot.hasError || !snapshot.hasData) {
-                                                    return const SizedBox(
-                                                      height: 60,
-                                                      child: Center(
-                                                        child: Text(
-                                                          "Failed to generate barcode",
-                                                          style: TextStyle(fontSize: 10, color: Colors.grey),
-                                                        ),
-                                                      ),
-                                                    );
-                                                  }
-
-                                                  return Image.memory(
-                                                    snapshot.data!,
+                                              // Serial Barcode Image
+                                              if (serial.barcodeImage.isNotEmpty) ...[
+                                                const SizedBox(height: 8),
+                                                Center(
+                                                  child: Image.network(
+                                                    serial.barcodeImage,
                                                     height: 60,
                                                     fit: BoxFit.contain,
-                                                  );
-                                                },
-                                              ),
+                                                    loadingBuilder: (context, child, progress) {
+                                                      if (progress == null) return child;
+                                                      return const SizedBox(
+                                                        height: 60,
+                                                        child: Center(
+                                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                                        ),
+                                                      );
+                                                    },
+                                                    errorBuilder: (context, error, stack) {
+                                                      return const SizedBox(
+                                                        height: 40,
+                                                        child: Center(
+                                                          child: Text(
+                                                            "Image not available",
+                                                            style: TextStyle(fontSize: 10, color: Colors.grey),
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                  ),
+                                                ),
+                                              ],
                                             ],
                                           ),
                                         );
@@ -426,15 +498,116 @@ class OrderDetailScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 20),
-
-                  // Return Buttons
+                  if (order.items.any((item) => item.serials.isNotEmpty)) ...[
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.print, size: 16, color: Colors.grey.shade700),
+                              const SizedBox(width: 8),
+                              Text(
+                                "Serial Barcodes",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey.shade800,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          // Text(
+                          //   "Sab serials ke barcode ek PDF me print ya download karo",
+                          //   style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                          // ),
+                          // const SizedBox(height: 14),
+                          Row(
+                            children: [
+                              // ── Print Button ──────────────────────────────────
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () async {
+                                    // Loading show karo
+                                    showDialog(
+                                      context: context,
+                                      barrierDismissible: false,
+                                      builder: (_) => const Center(
+                                        child: CircularProgressIndicator(color: Color(0xFF1A1A4F)),
+                                      ),
+                                    );
+                                    await BarcodePdfService.printBarcodePdf(context, order);
+                                    if (context.mounted) Navigator.of(context).pop(); // loader close
+                                  },
+                                  icon: const Icon(Icons.print_outlined, size: 18),
+                                  label: const Text("Print"),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFF1A1A4F),
+                                    side: const BorderSide(color: Color(0xFF1A1A4F)),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              // ── Download Button ───────────────────────────────
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () async {
+                                    showDialog(
+                                      context: context,
+                                      barrierDismissible: false,
+                                      builder: (_) => const Center(
+                                        child: CircularProgressIndicator(color: Color(0xFF1A1A4F)),
+                                      ),
+                                    );
+                                    await BarcodePdfService.downloadBarcodePdf(context, order);
+                                    if (context.mounted) Navigator.of(context).pop();
+                                  },
+                                  icon: const Icon(Icons.download_outlined, size: 18),
+                                  label: const Text("Download PDF"),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF1A1A4F),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                  // ── Return Buttons ───────────────────────────────────────
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: AppGradientButton(
                           onPressed: () {
-                            final oldOrder = orderController.orders.firstWhereOrNull((o) => o.id == orderId);
+                            final oldOrder = orderController.orders
+                                .firstWhereOrNull((o) => o.id == orderId);
                             if (oldOrder != null) {
                               showCourierReturnDialog(context, oldOrder);
                             }
@@ -447,7 +620,8 @@ class OrderDetailScreen extends StatelessWidget {
                       Expanded(
                         child: AppGradientButton(
                           onPressed: () {
-                            final oldOrder = orderController.orders.firstWhereOrNull((o) => o.id == orderId);
+                            final oldOrder = orderController.orders
+                                .firstWhereOrNull((o) => o.id == orderId);
                             if (oldOrder != null) {
                               showCustomerReturnDialog(context, oldOrder);
                             }
@@ -496,141 +670,8 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 
-  double _calculateTotal(OrderDetailUIModel order) {
-    double total = 0;
-    for (var item in order.items) {
-      total += item.unitPrice * item.quantity;
-    }
-    return total;
+  // ✅ totalPrice field directly available hai, par sum bhi kar sakte ho
+  double _calculateTotal(order) {
+    return order.items.fold(0.0, (sum, item) => sum + item.totalPrice);
   }
 }
-// Container(
-//   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-//   decoration: BoxDecoration(
-//     color: item.stockLeft > 0 ? Colors.green.shade50 : Colors.red.shade50,
-//     borderRadius: BorderRadius.circular(6),
-//   ),
-//   child: Row(
-//     mainAxisSize: MainAxisSize.min,
-//     children: [
-//       Icon(
-//         Icons.inventory_2,
-//         size: 12,
-//         color: item.stockLeft > 0 ? Colors.green.shade700 : Colors.red.shade700,
-//       ),
-//       const SizedBox(width: 4),
-//       Text(
-//         "Stock: ${item.stockLeft}",
-//         style: TextStyle(
-//           fontSize: 11,
-//           color: item.stockLeft > 0 ? Colors.green.shade700 : Colors.red.shade700,
-//           fontWeight: FontWeight.w600,
-//         ),
-//       ),
-//     ],
-//   ),
-// ),
-
-// if (item.barcodes.isNotEmpty) ...[
-//   const SizedBox(height: 16),
-//   Container(
-//     padding: const EdgeInsets.all(12),
-//     decoration: BoxDecoration(
-//       color: Colors.grey.shade50,
-//       borderRadius: BorderRadius.circular(8),
-//       border: Border.all(color: Colors.grey.shade200),
-//     ),
-//     child: Column(
-//       crossAxisAlignment: CrossAxisAlignment.start,
-//       children: [
-//         Row(
-//           children: [
-//             Icon(Icons.qr_code, size: 16, color: Colors.grey.shade700),
-//             const SizedBox(width: 8),
-//             Text(
-//               "Barcodes (${item.barcodes.length})",
-//               style: TextStyle(
-//                 fontSize: 13,
-//                 fontWeight: FontWeight.bold,
-//                 color: Colors.grey.shade700,
-//               ),
-//             ),
-//           ],
-//         ),
-//         const SizedBox(height: 12),
-//         ...item.barcodes.map((barcode) {
-//           // ✅ Construct proper image URL
-//           final imageUrl = barcode.image.startsWith('http')
-//               ? barcode.image
-//               : "https://traders.testwebs.in${barcode.image}";
-//
-//           if (kDebugMode) {
-//             print("🖼️ Barcode: ${barcode.barcode}");
-//             print("🖼️ Image URL: $imageUrl");
-//           }
-//
-//           return Container(
-//             margin: const EdgeInsets.only(bottom: 8),
-//             padding: const EdgeInsets.all(8),
-//             decoration: BoxDecoration(
-//               color: Colors.white,
-//               borderRadius: BorderRadius.circular(6),
-//             ),
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Text(
-//                   barcode.barcode,
-//                   style: const TextStyle(
-//                     fontSize: 12,
-//                     fontWeight: FontWeight.w600,
-//                     fontFamily: 'monospace',
-//                   ),
-//                 ),
-//                 if (barcode.image.isNotEmpty) ...[
-//                   const SizedBox(height: 8),
-//                   Center(
-//                     child: Image.network(
-//                       imageUrl,
-//                       height: 60,
-//                       fit: BoxFit.contain,
-//                       loadingBuilder: (context, child, loadingProgress) {
-//                         if (loadingProgress == null) return child;
-//                         return SizedBox(
-//                           height: 60,
-//                           child: Center(
-//                             child: CircularProgressIndicator(
-//                               value: loadingProgress.expectedTotalBytes != null
-//                                   ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-//                                   : null,
-//                               strokeWidth: 2,
-//                             ),
-//                           ),
-//                         );
-//                       },
-//                       errorBuilder: (context, error, stackTrace) {
-//                         if (kDebugMode) {
-//                           print("❌ Image load error: $error");
-//                           print("❌ Failed URL: $imageUrl");
-//                         }
-//                         return Column(
-//                           children: [
-//                             const Icon(Icons.broken_image, color: Colors.grey, size: 40),
-//                             Text(
-//                               "Image not available",
-//                               style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
-//                             ),
-//                           ],
-//                         );
-//                       },
-//                     ),
-//                   ),
-//                 ],
-//               ],
-//             ),
-//           );
-//         }),
-//       ],
-//     ),
-//   ),
-// ],

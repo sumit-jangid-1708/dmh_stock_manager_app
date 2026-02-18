@@ -1,9 +1,11 @@
+// lib/view_models/controller/util_controller.dart
+
 import 'package:dmj_stock_manager/model/product_models/scan_product_response_model.dart';
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
 import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../data/app_exceptions.dart';
+import '../../model/product_models/product_serial_stock_model.dart';
 import '../../model/vendor_model/generate_barcode_model.dart';
 import '../services/util_service.dart';
 import 'order_controller.dart';
@@ -25,14 +27,14 @@ class UtilController extends GetxController with BaseController {
   var barcodeGenerationLoading = false.obs;
   var scannedProduct = Rxn<ScanProductResponseModel>();
   var foundProduct = Rxn<ScanProductModel>();
-  // var serialScanned = RxnInt();
   var serialScanned = RxnString();
-  var generatedBarcodes = Rxn<BarcodeListResponseModel>();
+
+  // ✅ Naya model use ho raha hai
+  var generatedBarcodes = Rxn<ProductSerialStockModel>();
+
   RxBool isPrinting = false.obs;
   RxInt progress = 0.obs;
   RxString progressText = "Starting...".obs;
-
-  // final orderController = Get.find<OrderController>();
 
   Future<ScanProductModel?> barcodeScanned(String barcode) async {
     if (isLoading.value) return null;
@@ -48,8 +50,6 @@ class UtilController extends GetxController with BaseController {
       foundProduct.value = scanResponse.product;
       serialScanned.value = scanResponse.serialScanned;
 
-      // serialScanned.value = scanResponse.serialScanned ?? 0;
-
       if (scanResponse.product != null) {
         orderController.addScannedProductFromScan(scanResponse.product!);
         AppAlerts.success(
@@ -58,20 +58,8 @@ class UtilController extends GetxController with BaseController {
       } else {
         AppAlerts.error("Product with barcode $barcode not found!");
       }
-      print(
-        "Barcode Scan Success: ${scanResponse.product?.name ?? 'Not found'}",
-      );
-      // } on AppExceptions catch (e) {
-      //   Get.snackbar(
-      //     "Error",
-      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-      //     duration: const Duration(seconds: 2),
-      //     snackPosition: SnackPosition.TOP,
-      //     backgroundColor: Colors.red,
-      //     colorText: Colors.white,
-      //   );
     } catch (e) {
-      print("Barcode Scan Error: $e");
+      debugPrint("Barcode Scan Error: $e");
       handleError(e);
     } finally {
       isLoading.value = false;
@@ -79,8 +67,7 @@ class UtilController extends GetxController with BaseController {
     return null;
   }
 
-  // ✅ Updated generateBarcode method for UtilController
-
+  /// ✅ Updated — naya ProductSerialStockModel parse karta hai
   Future<void> generateBarcode(int productId, int quantity) async {
     if (quantity <= 0) {
       AppAlerts.error("Invalid, Please enter Quantity");
@@ -90,31 +77,29 @@ class UtilController extends GetxController with BaseController {
     barcodeGenerationLoading.value = true;
     generatedBarcodes.value = null;
 
-    final data = {"product_id": productId, "quantity": quantity};
+    final data = {
+      "product_id": productId,
+      "quantity": quantity,
+    };
+
     try {
       final response = await utilService.generateBarcode(data);
-      final result = BarcodeListResponseModel.fromJson(response);
 
+      // ✅ Error check — agar API "error" key bheje
+      if (response is Map && response.containsKey('error')) {
+        AppAlerts.error(response['error'].toString());
+        return;
+      }
+
+      final result = ProductSerialStockModel.fromJson(response);
       generatedBarcodes.value = result;
 
-      debugPrint("✅ Generated ${result.barcodes?.length ?? 0} barcodes");
-
-      // ✅ No snackbar here - dialog will show success/error
-
-      // } on AppExceptions catch (e) {
-      //   debugPrint("❌ Barcode generation error: $e");
-      //   Get.snackbar(
-      //     "Error",
-      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-      //     backgroundColor: Colors.red,
-      //     colorText: Colors.white,
-      //     snackPosition: SnackPosition.TOP,
-      //   );
-      //   rethrow; // ✅ Throw error so dialog can catch it
+      debugPrint("✅ Generated ${result.serials.length} serials for ${result.productName}");
+      debugPrint("📦 Stock: available=${result.totalAvailable}, remaining=${result.remainingStock}");
     } catch (e) {
-      debugPrint("❌ Unexpected error: $e");
+      debugPrint("❌ Barcode generation error: $e");
       handleError(e);
-      rethrow; // ✅ Throw error so dialog can catch it
+      rethrow;
     } finally {
       barcodeGenerationLoading.value = false;
     }

@@ -174,3 +174,6 @@ class Product {
     );
   }
 }
+
+
+// achha mano mere pas order aaya h lets suppose product 22 ka to mene order create kiya  jisme mere product ke serial nikle 0001 aur 0002 thik h ab mujhe is product ke jo barcode h yani 0001 aur 0002 ko product par print karke lagana h lekin agar me generate barcode wali api se generate karke print kar rha hu to ye to 0003 aur 0004 de rha h lekin ye to mere kaam ke hi nahi h jabki mujhe to 0001 aur 0002 print karne the

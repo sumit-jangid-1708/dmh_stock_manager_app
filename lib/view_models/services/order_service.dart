@@ -4,6 +4,7 @@ import 'package:dmj_stock_manager/res/app_url/app_url.dart';
 import '../../model/courier_return/courier_return_response.dart';
 import '../../model/customer_return/customer_return_response.dart';
 import '../../model/order_models/order_detail_by_id_model.dart';
+import '../../model/order_models/order_detail_model.dart';
 
 class OrderService{
   final NetworkApiServices _apiServices = NetworkApiServices();
@@ -30,10 +31,10 @@ class OrderService{
     return response;
   }
 
-  // Future<OrderDetailByIdModel> getOrderDetailById(int orderId)async{
-  //   final response = await _apiServices.getApi("${AppUrl.orderBarcode}$orderId");
-  //   return OrderDetailByIdModel.fromJson(response);
-  // }
+  Future<OrderDetailsModel> getOrderDetailById(int orderId) async {
+    final response = await _apiServices.getApi("${AppUrl.orders}$orderId");
+    return OrderDetailsModel.fromJson(response);
+  }
 
   /// ✅ Updated to use OrderBarcodeResponse
   Future<OrderBarcodeResponse> getOrderBarcodes(int orderId) async {

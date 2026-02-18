@@ -29,10 +29,13 @@ class StockController extends GetxController with BaseController{
       final response = await stockService.fetchInventoryApi();
       final List<dynamic> data = response;
       inventoryList.value = data
-          .map((item) => InventoryModel.formJson(item))
+          .map((item) => InventoryModel.fromJson(item)
+      )
           .toList();
 
-      inventoryList.sort((a, b)=> b.id.compareTo(a.id));
+      inventoryList.sort(
+            (a, b) => (b.id ?? 0).compareTo(a.id ?? 0),
+      );
     } catch (e) {
       print("Error fetching Inventory: $e");
       handleError(e, onRetry: ()=> fetchInventoryList());
@@ -57,13 +60,13 @@ class StockController extends GetxController with BaseController{
     try {
       Map data = {"product": productId, "quantity": quantity};
       final response = await stockService.addProductQuantity(data);
-      final product = InventoryModel.formJson(response);
+      final product = InventoryModel.fromJson(response);
       inventoryList.add(product);
       fetchInventoryList();
       AppAlerts.success("Quantity added successfully");
-    }catch (e) {
+    }catch (e,s) {
       if (kDebugMode) {
-        print("🚩 Add Inventory Error ❌ Exception Details: $e"); // full stack ya raw details
+        print("🚩 Add Inventory Error ❌ Exception Details: $e $s"); // full stack ya raw details
       }
       handleError(e);
     } finally {

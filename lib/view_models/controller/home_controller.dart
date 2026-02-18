@@ -50,18 +50,6 @@ class HomeController extends GetxController with BaseController {
       final response = await _homeService.getChannelApi();
       final List<dynamic> data = response;
       channels.value = data.map((item) => ChannelModel.fromJson(item)).toList();
-      // } on AppExceptions catch (e) {
-      //   if (kDebugMode) {
-      //     print("❌ Exception Details: $e"); // full stack ya raw details
-      //   }
-      //   Get.snackbar(
-      //     "Error",
-      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-      //     duration: const Duration(seconds: 1),
-      //     snackPosition: SnackPosition.TOP,
-      //     backgroundColor: Colors.red,
-      //     colorText: Colors.white,
-      //   );
     } catch (e) {
       print("Error fetching Channels: $e");
       handleError(e, onRetry: () => getChannels());
@@ -90,29 +78,11 @@ class HomeController extends GetxController with BaseController {
       nameController.clear(); // ✅ Cleanup
       if (Get.isDialogOpen ?? false) Get.back();
       AppAlerts.success("Channel added successfully");
-      // } on AppExceptions catch (e) {
-      //   if (kDebugMode) {
-      //     print("❌ Channel API Error: $e"); // ✅ Backend / API errors
-      //   }
-      //   Get.snackbar(
-      //     "Error",
-      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-      //     duration: const Duration(seconds: 1),
-      //     snackPosition: SnackPosition.TOP,
-      //     backgroundColor: Colors.red,
-      //     colorText: Colors.white,
-      //   );
     } catch (e) {
       if (kDebugMode) {
         print("❌ Channel Unexpected Error: $e"); // ❌ Unexpected crash
       }
       handleError(e);
-      // Get.snackbar(
-      //   "Error",
-      //   "Something went wrong",
-      //   backgroundColor: Colors.redAccent,
-      //   colorText: Colors.white,
-      // );
     } finally {
       isLoading.value = false;
     }
@@ -122,9 +92,7 @@ class HomeController extends GetxController with BaseController {
     try {
       isLoading.value = true;
       final response = await _homeService.stockDetailsApi();
-      // response ek Map hai (not List)
       final stockResponse = StockResponseModel.fromJson(response);
-      // yahan tumhari observable list me sirf stockDetail wali list save hogi
       stockDetails.value = stockResponse.data?.stockDetail ?? [];
       totalStock.value = stockResponse.data!.stockCount!;
       lowStock.value = stockResponse.data!.lowCount!;
@@ -133,18 +101,6 @@ class HomeController extends GetxController with BaseController {
       print(
         "🦄 First Product: ${stockDetails.isNotEmpty ? stockDetails.first.name : 'No Data'}",
       );
-      // } on AppExceptions catch (e) {
-      //   if (kDebugMode) {
-      //     print("❌ Exception Details: $e"); // full stack ya raw details
-      //   }
-      //   Get.snackbar(
-      //     "Error",
-      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-      //     duration: const Duration(seconds: 1),
-      //     snackPosition: SnackPosition.TOP,
-      //     backgroundColor: Colors.red,
-      //     colorText: Colors.white,
-      //   );
     } catch (e) {
       if (kDebugMode) {
         print("❌ Exception Details: $e"); // full stack ya raw details
@@ -180,16 +136,7 @@ class HomeController extends GetxController with BaseController {
         print("✅ Best Selling Products Count: ${result.count}");
         print("✅ Low Stock: $lowStockCount, Out of Stock: $outOfStockCount");
       }
-      // } on AppExceptions catch (e) {
-      //   if (kDebugMode) {
-      //     print("❌ Exception: $e");
-      //   }
-      //   Get.snackbar(
-      //     "Error",
-      //     "Failed to fetch best selling products",
-      //     backgroundColor: Colors.red,
-      //     colorText: Colors.white,
-      //   );
+
     } catch (e) {
       if (kDebugMode) {
         print("❌ Error: $e");
