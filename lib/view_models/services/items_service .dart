@@ -15,7 +15,7 @@ class ItemService {
   }
 
   Future<dynamic> addProductApi({
-    required Map<String, String> fields,
+    required Map<String, dynamic> fields,
     required List<File> images,
   }) async {
     final storage = GetStorage();
@@ -26,16 +26,17 @@ class ItemService {
       Uri.parse(AppUrl.product),
     );
 
-    // ✅ ADD AUTH HEADER (THIS WAS MISSING)
     request.headers.addAll({
       'Authorization': 'Bearer $token',
-      // ❌ Content-Type manually mat lagana (Multipart khud set karta hai)
     });
 
-    // add fields
-    request.fields.addAll(fields);
+    // ✅ convert all values to string
+    fields.forEach((key, value) {
+      if (value != null) {  // ✅ null values skip karo
+        request.fields[key] = value.toString();
+      }
+    });
 
-    // add images
     for (var image in images) {
       request.files.add(
         await http.MultipartFile.fromPath(
@@ -51,12 +52,12 @@ class ItemService {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(resStr);
     } else {
-      // 🔥 DEBUG ke liye body bhi print karo
       throw Exception(
         "Failed to add product: ${response.statusCode} → $resStr",
       );
     }
   }
+
 
 // Future<dynamic> addProductApi(data) async {
   //   dynamic response = await _apiServices.postApi(data, AppUrl.product);

@@ -354,7 +354,7 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
             material,
             itemController.purchasePrice.value.text,
             imagesCopy,
-            _selectedHsnId.toString(),
+            _selectedHsnId,
           );
           Get.back();
         },

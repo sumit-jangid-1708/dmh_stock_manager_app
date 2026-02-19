@@ -21,7 +21,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../data/app_exceptions.dart';
 import '../../utils/app_lists.dart';
 
-class ItemController extends GetxController with BaseController{
+class ItemController extends GetxController with BaseController {
   final ItemService itemService = ItemService();
   final products = <ProductModel>[].obs;
   var isLoading = false.obs;
@@ -43,11 +43,11 @@ class ItemController extends GetxController with BaseController{
   Rx<ProductModel?> selectedProduct = Rx<ProductModel?>(null);
 
   //image slider
-RxInt currentIndex = 0.obs;
+  RxInt currentIndex = 0.obs;
 
-void updateIndex(int index){
-  currentIndex.value = index;
-}
+  void updateIndex(int index) {
+    currentIndex.value = index;
+  }
 
   @override
   void onInit() {
@@ -116,7 +116,9 @@ void updateIndex(int index){
       final pdf = pw.Document();
 
       // Convert all byte arrays to MemoryImage
-      final images = barcodeImages.map((bytes) => pw.MemoryImage(bytes)).toList();
+      final images = barcodeImages
+          .map((bytes) => pw.MemoryImage(bytes))
+          .toList();
 
       pdf.addPage(
         pw.MultiPage(
@@ -146,7 +148,6 @@ void updateIndex(int index){
       );
 
       debugPrint("✅ Printed ${barcodeImages.length} barcodes successfully");
-
     } catch (e) {
       debugPrint("❌ Error printing barcodes: $e");
       rethrow; // Let dialog handle the error
@@ -169,21 +170,21 @@ void updateIndex(int index){
       // ✅ make filteredProducts same as products initially
       filteredProducts.assignAll(products);
       print("✅ Products fetched: ${products.length}");
-    // } on AppExceptions catch (e) {
-    //   if (kDebugMode) {
-    //     print("❌ Exception Details: $e"); // full stack ya raw details
-    //   }
-    //   Get.snackbar(
-    //     "Error",
-    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-    //     duration: const Duration(seconds: 1),
-    //     snackPosition: SnackPosition.TOP,
-    //     backgroundColor: Colors.red,
-    //     colorText: Colors.white,
-    //   );
+      // } on AppExceptions catch (e) {
+      //   if (kDebugMode) {
+      //     print("❌ Exception Details: $e"); // full stack ya raw details
+      //   }
+      //   Get.snackbar(
+      //     "Error",
+      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+      //     duration: const Duration(seconds: 1),
+      //     snackPosition: SnackPosition.TOP,
+      //     backgroundColor: Colors.red,
+      //     colorText: Colors.white,
+      //   );
     } catch (e) {
       print("🚩 Product Error $e");
-      handleError(e, onRetry: ()=> getProducts());
+      handleError(e, onRetry: () => getProducts());
     } finally {
       isLoading.value = false;
     }
@@ -197,9 +198,9 @@ void updateIndex(int index){
     String material,
     String purchasePrice,
     List<File> images, // ⬅️ accept List<File>
-    String hsn,
+    int? hsn,
   ) async {
-    Map<String, String> fields = {
+    Map<String, dynamic> fields = {
       "vendor": vendorId,
       "prefix_code": skuCode.value.text,
       "name": productName.value.text,
@@ -222,21 +223,23 @@ void updateIndex(int index){
       AppAlerts.success("Product added successfully");
 
       clearAddProductForm();
-    // } on AppExceptions catch (e) {
-    //   if (kDebugMode) {
-    //     print("❌ Exception Details: $e"); // full stack ya raw details
-    //   }
-    //   Get.snackbar(
-    //     "Error",
-    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-    //     duration: const Duration(seconds: 1),
-    //     snackPosition: SnackPosition.TOP,
-    //     backgroundColor: Colors.red,
-    //     colorText: Colors.white,
-    //   );
-    } catch (e) {
+      // } on AppExceptions catch (e) {
+      //   if (kDebugMode) {
+      //     print("❌ Exception Details: $e"); // full stack ya raw details
+      //   }
+      //   Get.snackbar(
+      //     "Error",
+      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+      //     duration: const Duration(seconds: 1),
+      //     snackPosition: SnackPosition.TOP,
+      //     backgroundColor: Colors.red,
+      //     colorText: Colors.white,
+      //   );
+    } catch (e,s) {
       if (kDebugMode) {
-        print("🚩 Add product Error ❌ Exception Details: $e",); // full stack ya raw details
+        print(
+          "🚩 Add product Error ❌ Exception Details: $e $s",
+        ); // full stack ya raw details
       }
       handleError(e);
     } finally {
@@ -252,7 +255,7 @@ void updateIndex(int index){
     lowStockLimit.value.clear();
     hsnCode.value.clear();
 
-    // Optional: अगर आप चाहते हो कि selected images भी clear हो जाएं
+
     selectedImage.clear();
 
     if (kDebugMode) {
@@ -304,18 +307,18 @@ void updateIndex(int index){
       //   snackPosition: SnackPosition.TOP,
       //   duration: const Duration(seconds: 3),
       // );
-    // } on AppExceptions catch (e) {
-    //   if (kDebugMode) {
-    //     print("❌ Exception Details: $e"); // full stack ya raw details
-    //   }
-    //   Get.snackbar(
-    //     "Error",
-    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-    //     duration: const Duration(seconds: 1),
-    //     snackPosition: SnackPosition.TOP,
-    //     backgroundColor: Colors.red,
-    //     colorText: Colors.white,
-    //   );
+      // } on AppExceptions catch (e) {
+      //   if (kDebugMode) {
+      //     print("❌ Exception Details: $e"); // full stack ya raw details
+      //   }
+      //   Get.snackbar(
+      //     "Error",
+      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+      //     duration: const Duration(seconds: 1),
+      //     snackPosition: SnackPosition.TOP,
+      //     backgroundColor: Colors.red,
+      //     colorText: Colors.white,
+      //   );
     } catch (e) {
       if (kDebugMode) {
         print("❌ Exception Details: $e"); // full stack ya raw details
@@ -359,18 +362,18 @@ void updateIndex(int index){
       if (kDebugMode) {
         print("✅ HSN List fetched: ${hsnList.length}");
       }
-    // } on AppExceptions catch (e) {
-    //   if (kDebugMode) {
-    //     print("❌ HSN API Exception: $e");
-    //   }
-    //   Get.snackbar(
-    //     "Error",
-    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-    //     snackPosition: SnackPosition.TOP,
-    //     backgroundColor: Colors.red,
-    //     colorText: Colors.white,
-    //     duration: const Duration(seconds: 2),
-    //   );
+      // } on AppExceptions catch (e) {
+      //   if (kDebugMode) {
+      //     print("❌ HSN API Exception: $e");
+      //   }
+      //   Get.snackbar(
+      //     "Error",
+      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+      //     snackPosition: SnackPosition.TOP,
+      //     backgroundColor: Colors.red,
+      //     colorText: Colors.white,
+      //     duration: const Duration(seconds: 2),
+      //   );
     } catch (e) {
       if (kDebugMode) {
         print("❌ HSN Error: $e");
@@ -384,7 +387,7 @@ void updateIndex(int index){
   Future<void> addHsn(String hsnCode, double gstPercentage) async {
     final alreadyExistsLocally = hsnList.any((e) => e.hsnCode == hsnCode);
     if (alreadyExistsLocally) {
-    AppAlerts.error("This Hsn code is already exists");
+      AppAlerts.error("This Hsn code is already exists");
       return;
     }
     Map<String, dynamic> data = {
@@ -400,14 +403,14 @@ void updateIndex(int index){
       if (kDebugMode) {
         print("✅ HSN added: $hsnCode with GST: $gstPercentage%");
       }
-    // } on AppExceptions catch (e) {
-    //   Get.snackbar(
-    //     "Error",
-    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-    //     snackPosition: SnackPosition.TOP,
-    //     backgroundColor: Colors.red,
-    //     colorText: Colors.white,
-    //   );
+      // } on AppExceptions catch (e) {
+      //   Get.snackbar(
+      //     "Error",
+      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+      //     snackPosition: SnackPosition.TOP,
+      //     backgroundColor: Colors.red,
+      //     colorText: Colors.white,
+      //   );
     } catch (e) {
       handleError(e);
     } finally {
