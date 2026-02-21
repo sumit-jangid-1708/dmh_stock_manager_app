@@ -33,6 +33,7 @@ class ItemController extends GetxController with BaseController {
   var purchasePrice = TextEditingController().obs;
   var lowStockLimit = TextEditingController().obs;
   final hsnCode = TextEditingController().obs;
+  final description = TextEditingController().obs;
 
   // store filtered vendors
   var filteredProducts = <ProductModel>[].obs;
@@ -192,14 +193,15 @@ class ItemController extends GetxController with BaseController {
 
   /// Add product api
   Future<void> addProduct(
-    String vendorId,
-    String color,
-    String size,
-    String material,
-    String purchasePrice,
-    List<File> images, // ⬅️ accept List<File>
-    int? hsn,
-  ) async {
+      String vendorId,
+      String color,
+      String size,
+      String material,
+      String purchasePrice,
+      List<File> images,
+      int? hsn,
+      String? description,
+      ) async {
     Map<String, dynamic> fields = {
       "vendor": vendorId,
       "prefix_code": skuCode.value.text,
@@ -209,43 +211,30 @@ class ItemController extends GetxController with BaseController {
       "material": material,
       "unit_purchase_price": purchasePrice,
       "hsn": hsn,
+      "desc": description,
     };
 
     try {
       isLoading.value = true;
       final response = await itemService.addProductApi(
         fields: fields,
-        images: images, // ⬅️ use passed images instead of selectedImage
+        images: images,
       );
       final product = ProductModel.fromJson(response);
-      // products.add(product);
       await getProducts();
       AppAlerts.success("Product added successfully");
 
       clearAddProductForm();
-      // } on AppExceptions catch (e) {
-      //   if (kDebugMode) {
-      //     print("❌ Exception Details: $e"); // full stack ya raw details
-      //   }
-      //   Get.snackbar(
-      //     "Error",
-      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-      //     duration: const Duration(seconds: 1),
-      //     snackPosition: SnackPosition.TOP,
-      //     backgroundColor: Colors.red,
-      //     colorText: Colors.white,
-      //   );
-    } catch (e,s) {
+    } catch (e, s) {
       if (kDebugMode) {
-        print(
-          "🚩 Add product Error ❌ Exception Details: $e $s",
-        ); // full stack ya raw details
+        print("🚩 Add product Error ❌ Exception Details: $e $s");
       }
       handleError(e);
     } finally {
       isLoading.value = false;
     }
   }
+
 
   /// Add this method in ItemController class
   void clearAddProductForm() {
@@ -254,8 +243,7 @@ class ItemController extends GetxController with BaseController {
     purchasePrice.value.clear();
     lowStockLimit.value.clear();
     hsnCode.value.clear();
-
-
+    description.value.clear();
     selectedImage.clear();
 
     if (kDebugMode) {

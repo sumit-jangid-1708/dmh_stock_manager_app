@@ -175,6 +175,13 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                   // HSN Dropdown
                   _buildHsnDropdown(),
 
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    controller: itemController.description.value,
+                    hintText: "Description",
+                    prefixIcon: Icons.description,
+                    maxLines: 3,
+                  ),
                   const SizedBox(height: 32),
                   _buildSubmitButton(),
                   const SizedBox(height: 12),
@@ -347,6 +354,7 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
           }
 
           final imagesCopy = List<File>.from(_selectedImages);
+          final descriptionText = itemController.description.value.text.trim();
           itemController.addProduct(
             vendor.id.toString(),
             color,
@@ -355,6 +363,7 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
             itemController.purchasePrice.value.text,
             imagesCopy,
             _selectedHsnId,
+            descriptionText.isEmpty ? null : descriptionText,
           );
           Get.back();
         },

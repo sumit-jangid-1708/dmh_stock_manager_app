@@ -13,7 +13,7 @@ class ProductModel {
   final List<String> productImageVariants;
   final String unitPurchasePrice;
   final int? hsnId; // ✅ nullable because API sends null
-
+  final String? description;
   // Convenience getter (fine to keep)
   String get purchasePrice => unitPurchasePrice;
 
@@ -32,6 +32,7 @@ class ProductModel {
     required this.productImageVariants,
     required this.unitPurchasePrice,
     this.hsnId,
+    this.description
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
@@ -55,6 +56,7 @@ class ProductModel {
           [],
       unitPurchasePrice: json['unit_purchase_price']?.toString() ?? '0.00',
       hsnId: json['hsn'], // ✅ null-safe
+      description: json['desc'],
     );
   }
 }

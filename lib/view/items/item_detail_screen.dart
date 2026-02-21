@@ -148,13 +148,34 @@ class ItemDetailScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
-                              child: Text(product.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1A1A4F))),
+                              child: Text(
+                                product.name,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF1A1A4F),
+                                ),
+                              ),
                             ),
-                            Text("₹${product.unitPurchasePrice}", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Color(0xFF1A1A4F))),
+                            Text(
+                              "₹${product.unitPurchasePrice}",
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF1A1A4F),
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Text("SKU: ${product.sku}", style: TextStyle(color: Colors.grey.shade500, fontWeight: FontWeight.w500, letterSpacing: 1)),
+                        Text(
+                          "SKU: ${product.sku}",
+                          style: TextStyle(
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 1,
+                          ),
+                        ),
 
                         const SizedBox(height: 30),
 
@@ -180,31 +201,68 @@ class ItemDetailScreen extends StatelessWidget {
                           ),
                         ),
 
+                        // ✅ DESCRIPTION SECTION (if available)
+                        if (product.description != null && product.description!.isNotEmpty) ...[
+                          const SizedBox(height: 30),
+                          _buildSectionHeader("Description"),
+                          const SizedBox(height: 15),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.grey.shade100),
+                            ),
+                            child: Text(
+                              product.description!,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.shade700,
+                                height: 1.5,
+                              ),
+                            ),
+                          ),
+                        ],
+
                         const SizedBox(height: 30),
 
                         // --- BARCODE CARD ---
                         _buildSectionHeader("Identification"),
                         const SizedBox(height: 15),
                         GestureDetector(
-                          onTap: () => showBarcodeDialog(context, product.id, product.barcode, product.barcodeImage),
+                          onTap: () => showBarcodeDialog(
+                            context,
+                            product.id,
+                            product.barcode,
+                            product.barcodeImage,
+                          ),
                           child: Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: const Color(0xFF1A1A4F).withOpacity(0.1)),
+                              border: Border.all(
+                                color: const Color(0xFF1A1A4F).withOpacity(0.1),
+                              ),
                             ),
                             child: Column(
                               children: [
                                 Image.network(
-                                  // "http://192.168.1.8:8000${product.barcodeImage}",
                                   "https://traders.testwebs.in${product.barcodeImage}",
                                   height: 60,
-                                  errorBuilder: (_, __, ___) => const Icon(Icons.barcode_reader, size: 40, color: Colors.grey),
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.barcode_reader,
+                                    size: 40,
+                                    color: Colors.grey,
+                                  ),
                                 ),
                                 const SizedBox(height: 10),
-                                const Text("Tap to view or print barcode", style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                const Text(
+                                  "Tap to view or print barcode",
+                                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                                ),
                               ],
                             ),
                           ),
