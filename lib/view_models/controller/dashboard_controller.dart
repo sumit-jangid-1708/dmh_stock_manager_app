@@ -209,7 +209,7 @@ class DashboardController extends GetxController with WidgetsBindingObserver, Ba
                                         ),
                                       ),
                                       Text(
-                                        "SKU: ${item.sku}",
+                                        "SKU: ${item.baseSku}",
                                         style: const TextStyle(color: Colors.grey, fontSize: 11),
                                       ),
                                     ],

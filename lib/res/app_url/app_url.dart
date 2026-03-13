@@ -32,6 +32,7 @@ class AppUrl {
   static const String customerReturnList = "$baseUrl/customer-return-list/";
 
   static const String orderBarcode="$baseUrl/order-barcodes/";
+  static const String editProduct = "$baseUrl/products-update";
 }
 
 

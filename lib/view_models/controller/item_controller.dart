@@ -34,6 +34,8 @@ class ItemController extends GetxController with BaseController {
   var lowStockLimit = TextEditingController().obs;
   final hsnCode = TextEditingController().obs;
   final description = TextEditingController().obs;
+  final weightBefore = TextEditingController().obs; // ✅ Added
+  final weightAfter = TextEditingController().obs;  // ✅ Added
 
   // store filtered vendors
   var filteredProducts = <ProductModel>[].obs;
@@ -202,6 +204,20 @@ class ItemController extends GetxController with BaseController {
       int? hsn,
       String? description,
       ) async {
+    // ✅ Validate images first
+    if (images.isEmpty) {
+      AppAlerts.error("Please select at least one product image");
+      return;
+    }
+
+    // ✅ Check if image files exist
+    for (var image in images) {
+      if (!await image.exists()) {
+        AppAlerts.error("Selected image no longer exists. Please select again.");
+        return;
+      }
+    }
+
     Map<String, dynamic> fields = {
       "vendor": vendorId,
       "prefix_code": skuCode.value.text,
@@ -212,14 +228,22 @@ class ItemController extends GetxController with BaseController {
       "unit_purchase_price": purchasePrice,
       "hsn": hsn,
       "desc": description,
+      "weight_before": weightBefore.value.text.trim().isEmpty
+          ? null
+          : weightBefore.value.text.trim(),
+      "weight_after": weightAfter.value.text.trim().isEmpty
+          ? null
+          : weightAfter.value.text.trim(),
     };
 
     try {
       isLoading.value = true;
+
       final response = await itemService.addProductApi(
         fields: fields,
         images: images,
       );
+
       final product = ProductModel.fromJson(response);
       await getProducts();
       AppAlerts.success("Product added successfully");
@@ -228,6 +252,67 @@ class ItemController extends GetxController with BaseController {
     } catch (e, s) {
       if (kDebugMode) {
         print("🚩 Add product Error ❌ Exception Details: $e $s");
+      }
+      handleError(e);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> editProduct({
+    required int productId,
+    required int vendorId, // ✅ Added vendor ID
+    required String prefixCode, // ✅ Added prefix code
+    required String color,
+    required String size,
+    required String material,
+    required String purchasePrice,
+    required List<File> images,
+    int? hsnId,
+    String? description,
+  }) async {
+    Map<String, dynamic> fields = {
+      // ✅ Include vendor and prefix_code (won't change but required by API)
+      "vendor": vendorId,
+      "prefix_code": prefixCode,
+      "name": productName.value.text.trim(),
+      "size": size,
+      "color": color,
+      "material": material,
+      "unit_purchase_price": purchasePrice,
+      "hsn": hsnId,
+      "desc": description,
+      "weight_before": weightBefore.value.text.trim().isEmpty
+          ? null
+          : weightBefore.value.text.trim(),
+      "weight_after": weightAfter.value.text.trim().isEmpty
+          ? null
+          : weightAfter.value.text.trim(),
+    };
+
+    try {
+      isLoading.value = true;
+
+      final response = await itemService.editProduct(
+        fields: fields,
+        images: images,
+        productId: productId,
+      );
+
+      if (kDebugMode) {
+        print("✅ Product updated: ${response}");
+      }
+
+      // ✅ Refresh product list
+      await getProducts();
+
+      AppAlerts.success("Product updated successfully");
+
+      // ✅ Clear form
+      clearAddProductForm();
+    } catch (e, s) {
+      if (kDebugMode) {
+        print("🚩 Edit product Error ❌: $e $s");
       }
       handleError(e);
     } finally {
@@ -244,6 +329,8 @@ class ItemController extends GetxController with BaseController {
     lowStockLimit.value.clear();
     hsnCode.value.clear();
     description.value.clear();
+    weightBefore.value.clear(); // ✅ Added
+    weightAfter.value.clear();  // ✅ Added
     selectedImage.clear();
 
     if (kDebugMode) {

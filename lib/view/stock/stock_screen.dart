@@ -297,11 +297,11 @@ class StockScreen extends StatelessWidget {
                             ),
                           ),
                           SizedBox(height: 4),
-                          if (product?.sku != null)
+                          if (product?.baseSku != null)
                             Row(
                               children: [
                                 Text(
-                                  "SKU: ${product!.sku}",
+                                  "SKU: ${product!.baseSku}",
                                   style: TextStyle(
                                     fontSize: 11,
                                     color: Colors.grey.shade600,

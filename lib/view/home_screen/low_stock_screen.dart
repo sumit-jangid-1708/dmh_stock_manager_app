@@ -338,7 +338,7 @@ class LowStockScreen extends StatelessWidget {
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            Text("SKU: ${stock.sku ?? 'N/A'}", style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+            Text("SKU: ${stock.baseSku ?? 'N/A'}", style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
             Text("Size: ${stock.size ?? '-'}", style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
             Text("Price: ₹${stock.unitPurchasePrice ?? '0.00'}", style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
             const SizedBox(height: 12),
@@ -411,7 +411,7 @@ class LowStockScreen extends StatelessWidget {
                     children: [
                       Text(product.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
-                      Text("SKU: ${product.sku}", style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                      Text("SKU: ${product.baseSku}", style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
                     ],
                   ),
                 ),

@@ -74,6 +74,16 @@ class StockDetail {
   final String? unitPurchasePrice;
   final int? inventoryQuantity;
 
+  String? get baseSku {
+    final parts = sku?.split('-');
+    if (parts!.length > 4) {
+      // Remove last 4 parts (color, size, material, serial)
+      return parts.sublist(0, parts.length - 4).join('-');
+    }
+
+    return sku;
+  }
+
   StockDetail({
     this.name,
     this.sku,

@@ -26,6 +26,16 @@ class BestSellingProductModel {
   final bool popular;
   final int threshold;
 
+  String get baseSku {
+    final parts = sku.split('-');
+    if (parts.length > 4) {
+      // Remove last 4 parts (color, size, material, serial)
+      return parts.sublist(0, parts.length - 4).join('-');
+    }
+
+    return sku;
+  }
+
   BestSellingProductModel({
     required this.productId,
     required this.sku,

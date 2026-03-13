@@ -93,6 +93,37 @@ class NetworkApiServices extends BaseApiServices {
     }
   }
 
+  @override
+  Future<dynamic> putApi(
+      dynamic data,
+      String url, {
+        Map<String, String>? headers,
+      }) async {
+    if (kDebugMode) {
+      print('🌐 PUT Request URL: $url');
+      print('🌐 PUT Request Body: $data');
+    }
+
+    try {
+      final mergedHeaders = await _getHeaders(url, extra: headers);
+
+      final response = await http
+          .put(
+        Uri.parse(url),
+        body: jsonEncode(data),
+        headers: mergedHeaders,
+      )
+          .timeout(const Duration(seconds: 30));
+
+      return returnResponse(response);
+
+    } on SocketException {
+      throw InternetExceptions();
+    } on TimeoutException {
+      throw RequestTimeOut();
+    }
+  }
+
   dynamic returnResponse(http.Response response) {
     final contentType = response.headers['content-type'];
 

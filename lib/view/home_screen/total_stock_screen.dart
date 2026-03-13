@@ -71,7 +71,7 @@ class TotalStockScreen extends StatelessWidget {
                       final stock = homeController.stockDetails[index];
                       return _buildStockCard(
                         name: stock.name ?? "N/A",
-                        sku: stock.sku ?? "N/A",
+                        sku: stock.baseSku ?? "N/A",
                         size: stock.size ?? "-",
                         price: stock.unitPurchasePrice ?? "0.00",
                         quantity: stock.inventoryQuantity ?? 0,

@@ -112,7 +112,7 @@ class ProductCard extends StatelessWidget {
 
                       // SKU
                       Text(
-                        "SKU: ${product.sku}",
+                        "SKU: ${product.baseSku}",
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,

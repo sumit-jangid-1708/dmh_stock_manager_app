@@ -169,7 +169,7 @@ class ItemDetailScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          "SKU: ${product.sku}",
+                          "SKU: ${product.baseSku}",
                           style: TextStyle(
                             color: Colors.grey.shade500,
                             fontWeight: FontWeight.w500,
@@ -197,6 +197,22 @@ class ItemDetailScreen extends StatelessWidget {
                               _buildGridItem("Color", product.color, Icons.palette_outlined),
                               _buildGridItem("HSN Code", hsnDisplay, Icons.description_outlined),
                               _buildGridItem("Serial", product.serial.toString(), Icons.tag),
+
+                              // ✅ Weight Before Packaging
+                              if (product.weightBefore != null && product.weightBefore!.isNotEmpty)
+                                _buildGridItem(
+                                  "Weight Before Packaging",
+                                  "${product.weightBefore}g",
+                                  Icons.inventory_outlined,
+                                ),
+
+                              // ✅ Weight After Packaging
+                              if (product.weightAfter != null && product.weightAfter!.isNotEmpty)
+                                _buildGridItem(
+                                  "Weight After Packaging",
+                                  "${product.weightAfter}g",
+                                  Icons.local_shipping_outlined,
+                                ),
                             ],
                           ),
                         ),

@@ -1,5 +1,8 @@
+// lib/view/items/edit_item_form_bottom_sheet.dart
+
 import 'dart:io';
 import 'package:dmj_stock_manager/model/vendor_model/vendor_model.dart';
+import 'package:dmj_stock_manager/model/product_models/product_model.dart';
 import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/res/components/widgets/custom_text_field.dart';
 import 'package:dmj_stock_manager/res/components/widgets/multi_image_picker_widget.dart';
@@ -11,14 +14,17 @@ import 'package:dmj_stock_manager/view_models/controller/dashboard_controller.da
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class AddItemFormBottomSheet extends StatefulWidget {
-  const AddItemFormBottomSheet({super.key});
+class EditItemFormBottomSheet extends StatefulWidget {
+  final ProductModel product;
+
+  const EditItemFormBottomSheet({super.key, required this.product});
 
   @override
-  State<AddItemFormBottomSheet> createState() => _AddItemFormBottomSheetState();
+  State<EditItemFormBottomSheet> createState() =>
+      _EditItemFormBottomSheetState();
 }
 
-class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
+class _EditItemFormBottomSheetState extends State<EditItemFormBottomSheet> {
   List<File> _selectedImages = [];
 
   // Using Rx for reactive dropdown selections
@@ -30,11 +36,61 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
   final Rx<dynamic> _selectedHsn = Rx<dynamic>(null);
 
   int? _selectedHsnId;
+  int? _vendorId;
 
   final VendorController vendorController = Get.find<VendorController>();
   final DashboardController dashboardController =
       Get.find<DashboardController>();
   final ItemController itemController = Get.find<ItemController>();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingData();
+  }
+
+  void _loadExistingData() {
+    // ✅ Pre-fill form with existing product data
+    itemController.productName.value.text = widget.product.name;
+    itemController.skuCode.value.text = widget.product.prefixCode ?? '';
+    itemController.purchasePrice.value.text = widget.product.unitPurchasePrice
+        .toString();
+    itemController.description.value.text = widget.product.description ?? '';
+    itemController.weightBefore.value.text = widget.product.weightBefore ?? '';
+    itemController.weightAfter.value.text = widget.product.weightAfter ?? '';
+
+    // ✅ Set dropdown values
+    _selectedColor.value = widget.product.color;
+    _selectedSize.value = widget.product.size;
+    _selectedMaterial.value = widget.product.material;
+
+    // ✅ Store vendor ID (won't change but needed for API)
+    _vendorId = widget.product.vendor;
+
+    // ✅ Set vendor
+    final vendor = vendorController.vendors.firstWhereOrNull(
+      (v) => v.id == widget.product.vendor,
+    );
+    if (vendor != null) {
+      _selectedVendor.value = vendor;
+      dashboardController.setSelectedVendor(
+        vendor.id.toString(),
+        vendor.vendorName ?? "",
+      );
+    }
+
+    // ✅ Set HSN
+    if (widget.product.hsnId != null) {
+      final hsn = itemController.hsnList.firstWhereOrNull(
+        (h) => h.id == widget.product.hsnId,
+      );
+      if (hsn != null) {
+        _selectedHsn.value = hsn;
+        _selectedHsnCode.value = hsn.hsnCode;
+        _selectedHsnId = hsn.id;
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +128,7 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                   _buildSectionTitle("Basic Information", Icons.info_outline),
                   const SizedBox(height: 12),
 
-                  // Vendor Dropdown
+                  // Vendor Dropdown (Disabled - Can't change vendor)
                   CustomSearchableDropdown<VendorModel>(
                     items: vendorController.vendors,
                     selectedItem: _selectedVendor,
@@ -80,14 +136,7 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                     hintText: "Select Vendor*",
                     prefixIcon: Icons.business_outlined,
                     searchHint: "Search vendors...",
-                    onChanged: (vendor) {
-                      if (vendor != null) {
-                        dashboardController.setSelectedVendor(
-                          vendor.id.toString(),
-                          vendor.vendorName ?? "",
-                        );
-                      }
-                    },
+                    enabled: false, // ✅ Disabled (can't change vendor)
                   ),
 
                   const SizedBox(height: 12),
@@ -97,10 +146,13 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                     prefixIcon: Icons.inventory_2_outlined,
                   ),
                   const SizedBox(height: 12),
+
+                  // SKU Code (Disabled - Can't change)
                   AppTextField(
                     controller: itemController.skuCode.value,
                     hintText: "SKU Code",
                     prefixIcon: Icons.qr_code_scanner,
+                    enabled: false, // ✅ Disabled (can't change SKU)
                   ),
                   const SizedBox(height: 24),
 
@@ -115,17 +167,13 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                     hintText: "Purchase Price",
                     prefixIcon: Icons.payments_outlined,
                   ),
-                  const SizedBox(height: 12),
-                  AppTextField(
-                    controller: itemController.lowStockLimit.value,
-                    hintText: "Low Stock Limit",
-                    prefixIcon: Icons.warning_amber_rounded,
-                  ),
-                  const SizedBox(height: 24),
                   const SizedBox(height: 24),
 
-// WEIGHT SECTION ✅
-                  _buildSectionTitle("Weight Information (grams)", Icons.scale_outlined),
+                  // WEIGHT SECTION
+                  _buildSectionTitle(
+                    "Weight Information (grams)",
+                    Icons.scale_outlined,
+                  ),
                   const SizedBox(height: 12),
 
                   Row(
@@ -247,18 +295,18 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
             color: const Color(0xFF1A1A4F).withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(Icons.add_box_outlined, color: Color(0xFF1A1A4F)),
+          child: const Icon(Icons.edit_outlined, color: Color(0xFF1A1A4F)),
         ),
         const SizedBox(width: 16),
         const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Add New Product",
+              "Edit Product",
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             Text(
-              "Complete the details below",
+              "Update product details",
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ],
@@ -363,25 +411,14 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
       height: 54,
       child: Obx(() {
         return AppGradientButton(
-          text: "Add Product to Stock",
-          isLoading: itemController.isLoading.value, // ✅ Show loading state
+          text: "Update Product",
+          isLoading: itemController.isLoading.value,
           onPressed: () {
-            final vendor = _selectedVendor.value;
             final color = _selectedColor.value;
             final size = _selectedSize.value;
             final material = _selectedMaterial.value;
 
             // ✅ Validation
-            if (vendor == null) {
-              Get.snackbar(
-                "Required Fields",
-                "Please select a vendor",
-                backgroundColor: Colors.red,
-                colorText: Colors.white,
-              );
-              return;
-            }
-
             if (itemController.productName.value.text.trim().isEmpty) {
               Get.snackbar(
                 "Required Fields",
@@ -412,38 +449,42 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
               return;
             }
 
-            // ✅ Check images
-            if (_selectedImages.isEmpty) {
+            // ✅ Validate vendor ID
+            if (_vendorId == null) {
               Get.snackbar(
-                "Required Fields",
-                "Please select at least one product image",
+                "Error",
+                "Vendor information is missing",
                 backgroundColor: Colors.red,
                 colorText: Colors.white,
               );
               return;
             }
 
-            // ✅ Create a deep copy of images to prevent file path issues
-            final imagesCopy = _selectedImages.map((file) => File(file.path)).toList();
+            final descriptionText = itemController.description.value.text
+                .trim();
 
-            final descriptionText = itemController.description.value.text.trim();
-
-            // ✅ Call add product
-            itemController.addProduct(
-              vendor.id.toString(),
-              color,
-              size,
-              material,
-              itemController.purchasePrice.value.text,
-              imagesCopy,
-              _selectedHsnId,
-              descriptionText.isEmpty ? null : descriptionText,
-            ).then((_) {
-              // ✅ Only close if successful
-              if (!itemController.isLoading.value && mounted) {
-                Navigator.of(context).pop();
-              }
-            });
+            // ✅ Call edit product with vendor ID
+            itemController
+                .editProduct(
+                  productId: widget.product.id,
+                  vendorId: _vendorId!,
+                  // ✅ Pass vendor ID
+                  prefixCode: widget.product.prefixCode ?? '',
+                  // ✅ Pass prefix code
+                  color: color,
+                  size: size,
+                  material: material,
+                  purchasePrice: itemController.purchasePrice.value.text,
+                  images: _selectedImages,
+                  hsnId: _selectedHsnId,
+                  description: descriptionText.isEmpty ? null : descriptionText,
+                )
+                .then((_) {
+                  // ✅ Close bottom sheet on success
+                  if (!itemController.isLoading.value && mounted) {
+                    Navigator.of(context).pop();
+                  }
+                });
           },
         );
       }),
@@ -466,7 +507,6 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
         hintText: "Enter $name",
         prefixIcon: Icons.edit,
       ),
-
       confirm: AppGradientButton(
         onPressed: () {
           if (controller.text.isNotEmpty) {
