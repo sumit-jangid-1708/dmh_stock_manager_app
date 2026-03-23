@@ -73,17 +73,18 @@ class AddVendorFormBottomSheet extends StatelessWidget {
 
                       const SizedBox(height: 12),
 
-                      IntlPhoneField(
+                      Obx(() => IntlPhoneField(
                         decoration: Utils.inputDecoration(
                           "Phone Number",
                           Icons.phone_android_outlined,
                         ).copyWith(prefixIcon: null),
                         initialCountryCode: 'IN',
+                        initialValue: vendorController.phoneNumber.value,
                         onChanged: (phone) {
                           vendorController.countryCode.value = phone.countryCode;
                           vendorController.phoneNumber.value = phone.number;
                         },
-                      ),
+                      )),
 
                       const SizedBox(height: 12),
 
@@ -271,8 +272,8 @@ class AddVendorFormBottomSheet extends StatelessWidget {
 
                       const SizedBox(height: 32),
 
-                      // SUBMIT BUTTON
-                      SizedBox(
+                      // ✅ SUBMIT BUTTON - Dynamic text based on mode
+                      Obx(() => SizedBox(
                         width: double.infinity,
                         height: 54,
                         child: ElevatedButton(
@@ -283,23 +284,32 @@ class AddVendorFormBottomSheet extends StatelessWidget {
                             ),
                             elevation: 0,
                           ),
-                          onPressed: () {
+                          onPressed: vendorController.isLoading.value ? null : () {
                             if (vendorController.formKey.currentState
                                 ?.validate() ??
                                 false) {
-                              vendorController.addVendor();
+                              vendorController.saveVendor();
                             }
                           },
-                          child: const Text(
-                            'Save Vendor',
-                            style: TextStyle(
+                          child: vendorController.isLoading.value
+                              ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                              : Text(
+                            vendorController.isEditMode.value ? 'Update Vendor' : 'Save Vendor',
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
                           ),
                         ),
-                      ),
+                      )),
                       const SizedBox(height: 12),
                     ],
                   ),
@@ -313,7 +323,7 @@ class AddVendorFormBottomSheet extends StatelessWidget {
   }
 
   Widget _buildHeader() {
-    return Row(
+    return Obx(() => Row(
       children: [
         Container(
           padding: const EdgeInsets.all(10),
@@ -321,27 +331,29 @@ class AddVendorFormBottomSheet extends StatelessWidget {
             color: const Color(0xFF1A1A4F).withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(
-            Icons.group_add_outlined,
-            color: Color(0xFF1A1A4F),
+          child: Icon(
+            vendorController.isEditMode.value ? Icons.edit_outlined : Icons.group_add_outlined,
+            color: const Color(0xFF1A1A4F),
           ),
         ),
         const SizedBox(width: 16),
-        const Column(
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Add New Vendor",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              vendorController.isEditMode.value ? "Edit Vendor" : "Add New Vendor",
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             Text(
-              "Register a new supplier to stock",
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+              vendorController.isEditMode.value
+                  ? "Update vendor information"
+                  : "Register a new supplier to stock",
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ],
         ),
       ],
-    );
+    ));
   }
 
   Widget _buildSectionTitle(String title, IconData icon) {

@@ -33,6 +33,7 @@ class AppUrl {
 
   static const String orderBarcode="$baseUrl/order-barcodes/";
   static const String editProduct = "$baseUrl/products-update";
+  static const String updateVendor = '$baseUrl/vendors-updated/';
 }
 
 

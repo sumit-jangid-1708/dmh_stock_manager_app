@@ -79,6 +79,8 @@ class VendorScreen extends StatelessWidget {
                             color: Colors.transparent,
                             child: InkWell(
                               onTap: () {
+                                // ✅ Clear form before opening (ensure it's in add mode)
+                                vendorController.clearForm();
                                 showModalBottomSheet(
                                   elevation: 10,
                                   context: context,
@@ -165,63 +167,6 @@ class VendorScreen extends StatelessWidget {
 
               SizedBox(height: 4),
 
-              // 📊 Stats Bar
-              // Padding(
-              //   padding: const EdgeInsets.symmetric(horizontal: 20),
-              //   child: Container(
-              //     padding: EdgeInsets.all(16),
-              //     decoration: BoxDecoration(
-              //       gradient: LinearGradient(
-              //         colors: [
-              //           Color(0xFF1A1A4F).withOpacity(0.1),
-              //           Color(0xFF2D2D7F).withOpacity(0.05),
-              //         ],
-              //       ),
-              //       borderRadius: BorderRadius.circular(12),
-              //       border: Border.all(color: Color(0xFF1A1A4F).withOpacity(0.2)),
-              //     ),
-              //     child: Row(
-              //       children: [
-              //         Container(
-              //           padding: EdgeInsets.all(10),
-              //           decoration: BoxDecoration(
-              //             gradient: LinearGradient(
-              //               colors: [Color(0xFF1A1A4F), Color(0xFF2D2D7F)],
-              //             ),
-              //             borderRadius: BorderRadius.circular(10),
-              //           ),
-              //           child: Icon(Icons.people, color: Colors.white, size: 20),
-              //         ),
-              //         SizedBox(width: 12),
-              //         Expanded(
-              //           child: Column(
-              //             crossAxisAlignment: CrossAxisAlignment.start,
-              //             children: [
-              //               Text(
-              //                 "Total Vendors",
-              //                 style: TextStyle(
-              //                   fontSize: 12,
-              //                   color: Colors.grey.shade600,
-              //                 ),
-              //               ),
-              //               SizedBox(height: 2),
-              //               Obx(() => Text(
-              //                 "${vendorController.vendors.length} Active",
-              //                 style: TextStyle(
-              //                   fontSize: 16,
-              //                   fontWeight: FontWeight.bold,
-              //                   color: Color(0xFF1A1A4F),
-              //                 ),
-              //               )),
-              //             ],
-              //           ),
-              //         ),
-              //         Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey.shade400),
-              //       ],
-              //     ),
-              //   ),
-              // ),
-
               SizedBox(height: 16),
 
               // 📋 Vendor List
@@ -286,8 +231,24 @@ class VendorScreen extends StatelessWidget {
                           gstNumber: vendor.gstNumber,
                           isExpanded: vendorController.expandedList[index],
                           onToggle: () => vendorController.toggleVendor(index),
-                          onDelete: () {},
-                          onEdit: () {},
+                          onDelete: () {
+                            // TODO: Implement delete functionality
+                          },
+                          onEdit: () {
+                            // ✅ Populate form with vendor data and open in edit mode
+                            vendorController.populateFormForEdit(vendor);
+                            showModalBottomSheet(
+                              elevation: 10,
+                              context: context,
+                              isScrollControlled: true,
+                              builder: (context) {
+                                return SizedBox(
+                                  height: MediaQuery.of(context).size.height * 0.8,
+                                  child: AddVendorFormBottomSheet(),
+                                );
+                              },
+                            );
+                          },
                         ),
                       );
                     },
@@ -301,7 +262,6 @@ class VendorScreen extends StatelessWidget {
     );
   }
 }
-
 
 
 // import 'package:dmj_stock_manager/res/components/widgets/add_vendor_form.dart';

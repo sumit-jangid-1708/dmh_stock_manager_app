@@ -18,6 +18,11 @@ class VendorController extends GetxController with BaseController{
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   Rx<VendorOverviewModel?> vendorOverview = Rx<VendorOverviewModel?>(null);
+
+  // ✅ Edit mode tracking
+  var isEditMode = false.obs;
+  var editingVendorId = 0.obs;
+
   //fields
   final vendorNameController = TextEditingController().obs;
   // final phoneNumberController = TextEditingController().obs;
@@ -36,7 +41,7 @@ class VendorController extends GetxController with BaseController{
   final VendorService _vendorService = VendorService();
 
   Rx<VendorModel?> selectedVendor = Rx<VendorModel?>(null);
-final RxString gstError = ''.obs;
+  final RxString gstError = ''.obs;
 
   var isLoading = false.obs;
 
@@ -55,8 +60,8 @@ final RxString gstError = ''.obs;
       } else {
         filteredVendors.assignAll(
           vendors.where(
-            (vendor) =>
-                vendor.vendorName.toLowerCase().contains(query) ||
+                (vendor) =>
+            vendor.vendorName.toLowerCase().contains(query) ||
                 vendor.city.toLowerCase().contains(query) ||
                 vendor.state.toLowerCase().contains(query),
           ),
@@ -91,12 +96,29 @@ final RxString gstError = ''.obs;
     isWithGst.value = false;
     countryCode.value = "";
     phoneNumber.value = "";
+    isEditMode.value = false;
+    editingVendorId.value = 0;
     formKey.currentState?.reset();
   }
-  // void clearSearch() {
-  //   searchBar.clear();
-  //   filterVendors("");
-  // }
+
+  // ✅ Populate form for editing
+  void populateFormForEdit(VendorModel vendor) {
+    isEditMode.value = true;
+    editingVendorId.value = vendor.id;
+
+    vendorNameController.value.text = vendor.vendorName;
+    countryCode.value = vendor.countryCode;
+    phoneNumber.value = vendor.phoneNumber;
+    emailController.value.text = vendor.email ?? '';
+    addressController.value.text = vendor.address;
+    countryController.value.text = vendor.country;
+    cityController.value.text = vendor.city;
+    stateController.value.text = vendor.state;
+    pinCodeController.value.text = vendor.pinCode;
+    isWithGst.value = vendor.withGst;
+    firmNameController.value.text = vendor.firmName ?? '';
+    gstNumberController.value.text = vendor.gstNumber ?? '';
+  }
 
   void toggleVendor(int index) {
     expandedList[index] = !expandedList[index];
@@ -112,18 +134,6 @@ final RxString gstError = ''.obs;
       filteredVendors.assignAll(vendors); // update filtered list
       expandedList.value = List.generate(vendors.length, (_) => false); // update expanded list
       print("✅ Vendors fetched: ${vendors.length}");
-    // } on AppExceptions catch (e) {
-    //   if (kDebugMode) {
-    //     print("❌ Exception Details: $e"); // full stack ya raw details
-    //   }
-    //   Get.snackbar(
-    //     "Error",
-    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-    //     duration: const Duration(seconds: 1),
-    //     snackPosition: SnackPosition.TOP,
-    //     backgroundColor: Colors.red,
-    //     colorText: Colors.white,
-    //   );
     } catch (e) {
       if (kDebugMode) {
         print("🚩Vendor Error ❌ Exception Details: $e");
@@ -184,16 +194,7 @@ final RxString gstError = ''.obs;
         colorText: Colors.white,
       );
 
-      // Clear controllers after saving
-      vendorNameController.value.clear();
-      // phoneNumberController.value.clear();
-      emailController.value.clear();
-      addressController.value.clear();
-      cityController.value.clear();
-      stateController.value.clear();
-      pinCodeController.value.clear();
-      countryController.value.clear();
-
+      clearForm();
       getVendors();
     }on AppExceptions catch (e) {
       if (kDebugMode) {
@@ -218,6 +219,84 @@ final RxString gstError = ''.obs;
       );
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  // ✅ Update vendor API
+  Future<void> updateVendor() async {
+    Map data = {
+      "name": vendorNameController.value.text,
+      "country_code": countryCode.value,
+      "mobile": phoneNumber.value,
+      "email": emailController.value.text,
+      "address": addressController.value.text,
+      "country": countryController.value.text,
+      "city": cityController.value.text,
+      "state": stateController.value.text,
+      "pin_code": pinCodeController.value.text,
+      "with_Gst": isWithGst.value,
+      "firm_name": firmNameController.value.text,
+      "gst_number": gstNumberController.value.text,
+    };
+
+    try {
+      isLoading.value = true;
+      final response = await _vendorService.updateVendor(editingVendorId.value, data);
+
+      // Update the vendor in the list
+      final updatedVendor = VendorModel.fromJson(response);
+      final index = vendors.indexWhere((v) => v.id == editingVendorId.value);
+      if (index != -1) {
+        vendors[index] = updatedVendor;
+        filteredVendors.assignAll(vendors);
+      }
+
+      Get.back();
+      print("Success Vendor updated successfully ✅");
+      Get.snackbar(
+        'Success',
+        'Vendor updated successfully',
+        duration: const Duration(seconds: 1),
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+
+      clearForm();
+      getVendors();
+    } on AppExceptions catch (e) {
+      if (kDebugMode) {
+        print("❌ Exception Details: $e");
+      }
+      Get.snackbar(
+        "Error",
+        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+        duration: const Duration(seconds: 1),
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print("❌ Exception Details: $e");
+      }
+      Get.snackbar(
+        "Error",
+        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // ✅ Save vendor (add or update based on mode)
+  Future<void> saveVendor() async {
+    if (isEditMode.value) {
+      await updateVendor();
+    } else {
+      await addVendor();
     }
   }
 

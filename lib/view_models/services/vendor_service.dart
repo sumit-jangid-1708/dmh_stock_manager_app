@@ -19,4 +19,9 @@ class VendorService {
     dynamic response = await _apiServices.getApi("${AppUrl.vendorDetails}$vendorId/");
     return response;
   }
+
+  Future<dynamic> updateVendor(int vendorId, var data) async{
+    dynamic response = await _apiServices.putApi(data, "${AppUrl.updateVendor}$vendorId/");
+    return response;
+  }
 }
