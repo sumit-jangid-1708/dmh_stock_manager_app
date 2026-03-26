@@ -7,7 +7,7 @@ import '../../view_models/controller/item_controller.dart';
 class StockScreen extends StatelessWidget {
   StockScreen({super.key});
   final StockController stockController = Get.put(StockController());
-
+  final ScrollController _scrollController = ScrollController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -189,17 +189,24 @@ class StockScreen extends StatelessWidget {
                     );
                   }
 
-                  return ListView.builder(
-                    padding: EdgeInsets.all(16),
-                    itemCount: stockController.inventoryList.length,
-                    itemBuilder: (context, index) {
-                      final item = stockController.inventoryList[index];
-                      final product = stockController.getProductById(
-                        item.product,
-                      );
+                  return Scrollbar(
+                    controller: _scrollController,
+                    thumbVisibility: true,
+                    thickness: 6,
+                    radius: const Radius.circular(10),
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      padding: EdgeInsets.all(16),
+                      itemCount: stockController.inventoryList.length,
+                      itemBuilder: (context, index) {
+                        final item = stockController.inventoryList[index];
+                        final product = stockController.getProductById(
+                          item.product,
+                        );
 
-                      return _buildInventoryCard(item, product, context);
-                    },
+                        return _buildInventoryCard(item, product, context);
+                      },
+                    ),
                   );
                 }),
               ),

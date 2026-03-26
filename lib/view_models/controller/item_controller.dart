@@ -1,3 +1,5 @@
+// lib/view_models/controller/item_controller.dart
+
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
@@ -19,6 +21,7 @@ import 'package:syncfusion_flutter_xlsio/xlsio.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../data/app_exceptions.dart';
+import '../../model/product_models/product_delete_response_model.dart';
 import '../../utils/app_lists.dart';
 
 class ItemController extends GetxController with BaseController {
@@ -34,8 +37,8 @@ class ItemController extends GetxController with BaseController {
   var lowStockLimit = TextEditingController().obs;
   final hsnCode = TextEditingController().obs;
   final description = TextEditingController().obs;
-  final weightBefore = TextEditingController().obs; // ✅ Added
-  final weightAfter = TextEditingController().obs;  // ✅ Added
+  final weightBefore = TextEditingController().obs;
+  final weightAfter = TextEditingController().obs;
 
   // store filtered vendors
   var filteredProducts = <ProductModel>[].obs;
@@ -67,9 +70,9 @@ class ItemController extends GetxController with BaseController {
       } else {
         filteredProducts.assignAll(
           products.where(
-            (product) =>
-                product.name.toLowerCase().contains(query) || // product name
-                product.sku.toLowerCase().contains(query), // SKU code
+                (product) =>
+            product.name.toLowerCase().contains(query) ||
+                product.sku.toLowerCase().contains(query),
           ),
         );
       }
@@ -101,8 +104,6 @@ class ItemController extends GetxController with BaseController {
     selectedImage.clear();
   }
 
-  // ✅ Add this method in ItemController - Print multiple different barcodes
-
   /// Print multiple different barcode images in a single PDF page
   Future<void> printMultipleBarcodes(List<Uint8List> barcodeImages) async {
     if (barcodeImages.isEmpty) {
@@ -118,10 +119,8 @@ class ItemController extends GetxController with BaseController {
     try {
       final pdf = pw.Document();
 
-      // Convert all byte arrays to MemoryImage
-      final images = barcodeImages
-          .map((bytes) => pw.MemoryImage(bytes))
-          .toList();
+      final images =
+      barcodeImages.map((bytes) => pw.MemoryImage(bytes)).toList();
 
       pdf.addPage(
         pw.MultiPage(
@@ -129,8 +128,8 @@ class ItemController extends GetxController with BaseController {
           build: (pw.Context context) {
             return [
               pw.Wrap(
-                spacing: 10, // horizontal spacing
-                runSpacing: 10, // vertical spacing
+                spacing: 10,
+                runSpacing: 10,
                 children: images.map((image) {
                   return pw.Container(
                     width: 180,
@@ -145,7 +144,6 @@ class ItemController extends GetxController with BaseController {
         ),
       );
 
-      // Print the generated PDF
       await Printing.layoutPdf(
         onLayout: (PdfPageFormat format) async => pdf.save(),
       );
@@ -153,7 +151,7 @@ class ItemController extends GetxController with BaseController {
       debugPrint("✅ Printed ${barcodeImages.length} barcodes successfully");
     } catch (e) {
       debugPrint("❌ Error printing barcodes: $e");
-      rethrow; // Let dialog handle the error
+      rethrow;
     }
   }
 
@@ -164,27 +162,15 @@ class ItemController extends GetxController with BaseController {
     try {
       final response = await itemService.showProducts();
       final List<dynamic> data = response;
-      // fill products
+
       products.value = data
           .map<ProductModel>((item) => ProductModel.fromJson(item))
           .toList();
-      // ✅ Sort products by ID (latest first)
+
       products.sort((a, b) => b.id.compareTo(a.id));
-      // ✅ make filteredProducts same as products initially
       filteredProducts.assignAll(products);
+
       print("✅ Products fetched: ${products.length}");
-      // } on AppExceptions catch (e) {
-      //   if (kDebugMode) {
-      //     print("❌ Exception Details: $e"); // full stack ya raw details
-      //   }
-      //   Get.snackbar(
-      //     "Error",
-      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-      //     duration: const Duration(seconds: 1),
-      //     snackPosition: SnackPosition.TOP,
-      //     backgroundColor: Colors.red,
-      //     colorText: Colors.white,
-      //   );
     } catch (e) {
       print("🚩 Product Error $e");
       handleError(e, onRetry: () => getProducts());
@@ -204,16 +190,15 @@ class ItemController extends GetxController with BaseController {
       int? hsn,
       String? description,
       ) async {
-    // ✅ Validate images first
     if (images.isEmpty) {
       AppAlerts.error("Please select at least one product image");
       return;
     }
 
-    // ✅ Check if image files exist
     for (var image in images) {
       if (!await image.exists()) {
-        AppAlerts.error("Selected image no longer exists. Please select again.");
+        AppAlerts.error(
+            "Selected image no longer exists. Please select again.");
         return;
       }
     }
@@ -261,8 +246,8 @@ class ItemController extends GetxController with BaseController {
 
   Future<void> editProduct({
     required int productId,
-    required int vendorId, // ✅ Added vendor ID
-    required String prefixCode, // ✅ Added prefix code
+    required int vendorId,
+    required String prefixCode,
     required String color,
     required String size,
     required String material,
@@ -272,7 +257,6 @@ class ItemController extends GetxController with BaseController {
     String? description,
   }) async {
     Map<String, dynamic> fields = {
-      // ✅ Include vendor and prefix_code (won't change but required by API)
       "vendor": vendorId,
       "prefix_code": prefixCode,
       "name": productName.value.text.trim(),
@@ -303,12 +287,10 @@ class ItemController extends GetxController with BaseController {
         print("✅ Product updated: ${response}");
       }
 
-      // ✅ Refresh product list
       await getProducts();
 
       AppAlerts.success("Product updated successfully");
 
-      // ✅ Clear form
       clearAddProductForm();
     } catch (e, s) {
       if (kDebugMode) {
@@ -320,8 +302,36 @@ class ItemController extends GetxController with BaseController {
     }
   }
 
+  /// ✅ Delete Product Method
+  Future<void> deleteProduct(int productId) async {
+    try {
+      isLoading.value = true;
 
-  /// Add this method in ItemController class
+      final response = await itemService.deleteProduct(productId);
+
+      // Parse response
+      final deleteResponse = ProductDeleteResponse.fromJson(response);
+
+      // Remove from local list
+      products.removeWhere((p) => p.id == productId);
+      filteredProducts.removeWhere((p) => p.id == productId);
+
+      AppAlerts.success(deleteResponse.message);
+
+      if (kDebugMode) {
+        print("✅ Product deleted: ID $productId");
+      }
+    } catch (e, s) {
+      if (kDebugMode) {
+        print("🚩 Delete product Error ❌: $e $s");
+      }
+      handleError(e);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Clear form
   void clearAddProductForm() {
     productName.value.clear();
     skuCode.value.clear();
@@ -329,8 +339,8 @@ class ItemController extends GetxController with BaseController {
     lowStockLimit.value.clear();
     hsnCode.value.clear();
     description.value.clear();
-    weightBefore.value.clear(); // ✅ Added
-    weightAfter.value.clear();  // ✅ Added
+    weightBefore.value.clear();
+    weightAfter.value.clear();
     selectedImage.clear();
 
     if (kDebugMode) {
@@ -376,27 +386,9 @@ class ItemController extends GetxController with BaseController {
 
       await OpenFile.open(path);
       AppAlerts.success("Excel exported successfully!");
-      // Get.snackbar(
-      //   "Success",
-      //   "Excel saved at $path",
-      //   snackPosition: SnackPosition.TOP,
-      //   duration: const Duration(seconds: 3),
-      // );
-      // } on AppExceptions catch (e) {
-      //   if (kDebugMode) {
-      //     print("❌ Exception Details: $e"); // full stack ya raw details
-      //   }
-      //   Get.snackbar(
-      //     "Error",
-      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-      //     duration: const Duration(seconds: 1),
-      //     snackPosition: SnackPosition.TOP,
-      //     backgroundColor: Colors.red,
-      //     colorText: Colors.white,
-      //   );
     } catch (e) {
       if (kDebugMode) {
-        print("❌ Exception Details: $e"); // full stack ya raw details
+        print("❌ Exception Details: $e");
       }
       handleError(e);
     }
@@ -418,12 +410,6 @@ class ItemController extends GetxController with BaseController {
     selectedProducts.clear();
   }
 
-  // void addMaterial(String newMaterial) {
-  //   if (newMaterial.isNotEmpty && !materials.contains(newMaterial)) {
-  //     materials.add(newMaterial);
-  //   }
-  // }
-
   Future<void> getHsnList() async {
     try {
       isLoading.value = true;
@@ -437,18 +423,6 @@ class ItemController extends GetxController with BaseController {
       if (kDebugMode) {
         print("✅ HSN List fetched: ${hsnList.length}");
       }
-      // } on AppExceptions catch (e) {
-      //   if (kDebugMode) {
-      //     print("❌ HSN API Exception: $e");
-      //   }
-      //   Get.snackbar(
-      //     "Error",
-      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-      //     snackPosition: SnackPosition.TOP,
-      //     backgroundColor: Colors.red,
-      //     colorText: Colors.white,
-      //     duration: const Duration(seconds: 2),
-      //   );
     } catch (e) {
       if (kDebugMode) {
         print("❌ HSN Error: $e");
@@ -478,14 +452,6 @@ class ItemController extends GetxController with BaseController {
       if (kDebugMode) {
         print("✅ HSN added: $hsnCode with GST: $gstPercentage%");
       }
-      // } on AppExceptions catch (e) {
-      //   Get.snackbar(
-      //     "Error",
-      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-      //     snackPosition: SnackPosition.TOP,
-      //     backgroundColor: Colors.red,
-      //     colorText: Colors.white,
-      //   );
     } catch (e) {
       handleError(e);
     } finally {
@@ -493,66 +459,3 @@ class ItemController extends GetxController with BaseController {
     }
   }
 }
-
-// Future<void> addProduct(
-//   String vendorId,
-//   String color,
-//   String size,
-//   String material,
-// ) async {
-//   Map data = {
-//     "vendor": vendorId,
-//     "prefix_code": skuCode.value.text,
-//     "name": productName.value.text,
-//     "size": size,
-//     "color": color,
-//     "material": material,
-//   };
-//
-//   try {
-//     isLoading.value = true;
-//     final response = await itemService.addProductApi(data);
-//     final product = ProductModel.fromJson(response);
-//     products.add(product);
-//     getProducts();
-//
-//     Get.snackbar("Success", "Product added successfully");
-//   } catch (e) {
-//     print("🚩product Error $e");
-//     Get.snackbar('Error', 'Failed to add Product');
-//   } finally {
-//     isLoading.value = false;
-//   }
-// }
-// Future<void> printBarcode(Uint8List imageBytes, ) async {
-//   try {
-//     final pdf = pw.Document();
-//
-//     final image = pw.MemoryImage(imageBytes);
-//
-//     pdf.addPage(
-//       pw.Page(
-//         pageFormat: PdfPageFormat.a4,
-//         build: (pw.Context context) {
-//           return pw.Center(
-//             child: pw.Column(
-//               mainAxisAlignment: pw.MainAxisAlignment.center,
-//               children: [
-//                 pw.Text('Product Barcode', style: pw.TextStyle(fontSize: 20)),
-//                 pw.SizedBox(height: 20),
-//                 pw.Image(image, width: 230), // 👈 API Image
-//               ],
-//             ),
-//           );
-//         },
-//       ),
-//     );
-//
-//     // 🔹 Print / Save as PDF
-//     await Printing.layoutPdf(
-//       onLayout: (PdfPageFormat format) async => pdf.save(),
-//     );
-//   } catch (e) {
-//     print("Error printing barcode: $e");
-//   }
-// }

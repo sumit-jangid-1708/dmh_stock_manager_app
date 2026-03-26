@@ -3,12 +3,12 @@ import 'package:get/get.dart';
 import '../../view_models/controller/home_controller.dart';
 
 class TotalStockScreen extends StatelessWidget {
-  const TotalStockScreen({super.key});
+  final HomeController homeController = Get.find<HomeController>();
+  final ScrollController _scrollController = ScrollController();
+  TotalStockScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final HomeController homeController = Get.find<HomeController>();
-
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       body: SafeArea(
@@ -64,19 +64,26 @@ class TotalStockScreen extends StatelessWidget {
                 return RefreshIndicator(
                   color: const Color(0xFF1A1A4F),
                   onRefresh: () async => await homeController.refreshAllData(),
-                  child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 80),
-                    itemCount: homeController.stockDetails.length,
-                    itemBuilder: (context, index) {
-                      final stock = homeController.stockDetails[index];
-                      return _buildStockCard(
-                        name: stock.name ?? "N/A",
-                        sku: stock.baseSku ?? "N/A",
-                        size: stock.size ?? "-",
-                        price: stock.unitPurchasePrice ?? "0.00",
-                        quantity: stock.inventoryQuantity ?? 0,
-                      );
-                    },
+                  child: Scrollbar(
+                    controller: _scrollController,
+                    thumbVisibility: true,
+                    thickness: 6,
+                    radius: const Radius.circular(10),
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 80),
+                      itemCount: homeController.stockDetails.length,
+                      itemBuilder: (context, index) {
+                        final stock = homeController.stockDetails[index];
+                        return _buildStockCard(
+                          name: stock.name ?? "N/A",
+                          sku: stock.baseSku ?? "N/A",
+                          size: stock.size ?? "-",
+                          price: stock.unitPurchasePrice ?? "0.00",
+                          quantity: stock.inventoryQuantity ?? 0,
+                        );
+                      },
+                    ),
                   ),
                 );
               }),
@@ -102,7 +109,7 @@ class TotalStockScreen extends StatelessWidget {
               color: Colors.black.withOpacity(0.02),
               blurRadius: 8,
               offset: const Offset(0, 2),
-            )
+            ),
           ],
         ),
         child: const Icon(
@@ -197,12 +204,19 @@ class TotalStockScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
-                    color: isLowStock ? Colors.red.shade50 : Colors.green.shade50,
+                    color: isLowStock
+                        ? Colors.red.shade50
+                        : Colors.green.shade50,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: isLowStock ? Colors.red.shade100 : Colors.green.shade100,
+                      color: isLowStock
+                          ? Colors.red.shade100
+                          : Colors.green.shade100,
                     ),
                   ),
                   child: Text(
@@ -219,7 +233,11 @@ class TotalStockScreen extends StatelessWidget {
                     padding: EdgeInsets.only(top: 4),
                     child: Text(
                       "Low Stock",
-                      style: TextStyle(color: Colors.red, fontSize: 9, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
               ],
@@ -235,10 +253,7 @@ class TotalStockScreen extends StatelessWidget {
       children: [
         Icon(icon, size: 12, color: Colors.grey),
         const SizedBox(width: 4),
-        Text(
-          label,
-          style: const TextStyle(color: Colors.grey, fontSize: 11),
-        ),
+        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 11)),
       ],
     );
   }
@@ -248,11 +263,19 @@ class TotalStockScreen extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.layers_clear_outlined, size: 60, color: Colors.grey.shade300),
+          Icon(
+            Icons.layers_clear_outlined,
+            size: 60,
+            color: Colors.grey.shade300,
+          ),
           const SizedBox(height: 16),
           Text(
             "No stock available",
-            style: TextStyle(color: Colors.grey.shade500, fontSize: 16, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              color: Colors.grey.shade500,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),

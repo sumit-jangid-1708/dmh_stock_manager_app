@@ -13,6 +13,7 @@ class AppTextField extends StatelessWidget {
   final Function(String)? onChanged;
   final bool obscureText;
   final bool enabled;
+  final bool isSearch;
 
   const AppTextField({
     super.key,
@@ -28,14 +29,16 @@ class AppTextField extends StatelessWidget {
     this.onChanged,
     this.obscureText = false,
     this.enabled = true,
+    this.isSearch = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
-      keyboardType: keyboardType,
+      keyboardType: maxLines > 1 ? TextInputType.multiline : keyboardType,
       maxLines: maxLines,
+      textInputAction: maxLines > 1 ? TextInputAction.newline : TextInputAction.done,
       obscureText: obscureText,
       enabled: enabled,
       onChanged: onChanged,
@@ -46,12 +49,13 @@ class AppTextField extends StatelessWidget {
         fontWeight: FontWeight.w500,
       ),
       decoration: InputDecoration(
-        labelText: labelText ?? hintText, // Floating label support
+        labelText: isSearch ? null : labelText ?? hintText, // Floating label support
         labelStyle: TextStyle(
           color: Colors.grey.shade600,
           fontSize: 14,
         ),
-        hintText: labelText != null ? hintText : null,
+        hintText: hintText,
+        // hintText: labelText != null ? hintText : null,
         hintStyle: TextStyle(
           color: Colors.grey.shade400,
           fontSize: 14,
@@ -103,7 +107,8 @@ class AppTextField extends StatelessWidget {
           fontSize: 12,
         ),
         // Floating label behavior
-        floatingLabelBehavior: FloatingLabelBehavior.auto,
+        floatingLabelBehavior:
+        isSearch ? FloatingLabelBehavior.never : FloatingLabelBehavior.auto,
       ),
       cursorColor: const Color(0xFF1A1A4F),
     );

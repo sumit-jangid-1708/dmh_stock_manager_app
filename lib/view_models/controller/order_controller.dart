@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:dmj_stock_manager/model/bills_model/create_bill_model.dart';
 import 'package:dmj_stock_manager/model/order_models/create_order_response_model.dart';
 import 'package:dmj_stock_manager/model/order_models/order_model.dart';
@@ -46,16 +48,17 @@ class OrderController extends GetxController with BaseController {
   var selectedReason = "".obs;
   var selectedCondition = "".obs;
 
+  // ✅ Bill Creation Variables
   var selectedMethod = "NET_BANKING".obs;
   var paymentDate = DateTime.now().obs;
   var paidStatus = "UNPAID".obs;
   var transactionId = "".obs;
+  var partialAmount = "".obs; // ✅ Added for partial payment amount
   final billStatus = <CreateBillModel>[].obs;
 
   var filteredOrders = <OrderDetailModel>[].obs;
   RxString emailError = ''.obs;
 
-  // ✅ Purana orderDetailUI + barcodeCache hata ke sirf ye rakho
   final orderDetail = Rxn<OrderDetailsModel>();
   var isLoadingDetail = false.obs;
 
@@ -97,6 +100,15 @@ class OrderController extends GetxController with BaseController {
     if (formKey.currentState != null) {
       formKey.currentState!.reset();
     }
+  }
+
+  /// ✅ Clear Bill Form
+  void clearBillForm() {
+    selectedMethod.value = "NET_BANKING";
+    paymentDate.value = DateTime.now();
+    paidStatus.value = "UNPAID";
+    transactionId.value = "";
+    partialAmount.value = "";
   }
 
   void removeItemRow(int index) {
@@ -150,9 +162,15 @@ class OrderController extends GetxController with BaseController {
       return;
     }
 
+    if (items.isEmpty) {
+      AppAlerts.error("Please add at least one product");
+      return;
+    }
+
     try {
       isLoading.value = true;
 
+      // ✅ Prepare Item List
       List<Map<String, dynamic>> itemList = items.map((item) {
         final productRx = item["product"] as Rx<ProductModel?>?;
         final product = productRx?.value;
@@ -162,33 +180,68 @@ class OrderController extends GetxController with BaseController {
         return {
           "product": product?.id,
           "quantity": int.tryParse(qtyController.text) ?? 0,
-          "unit_price": priceController.text,
+          "unit_price": double.tryParse(priceController.text) ?? 0.0,
         };
       }).toList();
 
+      // ✅ Calculate Total Amount
+      // double totalAmount = 0.0;
+      //
+      // for (var item in itemList) {
+      //   double price = item["unit_price"] ?? 0.0;
+      //   int qty = item["quantity"] ?? 0;
+      //   totalAmount += price * qty;
+      // }
+
+      // ❌ Safety check
+      // if (totalAmount <= 0) {
+      //   AppAlerts.error("Total amount must be greater than 0");
+      //   return;
+      // }
+
+      // ✅ Final Payload
       final data = {
         "channel": selectedChannel.value?.id,
-        "customer_name": customerNameController.text,
-        "customer_email": emailController.text,
-        "channel_order_id": channelOrderId.text,
-        "remarks": remarkController.text,
+        "customer_name": customerNameController.text.trim(),
+        "customer_email": emailController.text.trim(),
+        "channel_order_id": channelOrderId.text.trim(),
+        "remarks": remarkController.text.trim(),
         "items": itemList,
         "country_code": countryCode.value,
         "mobile": phoneNumber.value,
+        // "total_amount": totalAmount,
       };
 
+      // ✅ API Call
       final response = await orderService.createOrderApi(data);
-      final order = CreateOrderResponseModel.fromJson(response);
-      createOrderResponse.add(order);
+
+      print("🟢 RAW API RESPONSE: $response");
+
+      // ✅ Proper Response Handling
+      if (response is Map<String, dynamic>) {
+        if (response.containsKey("error")) {
+          AppAlerts.error(response["error"] ?? "Something went wrong");
+          return;
+        }
+
+        final order = CreateOrderResponseModel.fromJson(response);
+        createOrderResponse.add(order);
+      } else {
+        AppAlerts.error("Invalid server response");
+        return;
+      }
 
       if (Get.isBottomSheetOpen ?? false) Get.back();
 
       AppAlerts.success("Order created successfully ✅");
+
       clearForm();
-      getOrderList();
+      await getOrderList();
       stockController.fetchInventoryList();
+
     } catch (e) {
       handleError(e);
+      print("❌ Create Order Error: $e");
     } finally {
       isLoading.value = false;
     }
@@ -237,12 +290,38 @@ class OrderController extends GetxController with BaseController {
     }
   }
 
+  /// ✅ Create Order Bill with Amount Calculation
   Future<void> createOrderBill(int orderId) async {
+    // ✅ Calculate amount based on paid status
+    double amount = 0.0;
+
+    if (paidStatus.value == "PAID") {
+      // PAID: Order ka total amount
+      final order = orderDetail.value;
+      if (order != null) {
+        amount = order.items.fold(0.0, (sum, item) => sum + item.totalPrice);
+      }
+    } else if (paidStatus.value == "PARTIAL") {
+      // PARTIAL: User entered amount
+      amount = double.tryParse(partialAmount.value) ?? 0.0;
+
+      // ✅ Validation: Partial amount cannot be 0 or empty
+      if (amount <= 0) {
+        AppAlerts.error("Please enter a valid partial amount");
+        return;
+      }
+    } else if (paidStatus.value == "UNPAID") {
+      // UNPAID: Amount = 0
+      amount = 0.0;
+    }
+
     String formattedDate = DateFormat('yyyy-MM-dd').format(paymentDate.value);
+
     Map<String, dynamic> data = {
       "payment_method": selectedMethod.value,
       "payment_date": formattedDate,
       "paid_status": paidStatus.value,
+      "amount": amount, // ✅ Added amount field
     };
 
     if (transactionId.value.isNotEmpty) {
@@ -262,6 +341,9 @@ class OrderController extends GetxController with BaseController {
       AppAlerts.success(
         apiResponse.message.isEmpty ? "Bill Created" : apiResponse.message,
       );
+
+      // ✅ Clear bill form after success
+      clearBillForm();
 
       await getOrderList();
       Get.to(() => BillingScreen());
@@ -347,7 +429,6 @@ class OrderController extends GetxController with BaseController {
     addScannedProduct(product);
   }
 
-  // ✅ SIMPLIFIED — sirf ek API call, koi adapter/merge nahi
   Future<void> loadOrderDetail(int orderId) async {
     try {
       isLoadingDetail.value = true;

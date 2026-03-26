@@ -7,7 +7,7 @@ import 'order_create_bottom_sheet.dart';
 class OrderScreen extends StatelessWidget {
   final OrderController orderController = Get.put(OrderController());
   final TextEditingController searchController = TextEditingController();
-
+final ScrollController _scrollController = ScrollController();
   OrderScreen({super.key});
 
   @override
@@ -142,13 +142,20 @@ class OrderScreen extends StatelessWidget {
                     return _buildEmptyState();
                   }
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 80), // Bottom padding for FAB
-                    itemCount: orderController.filteredOrders.length,
-                    itemBuilder: (context, index) {
-                      final order = orderController.filteredOrders[index];
-                      return _buildOrderCard(order);
-                    },
+                  return Scrollbar(
+                    controller: _scrollController,
+                    thumbVisibility: true,
+                    thickness: 6,
+                    radius: const Radius.circular(10),
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 80), // Bottom padding for FAB
+                      itemCount: orderController.filteredOrders.length,
+                      itemBuilder: (context, index) {
+                        final order = orderController.filteredOrders[index];
+                        return _buildOrderCard(order);
+                      },
+                    ),
                   );
                 }),
               ),

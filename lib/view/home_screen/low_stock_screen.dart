@@ -5,7 +5,8 @@ import '../../model/stock_inventory_models/stock_details_model.dart';
 import '../../view_models/controller/home_controller.dart';
 
 class LowStockScreen extends StatelessWidget {
-  const LowStockScreen({super.key});
+  final ScrollController _scrollController = ScrollController();
+  LowStockScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -260,13 +261,20 @@ class LowStockScreen extends StatelessWidget {
       return _buildEmptyState("No low stock items in inventory");
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: lowStockItems.length,
-      itemBuilder: (context, index) {
-        final stock = lowStockItems[index];
-        return _buildStockDetailsCard(stock);
-      },
+    return Scrollbar(
+      controller: _scrollController,
+      thumbVisibility: true,
+      thickness: 6,
+      radius: const Radius.circular(10),
+      child: ListView.builder(
+        controller: _scrollController,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: lowStockItems.length,
+        itemBuilder: (context, index) {
+          final stock = lowStockItems[index];
+          return _buildStockDetailsCard(stock);
+        },
+      ),
     );
   }
 
@@ -293,13 +301,20 @@ class LowStockScreen extends StatelessWidget {
       return _buildEmptyState("No items found");
     }
 
-    return ListView.builder(
+    return Scrollbar(
+        controller: _scrollController,
+        thumbVisibility: true,
+        thickness: 6,
+        radius: const Radius.circular(10),
+        child: ListView.builder(
+          controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: filteredProducts.length,
       itemBuilder: (context, index) {
         final product = filteredProducts[index];
         return _buildBestSellingCard(product);
       },
+    )
     );
   }
 

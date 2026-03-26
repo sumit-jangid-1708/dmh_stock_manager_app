@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 
 class VendorScreen extends StatelessWidget {
   final VendorController vendorController = Get.put(VendorController());
-
+  final ScrollController _scrollController = ScrollController();
   VendorScreen({super.key});
 
   @override
@@ -205,53 +205,60 @@ class VendorScreen extends StatelessWidget {
                     );
                   }
 
-                  return ListView.builder(
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    itemCount: vendors.length,
-                    itemBuilder: (context, index) {
-                      final vendor = vendors[index];
-                      return InkWell(
-                        onTap: () {
-                          Get.to(() => VendorDetailScreen(vendorId: vendor.id));
-                        },
-                        child: VendorCard(
-                          initials: vendor.vendorName.isNotEmpty
-                              ? vendor.vendorName.substring(0, 2).toUpperCase()
-                              : "NA",
-                          vendorName: vendor.vendorName,
-                          phoneNumber: vendor.phoneNumber,
-                          countryCode: vendor.countryCode,
-                          email: vendor.email,
-                          address: vendor.address,
-                          city: vendor.city,
-                          state: vendor.state,
-                          country: vendor.country.isNotEmpty ? vendor.country : "N/A",
-                          pinCode: vendor.pinCode,
-                          firmName: vendor.firmName,
-                          gstNumber: vendor.gstNumber,
-                          isExpanded: vendorController.expandedList[index],
-                          onToggle: () => vendorController.toggleVendor(index),
-                          onDelete: () {
-                            // TODO: Implement delete functionality
+                  return Scrollbar(
+                    controller: _scrollController,
+                    thumbVisibility: true,
+                    thickness: 6,
+                    radius: const Radius.circular(10),
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      itemCount: vendors.length,
+                      itemBuilder: (context, index) {
+                        final vendor = vendors[index];
+                        return InkWell(
+                          onTap: () {
+                            Get.to(() => VendorDetailScreen(vendorId: vendor.id));
                           },
-                          onEdit: () {
-                            // ✅ Populate form with vendor data and open in edit mode
-                            vendorController.populateFormForEdit(vendor);
-                            showModalBottomSheet(
-                              elevation: 10,
-                              context: context,
-                              isScrollControlled: true,
-                              builder: (context) {
-                                return SizedBox(
-                                  height: MediaQuery.of(context).size.height * 0.8,
-                                  child: AddVendorFormBottomSheet(),
-                                );
-                              },
-                            );
-                          },
-                        ),
-                      );
-                    },
+                          child: VendorCard(
+                            initials: vendor.vendorName.isNotEmpty
+                                ? vendor.vendorName.substring(0, 2).toUpperCase()
+                                : "NA",
+                            vendorName: vendor.vendorName,
+                            phoneNumber: vendor.phoneNumber,
+                            countryCode: vendor.countryCode,
+                            email: vendor.email,
+                            address: vendor.address,
+                            city: vendor.city,
+                            state: vendor.state,
+                            country: vendor.country.isNotEmpty ? vendor.country : "N/A",
+                            pinCode: vendor.pinCode,
+                            firmName: vendor.firmName,
+                            gstNumber: vendor.gstNumber,
+                            isExpanded: vendorController.expandedList[index],
+                            onToggle: () => vendorController.toggleVendor(index),
+                            onDelete: () {
+                              // TODO: Implement delete functionality
+                            },
+                            onEdit: () {
+                              // ✅ Populate form with vendor data and open in edit mode
+                              vendorController.populateFormForEdit(vendor);
+                              showModalBottomSheet(
+                                elevation: 10,
+                                context: context,
+                                isScrollControlled: true,
+                                builder: (context) {
+                                  return SizedBox(
+                                    height: MediaQuery.of(context).size.height * 0.8,
+                                    child: AddVendorFormBottomSheet(),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
                   );
                 }),
               ),

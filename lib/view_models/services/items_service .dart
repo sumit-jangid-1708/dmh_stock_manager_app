@@ -202,4 +202,22 @@ class ItemService {
       throw Exception(errorMessage);
     }
   }
+
+  /// ✅ Delete Product API
+  Future<dynamic> deleteProduct(int productId) async {
+    final url = "${AppUrl.deleteProduct}/$productId";
+
+    if (kDebugMode) {
+      print("🗑️ Deleting product with ID: $productId");
+      print("🗑️ DELETE URL: $url");
+    }
+
+    dynamic response = await _apiServices.deleteApi(url);
+
+    if (kDebugMode) {
+      print("✅ Product deleted successfully: $response");
+    }
+
+    return response;
+  }
 }

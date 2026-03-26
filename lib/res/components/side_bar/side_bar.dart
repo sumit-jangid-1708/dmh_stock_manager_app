@@ -1,6 +1,7 @@
 import 'package:dmj_stock_manager/res/assets/images_assets.dart';
 import 'package:dmj_stock_manager/res/routes/routes_names.dart';
 import 'package:dmj_stock_manager/view/billings/billing_screen.dart';
+import 'package:dmj_stock_manager/view/orders/shipping_screen.dart';
 import 'package:dmj_stock_manager/view/purchase_screen/purchase_screen.dart';
 import 'package:dmj_stock_manager/view_models/controller/dashboard_controller.dart';
 import 'package:flutter/material.dart';
@@ -76,13 +77,12 @@ class Sidebar extends StatelessWidget {
                     ),
 
                     // 🔒 History Button is now hidden (Commented out/Removed)
-                    /*
+
                     _buildMenuItem(
-                      icon: Icons.history,
-                      title: "History",
-                      onTap: () => Get.toNamed(RouteName.historyScreen),
+                      icon: Icons.local_shipping_outlined,
+                      title: "Shipping",
+                      onTap: () => Get.to(()=> ShippingScreen()),
                     ),
-                    */
 
                     _buildMenuItem(
                       icon: Icons.settings_outlined,

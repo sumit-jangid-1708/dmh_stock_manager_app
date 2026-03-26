@@ -10,6 +10,7 @@ class ReturnOrderHistoryScreen extends StatelessWidget {
   final ReturnController controller = Get.put(ReturnController());
   final HomeController homeController = Get.find<HomeController>();
   final ItemController itemController = Get.find<ItemController>();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +47,11 @@ class ReturnOrderHistoryScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: IconButton(
-                            icon: const Icon(Icons.arrow_back, color: Colors.white, size: 20,),
+                            icon: const Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                             onPressed: () => Get.back(),
                             padding: EdgeInsets.zero,
                           ),
@@ -178,6 +183,8 @@ class CourierReturnsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Load data on first build
+    final ScrollController scrollController = ScrollController();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (controller.courierReturnList.isEmpty) {
         controller.getCourierReturnList();
@@ -206,33 +213,37 @@ class CourierReturnsTab extends StatelessWidget {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    _buildFilterChip("All", () {controller.getCourierReturnList();
+                    _buildFilterChip("All", () {
+                      controller.getCourierReturnList();
                     }),
                     const SizedBox(width: 8),
-                    _buildFilterChip("SAFE", () {controller.getCourierReturnList(
-                      condition: "SAFE",
-                    );
+                    _buildFilterChip("SAFE", () {
+                      controller.getCourierReturnList(condition: "SAFE");
                     }),
                     const SizedBox(width: 8),
-                    _buildFilterChip("DAMAGED", () {controller.getCourierReturnList(
-                      condition: "DAMAGED",
-                    );
+                    _buildFilterChip("DAMAGED", () {
+                      controller.getCourierReturnList(condition: "DAMAGED");
                     }),
                     const SizedBox(width: 8),
-                    _buildFilterChip("CLAIMED RECEIVED", () {controller.getCourierReturnList(
-                      claimStatus: "CLAIMED",
-                      claimResult: "RECEIVED",
-                    );
-                    }), const SizedBox(width: 8),
-                    _buildFilterChip("CLAIMED REJECTED", () {controller.getCourierReturnList(
-                      claimStatus: "CLAIMED",
-                      claimResult: "REJECTED",
-                    );
+                    _buildFilterChip("CLAIMED RECEIVED", () {
+                      controller.getCourierReturnList(
+                        claimStatus: "CLAIMED",
+                        claimResult: "RECEIVED",
+                      );
                     }),
                     const SizedBox(width: 8),
-                    _buildFilterChip("NOT CLAIMED", () {controller.getCourierReturnList(
-                      claimStatus: "NOT_CLAIMED"
-                    );}),
+                    _buildFilterChip("CLAIMED REJECTED", () {
+                      controller.getCourierReturnList(
+                        claimStatus: "CLAIMED",
+                        claimResult: "REJECTED",
+                      );
+                    }),
+                    const SizedBox(width: 8),
+                    _buildFilterChip("NOT CLAIMED", () {
+                      controller.getCourierReturnList(
+                        claimStatus: "NOT_CLAIMED",
+                      );
+                    }),
                   ],
                 ),
               ),
@@ -274,22 +285,29 @@ class CourierReturnsTab extends StatelessWidget {
 
             return RefreshIndicator(
               onRefresh: () => controller.getCourierReturnList(),
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: controller.courierReturnList.length,
-                itemBuilder: (context, index) {
-                  final returnItem = controller.courierReturnList[index];
-                  final product = itemController.products.firstWhereOrNull(
-                    (p) => p.id == returnItem.productId,
-                  );
+              child: Scrollbar(
+                controller: scrollController,
+                thumbVisibility: true,
+                thickness: 6,
+                radius: const Radius.circular(10),
+                child: ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: controller.courierReturnList.length,
+                  itemBuilder: (context, index) {
+                    final returnItem = controller.courierReturnList[index];
+                    final product = itemController.products.firstWhereOrNull(
+                      (p) => p.id == returnItem.productId,
+                    );
 
-                  return _CourierReturnCard(
-                    returnItem: returnItem,
-                    productName:
-                        product?.name ?? "Product #${returnItem.productId}",
-                    productSku: product?.sku ?? "N/A",
-                  );
-                },
+                    return _CourierReturnCard(
+                      returnItem: returnItem,
+                      productName:
+                          product?.name ?? "Product #${returnItem.productId}",
+                      productSku: product?.sku ?? "N/A",
+                    );
+                  },
+                ),
               ),
             );
           }),
@@ -337,6 +355,7 @@ class CustomerReturnsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Load data on first build
+    final ScrollController scrollController = ScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (controller.customerReturnList.isEmpty) {
         controller.getCustomerReturnList();
@@ -365,33 +384,29 @@ class CustomerReturnsTab extends StatelessWidget {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    _buildFilterChip("All", () {controller.getCustomerReturnList();}),
+                    _buildFilterChip("All", () {
+                      controller.getCustomerReturnList();
+                    }),
                     const SizedBox(width: 8),
-                    _buildFilterChip("SAFE", () {controller.getCustomerReturnList(
-                      condition: "SAFE",
-                    );}),
+                    _buildFilterChip("SAFE", () {
+                      controller.getCustomerReturnList(condition: "SAFE");
+                    }),
                     const SizedBox(width: 8),
                     _buildFilterChip("DAMAGED", () {
-                      controller.getCustomerReturnList(
-                        condition: "DAMAGED",
-                      );
+                      controller.getCustomerReturnList(condition: "DAMAGED");
                     }),
                     const SizedBox(width: 8),
                     _buildFilterChip("LOST", () {
-                      controller.getCustomerReturnList(
-                        condition: "LOST"
-                      );
+                      controller.getCustomerReturnList(condition: "LOST");
                     }),
                     const SizedBox(width: 8),
                     _buildFilterChip("PENDING", () {
-                      controller.getCustomerReturnList(
-                        refundStatus: "PENDING",
-                      );
+                      controller.getCustomerReturnList(refundStatus: "PENDING");
                     }),
                     const SizedBox(width: 8),
                     _buildFilterChip("REFUNDED", () {
                       controller.getCustomerReturnList(
-                        refundStatus: "REFUNDED"
+                        refundStatus: "REFUNDED",
                       );
                     }),
                   ],
@@ -435,14 +450,21 @@ class CustomerReturnsTab extends StatelessWidget {
 
             return RefreshIndicator(
               onRefresh: () => controller.getCustomerReturnList(),
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: controller.customerReturnList.length,
-                itemBuilder: (context, index) {
-                  final returnItem = controller.customerReturnList[index];
+              child: Scrollbar(
+                controller: scrollController,
+                thumbVisibility: true,
+                thickness: 6,
+                radius: const Radius.circular(10),
+                child: ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: controller.customerReturnList.length,
+                  itemBuilder: (context, index) {
+                    final returnItem = controller.customerReturnList[index];
 
-                  return _CustomerReturnCard(returnItem: returnItem);
-                },
+                    return _CustomerReturnCard(returnItem: returnItem);
+                  },
+                ),
               ),
             );
           }),

@@ -1,4 +1,5 @@
 import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
+import 'package:dmj_stock_manager/view/orders/shipping_detail_form.dart';
 import 'package:dmj_stock_manager/view_models/controller/home_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/order_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/billing_controller.dart';
@@ -599,6 +600,17 @@ class OrderDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                   ],
+
+                  AppGradientButton(
+                    onPressed: () {
+                      showShippingDetailsBottomSheet(context);
+                    },
+                    text: "Create Shipment",
+                    icon: Icons.local_shipping_outlined,
+                    width: double.infinity,
+                    height: 50,
+                  ),
+                  const SizedBox(height: 20),
                   // ── Return Buttons ───────────────────────────────────────
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

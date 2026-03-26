@@ -8,7 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class PurchaseScreen extends StatelessWidget {
-  const PurchaseScreen({super.key});
+  PurchaseScreen({super.key});
+  final ScrollController _scrollController = ScrollController();
 
   @override
   Widget build(BuildContext context) {
@@ -152,14 +153,21 @@ class PurchaseScreen extends StatelessWidget {
                     );
                   }
 
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: listToShow.length,
-                    itemBuilder: (context, index) {
-                      final purchase = listToShow[index];
-                      return PurchaseListCard(purchase: purchase);
-                    },
+                  return Scrollbar(
+                    controller: _scrollController,
+                    thumbVisibility: true,
+                    thickness: 6,
+                    radius: const Radius.circular(10),
+                    child: ListView.builder(
+                      controller: _scrollController,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: listToShow.length,
+                      itemBuilder: (context, index) {
+                        final purchase = listToShow[index];
+                        return PurchaseListCard(purchase: purchase);
+                      },
+                    ),
                   );
                 }),
 
