@@ -6,19 +6,25 @@ import '../../res/components/widgets/custom_searchable_dropdown.dart';
 import '../../res/components/widgets/custom_text_field.dart';
 
 void showShippingDetailsBottomSheet(BuildContext context) {
-  // Controllers and State variables
+  // Controllers
   final TextEditingController trackingIdController = TextEditingController();
+  final TextEditingController trackingUrlController = TextEditingController(); // Naya Controller
+  final TextEditingController shippingExpenseController = TextEditingController();
+  final TextEditingController additionalExpenseController = TextEditingController();
   final TextEditingController notesController = TextEditingController();
 
   final Rx<DateTime?> shippingDate = Rx<DateTime?>(null);
-  final Rx<DateTime?> expectedDeliveryDate = Rx<DateTime?>(null);
 
-  // Dummy data for Courier Partners
+  // Dropdown Selections
   final List<String> courierPartners = ["Delhivery", "BlueDart", "Ecom Express", "FedEx"];
   final Rx<String?> selectedCourier = Rx<String?>(null);
 
+  final List<String> middlePartners = ["Partner A", "Partner B", "Direct"];
+  final Rx<String?> selectedMiddlePartner = Rx<String?>(null);
+
   Get.bottomSheet(
     isScrollControlled: true,
+    backgroundColor: Colors.transparent,
     Container(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
       decoration: const BoxDecoration(
@@ -44,83 +50,148 @@ void showShippingDetailsBottomSheet(BuildContext context) {
             ),
 
             const Text(
-              "Shipping Details",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1A1A4F),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // 1. Courier Partner Dropdown
-            _label("Courier Partner"),
-            CustomSearchableDropdown<String>(
-              items: courierPartners,
-              selectedItem: selectedCourier,
-              itemAsString: (item) => item,
-              hintText: "Select courier type",
-              prefixIcon: Icons.local_shipping_outlined,
-              onChanged: (val) => selectedCourier.value = val,
+              "Create Shipment",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1A1A4F)),
             ),
             const SizedBox(height: 20),
 
-            // 2. Tracking ID
-            _label("Tracking ID"),
-            AppTextField(
-              controller: trackingIdController,
-              hintText: "Enter Tracking ID",
-              prefixIcon: Icons.qr_code_scanner_rounded,
-            ),
-            const SizedBox(height: 20),
-
-            // 3. Shipping Date & Expected Delivery Date (Row)
+            // 1. Courier & Middle Partner
             Row(
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _label("Shipping Date"),
-                      _datePickerTile(context, shippingDate, "DD/MM/YYYY"),
+                      _label("Courier Partner"),
+                      CustomSearchableDropdown<String>(
+                        items: courierPartners,
+                        selectedItem: selectedCourier,
+                        itemAsString: (item) => item,
+                        hintText: "Courier",
+                        prefixIcon: Icons.local_shipping_outlined,
+                      ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _label("Expected Delivery"),
-                      _datePickerTile(context, expectedDeliveryDate, "DD/MM/YYYY"),
+                      _label("Middle Partner"),
+                      CustomSearchableDropdown<String>(
+                        items: middlePartners,
+                        selectedItem: selectedMiddlePartner,
+                        itemAsString: (item) => item,
+                        hintText: "Partner",
+                        prefixIcon: Icons.handshake_outlined,
+                      ),
                     ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
-            // 4. Notes
-            _label("Notes"),
+            // 2. Tracking ID & Shipping Date
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _label("Tracking ID"),
+                      AppTextField(
+                        controller: trackingIdController,
+                        hintText: "Enter ID",
+                        prefixIcon: Icons.qr_code_scanner_rounded,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _label("Shipping Date"),
+                      _datePickerTile(context, shippingDate, "Date"),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // 3. Tracking URL (Naya Field)
+            _label("Tracking / Reference URL"),
+            AppTextField(
+              controller: trackingUrlController,
+              hintText: "https://tracking-link.com",
+              prefixIcon: Icons.link_rounded,
+              keyboardType: TextInputType.url,
+            ),
+            const SizedBox(height: 16),
+
+            // 4. Expenses Section
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _label("Shipping Expense"),
+                      AppTextField(
+                        controller: shippingExpenseController,
+                        hintText: "Amount",
+                        prefixIcon: Icons.currency_rupee,
+                        keyboardType: TextInputType.number,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _label("Other Expense"),
+                      AppTextField(
+                        controller: additionalExpenseController,
+                        hintText: "Amount",
+                        prefixIcon: Icons.add_card_outlined,
+                        keyboardType: TextInputType.number,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // 5. Notes / Remarks (Enter Button Enabled)
+            _label("Notes / Remarks"),
             AppTextField(
               controller: notesController,
-              hintText: "Write Note here...",
+              hintText: "Write details here...",
               prefixIcon: Icons.note_add_outlined,
-              maxLines: 3,
+              maxLines: 4,
+              keyboardType: TextInputType.multiline,
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
 
-            // 5. Submit Button
+            // 6. Submit Button
             AppGradientButton(
               width: double.infinity,
               height: 55,
-              text: "Submit",
+              text: "Confirm Shipment",
               onPressed: () {
+                // Yahan se aap trackingUrlController.text access kar sakte hain
                 Get.back();
               },
             ),
-            // Keyboard adjustment for bottom sheet
+
             SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
           ],
         ),
@@ -129,22 +200,17 @@ void showShippingDetailsBottomSheet(BuildContext context) {
   );
 }
 
-// Helper widget for Labels
+// --- Helper Widgets unchanged ---
 Widget _label(String text) {
   return Padding(
-    padding: const EdgeInsets.only(bottom: 8, left: 4),
+    padding: const EdgeInsets.only(bottom: 6, left: 4),
     child: Text(
       text,
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w600,
-        color: Colors.grey.shade700,
-      ),
+      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
     ),
   );
 }
 
-// Helper for Date Pickers using Container and InkWell to match AppTextField UI
 Widget _datePickerTile(BuildContext context, Rx<DateTime?> dateObs, String hint) {
   return Obx(() => InkWell(
     onTap: () async {
@@ -153,19 +219,11 @@ Widget _datePickerTile(BuildContext context, Rx<DateTime?> dateObs, String hint)
         initialDate: DateTime.now(),
         firstDate: DateTime(2000),
         lastDate: DateTime(2100),
-        builder: (context, child) {
-          return Theme(
-            data: Theme.of(context).copyWith(
-              colorScheme: const ColorScheme.light(primary: Color(0xFF1A1A4F)),
-            ),
-            child: child!,
-          );
-        },
       );
       if (picked != null) dateObs.value = picked;
     },
     child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(16),
@@ -175,16 +233,11 @@ Widget _datePickerTile(BuildContext context, Rx<DateTime?> dateObs, String hint)
         children: [
           Expanded(
             child: Text(
-              dateObs.value == null
-                  ? hint
-                  : DateFormat('dd/MM/yyyy').format(dateObs.value!),
-              style: TextStyle(
-                fontSize: 14,
-                color: dateObs.value == null ? Colors.grey.shade400 : Colors.black87,
-              ),
+              dateObs.value == null ? hint : DateFormat('dd/MM/yy').format(dateObs.value!),
+              style: TextStyle(fontSize: 14, color: dateObs.value == null ? Colors.grey.shade400 : Colors.black87),
             ),
           ),
-          Icon(Icons.calendar_month_outlined, size: 20, color: Colors.grey.shade600),
+          Icon(Icons.calendar_month, size: 18, color: Colors.grey.shade600),
         ],
       ),
     ),

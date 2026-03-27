@@ -171,8 +171,9 @@ class ItemController extends GetxController with BaseController {
       filteredProducts.assignAll(products);
 
       print("✅ Products fetched: ${products.length}");
-    } catch (e) {
-      print("🚩 Product Error $e");
+    } catch (e, stackTrace) {
+      print("🚩 Product Error: $e");
+      print("📍 Full StackTrace: $stackTrace");
       handleError(e, onRetry: () => getProducts());
     } finally {
       isLoading.value = false;
@@ -256,6 +257,7 @@ class ItemController extends GetxController with BaseController {
     int? hsnId,
     String? description,
   }) async {
+
     Map<String, dynamic> fields = {
       "vendor": vendorId,
       "prefix_code": prefixCode,
@@ -277,6 +279,27 @@ class ItemController extends GetxController with BaseController {
     try {
       isLoading.value = true;
 
+      /// 🔎 DEBUG START
+      if (kDebugMode) {
+        print("========== EDIT PRODUCT DEBUG ==========");
+        print("🆔 Product ID: $productId");
+        print("📦 Fields Data: $fields");
+        print("🖼 Total Images Selected: ${images.length}");
+
+        if (images.isEmpty) {
+          print("⚠️ No images selected!");
+        } else {
+          for (int i = 0; i < images.length; i++) {
+            final file = images[i];
+            print("➡ Image $i Path: ${file.path}");
+            print("➡ Image $i Exists: ${file.existsSync()}");
+            print("➡ Image $i Size (bytes): ${file.lengthSync()}");
+          }
+        }
+        print("========================================");
+      }
+      /// 🔎 DEBUG END
+
       final response = await itemService.editProduct(
         fields: fields,
         images: images,
@@ -284,7 +307,7 @@ class ItemController extends GetxController with BaseController {
       );
 
       if (kDebugMode) {
-        print("✅ Product updated: ${response}");
+        print("✅ Product updated response: $response");
       }
 
       await getProducts();
@@ -292,9 +315,11 @@ class ItemController extends GetxController with BaseController {
       AppAlerts.success("Product updated successfully");
 
       clearAddProductForm();
+
     } catch (e, s) {
       if (kDebugMode) {
-        print("🚩 Edit product Error ❌: $e $s");
+        print("🚩 Edit product Error ❌: $e");
+        print("📍 StackTrace: $s");
       }
       handleError(e);
     } finally {

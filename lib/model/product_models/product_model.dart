@@ -1,5 +1,3 @@
-// lib/model/product_models/product_model.dart
-
 class ProductModel {
   final int id;
   final int vendor;
@@ -8,7 +6,7 @@ class ProductModel {
   final String size;
   final String color;
   final String material;
-  final int serial;
+  final int? serial; // ✅ NULL SAFE
   final String sku;
   final String barcode;
   final String barcodeImage;
@@ -16,12 +14,11 @@ class ProductModel {
   final String unitPurchasePrice;
   final int? hsnId;
   final String? description;
-  final String? weightBefore; // ✅ Added
-  final String? weightAfter;  // ✅ Added
+  final String? weightBefore;
+  final String? weightAfter;
 
   String get purchasePrice => unitPurchasePrice;
 
-  /// This returns only the SKU entered at product creation time
   String get baseSku {
     final parts = sku.split('-');
     if (parts.length > 4) {
@@ -38,7 +35,7 @@ class ProductModel {
     required this.size,
     required this.color,
     required this.material,
-    required this.serial,
+    this.serial, // ✅ nullable
     required this.sku,
     required this.barcode,
     required this.barcodeImage,
@@ -46,33 +43,33 @@ class ProductModel {
     required this.unitPurchasePrice,
     this.hsnId,
     this.description,
-    this.weightBefore, // ✅ Added
-    this.weightAfter,  // ✅ Added
+    this.weightBefore,
+    this.weightAfter,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     return ProductModel(
-      id: json['id'],
-      vendor: json['vendor'],
-      prefixCode: json['prefix_code'],
-      name: json['name'],
-      size: json['size'],
-      color: json['color'],
-      material: json['material'],
-      serial: json['serial'],
-      sku: json['sku'],
-      barcode: json['barcode'],
-      barcodeImage: json['barcode_image'],
+      id: json['id'] ?? 0,
+      vendor: json['vendor'] ?? 0,
+      prefixCode: json['prefix_code'] ?? '',
+      name: json['name'] ?? '',
+      size: json['size'] ?? '',
+      color: json['color'] ?? '',
+      material: json['material'] ?? '',
+      serial: json['serial'], // ✅ safe
+      sku: json['sku'] ?? '',
+      barcode: json['barcode'] ?? '',
+      barcodeImage: json['barcode_image'] ?? '',
       productImageVariants:
-      (json['product_image_variants'] as List<dynamic>?)
-          ?.map((e) => e.toString())
-          .toList() ??
+          (json['product_image_variants'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
           [],
       unitPurchasePrice: json['unit_purchase_price']?.toString() ?? '0.00',
       hsnId: json['hsn'],
       description: json['desc'],
-      weightBefore: json['weight_before']?.toString(), // ✅ Added
-      weightAfter: json['weight_after']?.toString(),   // ✅ Added
+      weightBefore: json['weight_before']?.toString(),
+      weightAfter: json['weight_after']?.toString(),
     );
   }
 
@@ -94,7 +91,7 @@ class ProductModel {
       'hsn': hsnId,
       'desc': description,
       'weight_before': weightBefore, // ✅ Added
-      'weight_after': weightAfter,   // ✅ Added
+      'weight_after': weightAfter, // ✅ Added
     };
   }
 }
