@@ -56,7 +56,7 @@ class ItemService {
 
         request.files.add(
           await http.MultipartFile.fromPath(
-            'product_image',
+            'product_image_variants_files',
             image.path,
           ),
         );
@@ -158,7 +158,7 @@ class ItemService {
 
           request.files.add(
             await http.MultipartFile.fromPath(
-              'product_image',
+              'product_image_variants_files',
               image.path,
             ),
           );

@@ -292,13 +292,14 @@ class ProductCard extends StatelessWidget {
 
   // Helper Functions
   String _getImageUrl(dynamic imageItem) {
-    if (imageItem is String) {
-      return "https://traders.testwebs.in$imageItem";
-    } else if (imageItem is Map<String, dynamic> &&
-        imageItem.containsKey('image')) {
-      return "https://traders.testwebs.in${imageItem['image']}";
+    if (imageItem is ProductImageVariant) {
+      return imageItem.url;
+    } else if (imageItem is String && imageItem.startsWith('http')) {
+      return imageItem;
+    } else if (imageItem is Map<String, dynamic> && imageItem.containsKey('url')) {
+      return imageItem['url']?.toString() ?? '';
     }
-    return "https://via.placeholder.com/150"; // Fallback
+    return "https://via.placeholder.com/150";
   }
 
   // Widget _buildActionButton({

@@ -266,7 +266,7 @@ class ItemDetailScreen extends StatelessWidget {
                             child: Column(
                               children: [
                                 Image.network(
-                                  "https://traders.testwebs.in${product.barcodeImage}",
+                                  product.barcodeImage,
                                   height: 60,
                                   errorBuilder: (_, __, ___) => const Icon(
                                     Icons.barcode_reader,
@@ -336,10 +336,19 @@ class ItemDetailScreen extends StatelessWidget {
       ),
     );
   }
-
   String _getImageUrl(dynamic imageItem) {
-    if (imageItem is String) return "https://traders.testwebs.in$imageItem";
-    if (imageItem is Map && imageItem.containsKey('image')) return "https://traders.testwebs.in${imageItem['image']}";
+    if (imageItem is ProductImageVariant) {
+      return imageItem.url;
+    } else if (imageItem is String && imageItem.startsWith('http')) {
+      return imageItem;
+    } else if (imageItem is Map && imageItem.containsKey('url')) {
+      return imageItem['url']?.toString() ?? '';
+    }
     return "https://via.placeholder.com/150";
   }
+  // String _getImageUrl(dynamic imageItem) {
+  //   if (imageItem is String) return "https://traders.testwebs.in$imageItem";
+  //   if (imageItem is Map && imageItem.containsKey('image')) return "https://traders.testwebs.in${imageItem['image']}";
+  //   return "https://via.placeholder.com/150";
+  // }
 }

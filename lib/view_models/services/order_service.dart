@@ -6,15 +6,15 @@ import '../../model/customer_return/customer_return_response.dart';
 import '../../model/order_models/order_detail_by_id_model.dart';
 import '../../model/order_models/order_detail_model.dart';
 
-class OrderService{
+class OrderService {
   final NetworkApiServices _apiServices = NetworkApiServices();
 
-  Future<dynamic> getOrderDetailApi ()async{
+  Future<dynamic> getOrderDetailApi() async {
     dynamic response = await _apiServices.getApi(AppUrl.orders);
     return response;
   }
 
-  Future<dynamic> createOrderApi (data) async {
+  Future<dynamic> createOrderApi(data) async {
     dynamic response = await _apiServices.postApi(data, AppUrl.orders);
     return response;
   }
@@ -26,7 +26,7 @@ class OrderService{
     return response;
   }
 
-  Future<dynamic> createBill(data, int id) async{
+  Future<dynamic> createBill(data, int id) async {
     dynamic response = _apiServices.postApi(data, "${AppUrl.createBill}/$id/");
     return response;
   }
@@ -38,8 +38,9 @@ class OrderService{
 
   /// ✅ Updated to use OrderBarcodeResponse
   Future<OrderBarcodeResponse> getOrderBarcodes(int orderId) async {
-    final response = await _apiServices.getApi("${AppUrl.orderBarcode}$orderId");
+    final response = await _apiServices.getApi(
+      "${AppUrl.orderBarcode}$orderId",
+    );
     return OrderBarcodeResponse.fromJson(response);
   }
-
 }

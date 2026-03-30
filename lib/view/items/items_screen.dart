@@ -337,11 +337,12 @@ class ItemsScreen extends StatelessWidget {
 
   // Helper function for image URL
   String _getImageUrl(dynamic imageItem) {
-    if (imageItem is String) {
-      return "https://traders.testwebs.in$imageItem";
-    } else if (imageItem is Map<String, dynamic> &&
-        imageItem.containsKey('image')) {
-      return "https://traders.testwebs.in${imageItem['image']}";
+    if (imageItem is ProductImageVariant) {
+      return imageItem.url; // full URL already in model
+    } else if (imageItem is String && imageItem.startsWith('http')) {
+      return imageItem;
+    } else if (imageItem is Map<String, dynamic> && imageItem.containsKey('url')) {
+      return imageItem['url']?.toString() ?? '';
     }
     return "https://via.placeholder.com/150";
   }
