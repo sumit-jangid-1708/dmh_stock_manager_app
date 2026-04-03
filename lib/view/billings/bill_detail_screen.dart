@@ -226,7 +226,9 @@ class BillDetailScreen extends StatelessWidget {
                           Divider(height: 20),
                           _buildDetailRow(
                             'Remarks',
-                            bill.remarks!,
+                            bill.remarks.isNotEmpty
+                                ? bill.remarks.join('\n')
+                                : 'No remarks available',
                             Icons.note,
                             maxLines: 3,
                           ),

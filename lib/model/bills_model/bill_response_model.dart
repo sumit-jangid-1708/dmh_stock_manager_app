@@ -29,7 +29,7 @@ class BillModel {
   final String customerName;
   final String mobile;
   final String createdAt;
-  final String? remarks;
+  final List<String> remarks;           // ← Changed to List<String>
 
   final String? paymentMethod;
   final String? paymentDate;
@@ -49,7 +49,7 @@ class BillModel {
     required this.customerName,
     required this.mobile,
     required this.createdAt,
-    this.remarks,
+    required this.remarks,               // ← Updated
     this.paymentMethod,
     this.paymentDate,
     required this.paidStatus,
@@ -63,12 +63,15 @@ class BillModel {
 
   factory BillModel.fromJson(Map<String, dynamic> json) {
     return BillModel(
-      id: json['id'],
+      id: json['id'] ?? 0,
       countryCode: json['country_code'] ?? '',
       customerName: json['customer_name'] ?? '',
       mobile: json['mobile'] ?? '',
       createdAt: json['created_at'] ?? '',
-      remarks: json['remarks'],
+
+      // ✅ Fixed: Safe parsing for remarks (List or String)
+      remarks: _parseRemarks(json['remarks']),
+
       paymentMethod: json['payment_method'],
       paymentDate: json['payment_date'],
       paidStatus: json['paid_status'] ?? '',
@@ -81,6 +84,18 @@ class BillModel {
           .map((e) => BillItemModel.fromJson(e))
           .toList(),
     );
+  }
+
+  // Helper method to handle remarks safely
+  static List<String> _parseRemarks(dynamic value) {
+    if (value == null) return [];
+    if (value is List) {
+      return value.map((e) => e.toString()).toList();
+    }
+    if (value is String) {
+      return value.trim().isEmpty ? [] : [value];
+    }
+    return [];
   }
 }
 
@@ -101,7 +116,7 @@ class BillItemModel {
 
   factory BillItemModel.fromJson(Map<String, dynamic> json) {
     return BillItemModel(
-      id: json['id'],
+      id: json['id'] ?? 0,
       product: ProductModel.fromJson(json['product']),
       quantity: json['quantity'] ?? 0,
       unitPrice: num.tryParse(json['unit_price'].toString())?.toDouble() ?? 0.0,
@@ -109,7 +124,6 @@ class BillItemModel {
     );
   }
 }
-
 
 class ProductModel {
   final int id;
@@ -146,8 +160,8 @@ class ProductModel {
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     return ProductModel(
-      id: json['id'],
-      vendor: json['vendor'],
+      id: json['id'] ?? 0,
+      vendor: json['vendor'] ?? 0,
       prefixCode: json['prefix_code'] ?? '',
       name: json['name'] ?? '',
       size: json['size'] ?? '',
@@ -157,12 +171,10 @@ class ProductModel {
       sku: json['sku'] ?? '',
       barcode: json['barcode'] ?? '',
       barcodeImage: json['barcode_image'] ?? '',
-      imageVariants:
-      (json['product_image_variants'] as List? ?? [])
+      imageVariants: (json['product_image_variants'] as List? ?? [])
           .map((e) => e.toString())
           .toList(),
-      unitPurchasePrice:
-      num.tryParse(json['unit_purchase_price'].toString())
+      unitPurchasePrice: num.tryParse(json['unit_purchase_price'].toString())
           ?.toDouble() ??
           0.0,
       hsn: json['hsn'],

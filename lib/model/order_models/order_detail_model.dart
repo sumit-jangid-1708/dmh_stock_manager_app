@@ -8,7 +8,10 @@ class OrderDetailsModel {
   final String customerEmail;
   final String mobile;
   final String countryCode;
-  final String remarks;
+
+  // ✅ Changed: String -> List<dynamic>
+  final List<dynamic> remarks;
+
   final DateTime createdAt;
   final String paidStatus;
   final String? paymentMethod;
@@ -37,25 +40,38 @@ class OrderDetailsModel {
 
   factory OrderDetailsModel.fromJson(Map<String, dynamic> json) {
     return OrderDetailsModel(
-      orderId: json['order_id'] ?? 0,
+      orderId: json['order_id'] is int
+          ? json['order_id']
+          : int.tryParse('${json['order_id']}') ?? 0,
+
       channel: json['channel'] ?? '',
       channelOrderId: json['channel_order_id'] ?? '',
       customerName: json['customer_name'] ?? '',
       customerEmail: json['customer_email'] ?? '',
       mobile: json['mobile'] ?? '',
       countryCode: json['country_code'] ?? '',
-      remarks: json['remarks'] ?? '',
+
+      // ✅ FIXED HERE
+      remarks: json['remarks'] is List
+          ? List<dynamic>.from(json['remarks'])
+          : [],
+
       createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
+          ? DateTime.tryParse(json['created_at']) ?? DateTime.now()
           : DateTime.now(),
+
       paidStatus: json['paid_status'] ?? '',
       paymentMethod: json['payment_method'],
       paymentDate: json['payment_date'] != null
-          ? DateTime.parse(json['payment_date'])
+          ? DateTime.tryParse(json['payment_date'])
           : null,
       transactionId: json['transaction_id'],
-      totalItems: json['total_items'] ?? 0,
-      items: json['items'] != null
+
+      totalItems: json['total_items'] is int
+          ? json['total_items']
+          : int.tryParse('${json['total_items']}') ?? 0,
+
+      items: json['items'] is List
           ? List<OrderItemModel>.from(
         json['items'].map((x) => OrderItemModel.fromJson(x)),
       )
@@ -71,8 +87,8 @@ class OrderItemModel {
   final String productSku;
   final String productBarcode;
   final String? productBarcodeImage;
-  final String? productImage; // Single image (agar ho)
-  final List<String> productImageVariants; // ← Added as per your request
+  final String? productImage;
+  final List<String> productImageVariants;
   final int vendorId;
   final String vendorName;
   final int orderedQuantity;
@@ -100,22 +116,38 @@ class OrderItemModel {
 
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
     return OrderItemModel(
-      productId: json['product_id'] ?? 0,
+      productId: json['product_id'] is int
+          ? json['product_id']
+          : int.tryParse('${json['product_id']}') ?? 0,
+
       productName: json['product_name'] ?? '',
       productSku: json['product_sku'] ?? '',
       productBarcode: json['product_barcode'] ?? '',
       productBarcodeImage: json['product_barcode_image'],
       productImage: json['product_image'],
-      productImageVariants: json['product_image_variants'] != null
+
+      productImageVariants: json['product_image_variants'] is List
           ? List<String>.from(json['product_image_variants'])
           : [],
-      vendorId: json['vendor_id'] ?? 0,
+
+      vendorId: json['vendor_id'] is int
+          ? json['vendor_id']
+          : int.tryParse('${json['vendor_id']}') ?? 0,
+
       vendorName: json['vendor_name'] ?? '',
-      orderedQuantity: json['ordered_quantity'] ?? 0,
+
+      orderedQuantity: json['ordered_quantity'] is int
+          ? json['ordered_quantity']
+          : int.tryParse('${json['ordered_quantity']}') ?? 0,
+
       unitPrice: _parseDouble(json['unit_price']),
       totalPrice: _parseDouble(json['total_price']),
-      stockLeft: json['stock_left'] ?? 0,
-      serials: json['serials'] != null
+
+      stockLeft: json['stock_left'] is int
+          ? json['stock_left']
+          : int.tryParse('${json['stock_left']}') ?? 0,
+
+      serials: json['serials'] is List
           ? List<SerialModel>.from(
         json['serials'].map((x) => SerialModel.fromJson(x)),
       )
@@ -137,7 +169,10 @@ class SerialModel {
   final String serialNumber;
   final String barcodeImage;
 
-  const SerialModel({required this.serialNumber, required this.barcodeImage});
+  const SerialModel({
+    required this.serialNumber,
+    required this.barcodeImage,
+  });
 
   factory SerialModel.fromJson(Map<String, dynamic> json) {
     return SerialModel(

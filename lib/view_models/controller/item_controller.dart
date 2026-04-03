@@ -31,6 +31,12 @@ class ItemController extends GetxController with BaseController {
   final RxList<File> selectedImage = <File>[].obs;
   final ImagePicker picker = ImagePicker();
 
+  // ✅ Image upload state
+  final RxList<String> uploadedImagePaths = <String>[].obs;
+  final RxList<String> existingImageUrls = <String>[].obs;
+  final RxSet<int> uploadingIndices = <int>{}.obs;
+
+  // Form text controllers
   final productName = TextEditingController().obs;
   final skuCode = TextEditingController().obs;
   var purchasePrice = TextEditingController().obs;
@@ -40,7 +46,11 @@ class ItemController extends GetxController with BaseController {
   final weightBefore = TextEditingController().obs;
   final weightAfter = TextEditingController().obs;
 
-  // store filtered vendors
+  // ✅ Multi-label size controllers
+  final lengthController = TextEditingController().obs;
+  final widthController = TextEditingController().obs;
+  final heightController = TextEditingController().obs;
+
   var filteredProducts = <ProductModel>[].obs;
   final searchBar = TextEditingController();
   var selectedProducts = <ProductModel>[].obs;
@@ -48,7 +58,6 @@ class ItemController extends GetxController with BaseController {
   final hsnList = <HsnGstModel>[].obs;
   Rx<ProductModel?> selectedProduct = Rx<ProductModel?>(null);
 
-  //image slider
   RxInt currentIndex = 0.obs;
 
   void updateIndex(int index) {
@@ -62,7 +71,6 @@ class ItemController extends GetxController with BaseController {
     getHsnList();
     filteredProducts.assignAll(products);
 
-    // Search listener
     searchBar.addListener(() {
       final query = searchBar.text.toLowerCase();
       if (query.isEmpty) {
@@ -79,172 +87,184 @@ class ItemController extends GetxController with BaseController {
     });
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // ✅ Existing image helpers (edit mode)
+  // ─────────────────────────────────────────────────────────────────────────
+  void setExistingImages(List<String> urls) {
+    existingImageUrls.assignAll(urls.where((u) => u.isNotEmpty).toList());
+    if (kDebugMode) print("📋 Existing images set: $existingImageUrls");
+  }
+
+  void removeExistingImage(int index) {
+    if (index < existingImageUrls.length) {
+      existingImageUrls.removeAt(index);
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ✅ Image upload
+  // ─────────────────────────────────────────────────────────────────────────
+  Future<void> _uploadImageAtIndex(File image, int index) async {
+    uploadingIndices.add(index);
+    try {
+      if (kDebugMode) print("📤 Uploading image at index $index: ${image.path}");
+      final String path = await itemService.uploadImage(image);
+
+      if (index < uploadedImagePaths.length) {
+        uploadedImagePaths[index] = path;
+      } else {
+        while (uploadedImagePaths.length < index) uploadedImagePaths.add('');
+        uploadedImagePaths.add(path);
+      }
+      if (kDebugMode) print("✅ Image $index uploaded → $path");
+    } catch (e) {
+      if (kDebugMode) print("❌ Upload failed for image $index: $e");
+      AppAlerts.error("Image ${index + 1} upload failed. Please try again.");
+      if (index < selectedImage.length) selectedImage.removeAt(index);
+      if (index < uploadedImagePaths.length) uploadedImagePaths.removeAt(index);
+    } finally {
+      uploadingIndices.remove(index);
+    }
+  }
+
   Future<void> pickFromCamera() async {
     if (selectedImage.length >= 6) return;
     final XFile? file = await picker.pickImage(source: ImageSource.camera);
-    if (file != null) {
-      selectedImage.add(File(file.path));
-    }
+    if (file == null) return;
+    final image = File(file.path);
+    final int index = selectedImage.length;
+    selectedImage.add(image);
+    await _uploadImageAtIndex(image, index);
   }
 
   Future<void> pickFromGalleryMultiple() async {
     if (selectedImage.length >= 6) return;
     final List<XFile> files = await picker.pickMultiImage();
-    if (files.isNotEmpty) {
-      final remaining = 6 - selectedImage.length;
-      selectedImage.addAll(files.take(remaining).map((e) => File(e.path)));
+    if (files.isEmpty) return;
+    final remaining = 6 - selectedImage.length;
+    final pickedFiles = files.take(remaining).map((e) => File(e.path)).toList();
+    for (final image in pickedFiles) {
+      final int index = selectedImage.length;
+      selectedImage.add(image);
+      await _uploadImageAtIndex(image, index);
     }
   }
 
   void removeImage(int index) {
     selectedImage.removeAt(index);
+    if (index < uploadedImagePaths.length) uploadedImagePaths.removeAt(index);
   }
 
   void clearAll() {
     selectedImage.clear();
+    uploadedImagePaths.clear();
+    uploadingIndices.clear();
+    existingImageUrls.clear();
   }
 
-  /// Print multiple different barcode images in a single PDF page
-  Future<void> printMultipleBarcodes(List<Uint8List> barcodeImages) async {
-    if (barcodeImages.isEmpty) {
-      Get.snackbar(
-        "Error",
-        "No barcodes to print",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return;
-    }
+  bool get isAnyImageUploading => uploadingIndices.isNotEmpty;
 
-    try {
-      final pdf = pw.Document();
-
-      final images =
-      barcodeImages.map((bytes) => pw.MemoryImage(bytes)).toList();
-
-      pdf.addPage(
-        pw.MultiPage(
-          pageFormat: PdfPageFormat.a4,
-          build: (pw.Context context) {
-            return [
-              pw.Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: images.map((image) {
-                  return pw.Container(
-                    width: 180,
-                    height: 100,
-                    alignment: pw.Alignment.center,
-                    child: pw.Image(image, width: 150, height: 60),
-                  );
-                }).toList(),
-              ),
-            ];
-          },
-        ),
-      );
-
-      await Printing.layoutPdf(
-        onLayout: (PdfPageFormat format) async => pdf.save(),
-      );
-
-      debugPrint("✅ Printed ${barcodeImages.length} barcodes successfully");
-    } catch (e) {
-      debugPrint("❌ Error printing barcodes: $e");
-      rethrow;
-    }
-  }
-
-  //--------------------------Show products api-------------------------------
-
+  // ─────────────────────────────────────────────────────────────────────────
+  // Show products
+  // ─────────────────────────────────────────────────────────────────────────
   Future<void> getProducts() async {
     isLoading.value = true;
     try {
       final response = await itemService.showProducts();
       final List<dynamic> data = response;
-
-      products.value = data
-          .map<ProductModel>((item) => ProductModel.fromJson(item))
-          .toList();
-
+      products.value = data.map<ProductModel>((item) => ProductModel.fromJson(item)).toList();
       products.sort((a, b) => b.id.compareTo(a.id));
       filteredProducts.assignAll(products);
-
       print("✅ Products fetched: ${products.length}");
     } catch (e, stackTrace) {
       print("🚩 Product Error: $e");
-      print("📍 Full StackTrace: $stackTrace");
+      print("📍 StackTrace: $stackTrace");
       handleError(e, onRetry: () => getProducts());
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Add product api
+  // ─────────────────────────────────────────────────────────────────────────
+  // ✅ Add product
+  //    isMultiLabelSize: true → send unit/length/width/height + computed size
+  //                     false → send size string from dropdown
+  // ─────────────────────────────────────────────────────────────────────────
   Future<void> addProduct(
       String vendorId,
       String color,
-      String size,
+      String size, // used when isMultiLabelSize = false
       String material,
       String purchasePrice,
-      List<File> images,
       int? hsn,
-      String? description,
-      ) async {
-    if (images.isEmpty) {
+      String? description, {
+        bool isMultiLabelSize = false,
+        String? unit,
+        String? length,
+        String? width,
+        String? height,
+      }) async {
+    if (isAnyImageUploading) {
+      AppAlerts.error("Please wait, images are still uploading...");
+      return;
+    }
+
+    final List<String> validPaths = uploadedImagePaths.where((p) => p.isNotEmpty).toList();
+    if (validPaths.isEmpty) {
       AppAlerts.error("Please select at least one product image");
       return;
     }
 
-    for (var image in images) {
-      if (!await image.exists()) {
-        AppAlerts.error(
-            "Selected image no longer exists. Please select again.");
-        return;
-      }
-    }
+    // ✅ Compute final size string for backend
+    final String finalSize = isMultiLabelSize
+        ? _buildSizeString(length, width, height, unit)
+        : size;
 
     Map<String, dynamic> fields = {
       "vendor": vendorId,
       "prefix_code": skuCode.value.text,
       "name": productName.value.text,
-      "size": size,
+      "size": finalSize,
       "color": color,
       "material": material,
       "unit_purchase_price": purchasePrice,
       "hsn": hsn,
       "desc": description,
-      "weight_before": weightBefore.value.text.trim().isEmpty
-          ? null
-          : weightBefore.value.text.trim(),
-      "weight_after": weightAfter.value.text.trim().isEmpty
-          ? null
-          : weightAfter.value.text.trim(),
+      "weight_before": weightBefore.value.text.trim().isEmpty ? null : weightBefore.value.text.trim(),
+      "weight_after": weightAfter.value.text.trim().isEmpty ? null : weightAfter.value.text.trim(),
     };
+
+    // ✅ Send individual dimension fields only for multi-label
+    if (isMultiLabelSize) {
+      if (unit != null && unit.isNotEmpty) fields["unit"] = unit;
+      if (length != null && length.isNotEmpty) fields["length"] = length;
+      if (width != null && width.isNotEmpty) fields["width"] = width;
+      if (height != null && height.isNotEmpty) fields["height"] = height;
+    }
 
     try {
       isLoading.value = true;
+      if (kDebugMode) {
+        print("📦 Adding product with ${validPaths.length} image paths:");
+        for (final p in validPaths) print("  → $p");
+      }
 
-      final response = await itemService.addProductApi(
-        fields: fields,
-        images: images,
-      );
-
-      final product = ProductModel.fromJson(response);
+      final response = await itemService.addProductApi(fields: fields, imagePaths: validPaths);
+      ProductModel.fromJson(response);
       await getProducts();
       AppAlerts.success("Product added successfully");
-
       clearAddProductForm();
     } catch (e, s) {
-      if (kDebugMode) {
-        print("🚩 Add product Error ❌ Exception Details: $e $s");
-      }
+      if (kDebugMode) print("🚩 Add product Error ❌: $e $s");
       handleError(e);
     } finally {
       isLoading.value = false;
     }
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // ✅ Edit product — same multi-label logic
+  // ─────────────────────────────────────────────────────────────────────────
   Future<void> editProduct({
     required int productId,
     required int vendorId,
@@ -253,69 +273,69 @@ class ItemController extends GetxController with BaseController {
     required String size,
     required String material,
     required String purchasePrice,
-    required List<File> images,
     int? hsnId,
     String? description,
+    bool isMultiLabelSize = false,
+    String? unit,
+    String? length,
+    String? width,
+    String? height,
   }) async {
+    if (isAnyImageUploading) {
+      AppAlerts.error("Please wait, images are still uploading...");
+      return;
+    }
+
+    // ✅ Determine image paths to send
+    final List<String> newPaths = uploadedImagePaths.where((p) => p.isNotEmpty).toList();
+    final List<String> pathsToSend = newPaths.isNotEmpty ? newPaths : existingImageUrls.toList();
+
+    // ✅ Compute final size
+    final String finalSize = isMultiLabelSize
+        ? _buildSizeString(length, width, height, unit)
+        : size;
 
     Map<String, dynamic> fields = {
       "vendor": vendorId,
       "prefix_code": prefixCode,
       "name": productName.value.text.trim(),
-      "size": size,
+      "size": finalSize,
       "color": color,
       "material": material,
       "unit_purchase_price": purchasePrice,
       "hsn": hsnId,
       "desc": description,
-      "weight_before": weightBefore.value.text.trim().isEmpty
-          ? null
-          : weightBefore.value.text.trim(),
-      "weight_after": weightAfter.value.text.trim().isEmpty
-          ? null
-          : weightAfter.value.text.trim(),
+      "weight_before": weightBefore.value.text.trim().isEmpty ? null : weightBefore.value.text.trim(),
+      "weight_after": weightAfter.value.text.trim().isEmpty ? null : weightAfter.value.text.trim(),
     };
+
+    if (isMultiLabelSize) {
+      if (unit != null && unit.isNotEmpty) fields["unit"] = unit;
+      if (length != null && length.isNotEmpty) fields["length"] = length;
+      if (width != null && width.isNotEmpty) fields["width"] = width;
+      if (height != null && height.isNotEmpty) fields["height"] = height;
+    }
 
     try {
       isLoading.value = true;
-
-      /// 🔎 DEBUG START
       if (kDebugMode) {
         print("========== EDIT PRODUCT DEBUG ==========");
         print("🆔 Product ID: $productId");
-        print("📦 Fields Data: $fields");
-        print("🖼 Total Images Selected: ${images.length}");
-
-        if (images.isEmpty) {
-          print("⚠️ No images selected!");
-        } else {
-          for (int i = 0; i < images.length; i++) {
-            final file = images[i];
-            print("➡ Image $i Path: ${file.path}");
-            print("➡ Image $i Exists: ${file.existsSync()}");
-            print("➡ Image $i Size (bytes): ${file.lengthSync()}");
-          }
-        }
+        print("📦 Fields: $fields");
+        print("🖼 Paths to send (${pathsToSend.length}): $pathsToSend");
         print("========================================");
       }
-      /// 🔎 DEBUG END
 
       final response = await itemService.editProduct(
         fields: fields,
-        images: images,
+        imagePaths: pathsToSend,
         productId: productId,
       );
 
-      if (kDebugMode) {
-        print("✅ Product updated response: $response");
-      }
-
+      if (kDebugMode) print("✅ Product updated: $response");
       await getProducts();
-
       AppAlerts.success("Product updated successfully");
-
       clearAddProductForm();
-
     } catch (e, s) {
       if (kDebugMode) {
         print("🚩 Edit product Error ❌: $e");
@@ -327,36 +347,34 @@ class ItemController extends GetxController with BaseController {
     }
   }
 
-  /// ✅ Delete Product Method
+  // ✅ Build size string from dimensions: "10X5X3CM"
+  String _buildSizeString(String? length, String? width, String? height, String? unit) {
+    final parts = [length, width, height].where((v) => v != null && v.isNotEmpty).toList();
+    if (parts.isEmpty) return '';
+    final dims = parts.join('X');
+    final u = (unit != null && unit.isNotEmpty) ? unit : '';
+    return '$dims$u';
+  }
+
+  /// ✅ Delete Product
   Future<void> deleteProduct(int productId) async {
     try {
       isLoading.value = true;
-
       final response = await itemService.deleteProduct(productId);
-
-      // Parse response
       final deleteResponse = ProductDeleteResponse.fromJson(response);
-
-      // Remove from local list
       products.removeWhere((p) => p.id == productId);
       filteredProducts.removeWhere((p) => p.id == productId);
-
       AppAlerts.success(deleteResponse.message);
-
-      if (kDebugMode) {
-        print("✅ Product deleted: ID $productId");
-      }
+      if (kDebugMode) print("✅ Product deleted: ID $productId");
     } catch (e, s) {
-      if (kDebugMode) {
-        print("🚩 Delete product Error ❌: $e $s");
-      }
+      if (kDebugMode) print("🚩 Delete product Error ❌: $e $s");
       handleError(e);
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Clear form
+  /// Clear form + all image + dimension state
   void clearAddProductForm() {
     productName.value.clear();
     skuCode.value.clear();
@@ -366,92 +384,100 @@ class ItemController extends GetxController with BaseController {
     description.value.clear();
     weightBefore.value.clear();
     weightAfter.value.clear();
+    lengthController.value.clear();
+    widthController.value.clear();
+    heightController.value.clear();
     selectedImage.clear();
+    uploadedImagePaths.clear();
+    uploadingIndices.clear();
+    existingImageUrls.clear();
+    if (kDebugMode) print("✅ Form cleared");
+  }
 
-    if (kDebugMode) {
-      print("✅ Add product form cleared");
+  Future<void> printMultipleBarcodes(List<Uint8List> barcodeImages) async {
+    if (barcodeImages.isEmpty) {
+      Get.snackbar("Error", "No barcodes to print", backgroundColor: Colors.red, colorText: Colors.white);
+      return;
+    }
+    try {
+      final pdf = pw.Document();
+      final images = barcodeImages.map((bytes) => pw.MemoryImage(bytes)).toList();
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) => [
+            pw.Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: images.map((image) => pw.Container(
+                width: 180, height: 100,
+                alignment: pw.Alignment.center,
+                child: pw.Image(image, width: 150, height: 60),
+              )).toList(),
+            ),
+          ],
+        ),
+      );
+      await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
+      debugPrint("✅ Printed ${barcodeImages.length} barcodes successfully");
+    } catch (e) {
+      debugPrint("❌ Error printing barcodes: $e");
+      rethrow;
     }
   }
 
   Future<void> exportProductListToExcel() async {
     try {
       var status = await Permission.storage.request();
-      if (!status.isGranted) {
-        AppAlerts.error("Storage permission is required to export Excel");
-        return;
-      }
+      if (!status.isGranted) { AppAlerts.error("Storage permission required"); return; }
       final Workbook workbook = Workbook();
       final Worksheet sheet = workbook.worksheets[0];
-
       sheet.getRangeByName('A1').setText('ID');
       sheet.getRangeByName('B1').setText('Name');
       sheet.getRangeByName('C1').setText('Size');
       sheet.getRangeByName('D1').setText('Color');
       sheet.getRangeByName('E1').setText('Material');
       sheet.getRangeByName('F1').setText('SKU');
-
       for (int i = 0; i < products.length; i++) {
         final p = products[i];
         final row = i + 2;
-        sheet.getRangeByName('A$row').setNumber(p.id.toDouble() ?? 0);
-        sheet.getRangeByName('B$row').setText(p.name ?? "");
-        sheet.getRangeByName('C$row').setText(p.size ?? "");
-        sheet.getRangeByName('D$row').setText(p.color ?? "");
-        sheet.getRangeByName('E$row').setText(p.material ?? "");
-        sheet.getRangeByName('F$row').setText(p.sku ?? "");
+        sheet.getRangeByName('A$row').setNumber(p.id.toDouble());
+        sheet.getRangeByName('B$row').setText(p.name);
+        sheet.getRangeByName('C$row').setText(p.size);
+        sheet.getRangeByName('D$row').setText(p.color);
+        sheet.getRangeByName('E$row').setText(p.material);
+        sheet.getRangeByName('F$row').setText(p.sku);
       }
-
       final List<int> bytes = workbook.saveAsStream();
       workbook.dispose();
-
       final directory = await getApplicationDocumentsDirectory();
       final path = "${directory.path}/products.xlsx";
       final file = File(path);
       await file.writeAsBytes(bytes, flush: true);
-
       await OpenFile.open(path);
       AppAlerts.success("Excel exported successfully!");
     } catch (e) {
-      if (kDebugMode) {
-        print("❌ Exception Details: $e");
-      }
+      if (kDebugMode) print("❌ Exception Details: $e");
       handleError(e);
     }
   }
 
   void toggleProduct(ProductModel product) {
-    if (selectedProducts.contains(product)) {
-      selectedProducts.remove(product);
-    } else {
-      selectedProducts.add(product);
-    }
+    if (selectedProducts.contains(product)) { selectedProducts.remove(product); }
+    else { selectedProducts.add(product); }
   }
-
-  void selectAll(List<ProductModel> products) {
-    selectedProducts.assignAll(products);
-  }
-
-  void clearSelection() {
-    selectedProducts.clear();
-  }
+  void selectAll(List<ProductModel> products) => selectedProducts.assignAll(products);
+  void clearSelection() => selectedProducts.clear();
 
   Future<void> getHsnList() async {
     try {
       isLoading.value = true;
       final response = await itemService.hsnCodeList();
-      if (response is! List) {
-        throw Exception("Invalid HSN response format");
-      }
-      hsnList.assignAll(
-        response.map<HsnGstModel>((e) => HsnGstModel.fromJson(e)).toList(),
-      );
-      if (kDebugMode) {
-        print("✅ HSN List fetched: ${hsnList.length}");
-      }
+      if (response is! List) throw Exception("Invalid HSN response format");
+      hsnList.assignAll(response.map<HsnGstModel>((e) => HsnGstModel.fromJson(e)).toList());
+      if (kDebugMode) print("✅ HSN List fetched: ${hsnList.length}");
     } catch (e) {
-      if (kDebugMode) {
-        print("❌ HSN Error: $e");
-      }
+      if (kDebugMode) print("❌ HSN Error: $e");
       handleError(e);
     } finally {
       isLoading.value = false;
@@ -460,27 +486,14 @@ class ItemController extends GetxController with BaseController {
 
   Future<void> addHsn(String hsnCode, double gstPercentage) async {
     final alreadyExistsLocally = hsnList.any((e) => e.hsnCode == hsnCode);
-    if (alreadyExistsLocally) {
-      AppAlerts.error("This Hsn code is already exists");
-      return;
-    }
-    Map<String, dynamic> data = {
-      "hsn_code": hsnCode,
-      "gst_percentage": gstPercentage,
-    };
+    if (alreadyExistsLocally) { AppAlerts.error("This Hsn code already exists"); return; }
     try {
       isLoading.value = true;
-      final response = await itemService.addHsn(data);
+      final response = await itemService.addHsn({"hsn_code": hsnCode, "gst_percentage": gstPercentage});
       final newHsn = HsnGstModel.fromJson(response);
       hsnList.add(newHsn);
       AppAlerts.success("Hsn added successfully");
-      if (kDebugMode) {
-        print("✅ HSN added: $hsnCode with GST: $gstPercentage%");
-      }
-    } catch (e) {
-      handleError(e);
-    } finally {
-      isLoading.value = false;
-    }
+    } catch (e) { handleError(e); }
+    finally { isLoading.value = false; }
   }
 }

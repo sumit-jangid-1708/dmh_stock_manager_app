@@ -41,6 +41,7 @@ class OrderController extends GetxController with BaseController {
   final TextEditingController channelOrderId = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController remarkController = TextEditingController();
+  final TextEditingController packageExpenseController = TextEditingController();
   final RxList<Map<String, dynamic>> items = <Map<String, dynamic>>[].obs;
 
   // Return Orders
@@ -89,7 +90,7 @@ class OrderController extends GetxController with BaseController {
     phoneNumber.value = "";
     emailError.value = "";
     scannedSku.value = "";
-
+    packageExpenseController.text = "";
     customerNameController.text = "";
     channelOrderId.text = "";
     emailController.text = "";
@@ -129,7 +130,7 @@ class OrderController extends GetxController with BaseController {
     remarkController.dispose();
     emailController.dispose();
     channelOrderId.dispose();
-
+    packageExpenseController.dispose();
     for (var item in items) {
       final qtyController = item["quantity"];
       final priceController = item["unitPrice"];
@@ -209,6 +210,7 @@ class OrderController extends GetxController with BaseController {
         "items": itemList,
         "country_code": countryCode.value,
         "mobile": phoneNumber.value,
+        "package_expence": double.tryParse(packageExpenseController.text.trim()) ?? 0.0,
         // "total_amount": totalAmount,
       };
 
@@ -403,7 +405,7 @@ class OrderController extends GetxController with BaseController {
       items.add({
         "product": Rx<ProductModel?>(product),
         "quantity": TextEditingController(text: "1"),
-        "unitPrice": TextEditingController(text: product.purchasePrice.toString()),
+        "unitPrice": TextEditingController(text: product.unitPurchasePrice.toString()),
       });
 
       Get.snackbar(

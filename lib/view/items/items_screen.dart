@@ -26,6 +26,24 @@ class ItemsScreen extends StatelessWidget {
   final ScrollController _scrollController = ScrollController();
   ItemsScreen({super.key});
 
+
+  static const String _baseUrl = "https://traders.testwebs.in";
+
+  // ✅ Convert relative or absolute path → full URL
+  String _getImageUrl(dynamic imageItem) {
+    String raw = '';
+
+    if (imageItem is String) {
+      raw = imageItem;
+    } else {
+      return "https://via.placeholder.com/150";
+    }
+
+    if (raw.isEmpty) return "https://via.placeholder.com/150";
+    if (raw.startsWith('http')) return raw;   // already full URL
+    return '$_baseUrl$raw';                    // relative → full
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -130,6 +148,8 @@ class ItemsScreen extends StatelessWidget {
                   return Scrollbar(
                     controller: _scrollController,
                     thumbVisibility: true,
+                    trackVisibility: true,
+                    interactive: true,
                     thickness: 6,
                     radius: const Radius.circular(10),
                     child: ListView.builder(
@@ -336,16 +356,16 @@ class ItemsScreen extends StatelessWidget {
   }
 
   // Helper function for image URL
-  String _getImageUrl(dynamic imageItem) {
-    if (imageItem is ProductImageVariant) {
-      return imageItem.url; // full URL already in model
-    } else if (imageItem is String && imageItem.startsWith('http')) {
-      return imageItem;
-    } else if (imageItem is Map<String, dynamic> && imageItem.containsKey('url')) {
-      return imageItem['url']?.toString() ?? '';
-    }
-    return "https://via.placeholder.com/150";
-  }
+  // String _getImageUrl(dynamic imageItem) {
+  //   if (imageItem is ProductImageVariant) {
+  //     return imageItem.url; // full URL already in model
+  //   } else if (imageItem is String && imageItem.startsWith('http')) {
+  //     return imageItem;
+  //   } else if (imageItem is Map<String, dynamic> && imageItem.containsKey('url')) {
+  //     return imageItem['url']?.toString() ?? '';
+  //   }
+  //   return "https://via.placeholder.com/150";
+  // }
 
   /// ✅ Delete Confirmation Dialog
   void _showDeleteConfirmationDialog(

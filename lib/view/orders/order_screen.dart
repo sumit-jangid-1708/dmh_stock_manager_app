@@ -232,7 +232,9 @@ final ScrollController _scrollController = ScrollController();
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  order.remarks?.toUpperCase() ?? "COMPLETED",
+                  order.remarks.isEmpty
+                      ? "NO REMARKS"
+                      : order.remarks.join(", ").toUpperCase(),
                   style: const TextStyle(
                     color: Colors.green,
                     fontSize: 10,

@@ -10,14 +10,85 @@ import 'package:http/http.dart' as http;
 class ItemService {
   final NetworkApiServices _apiServices = NetworkApiServices();
 
+  // ✅ Base URL — relative paths ko full URL banane ke liye
+  static const String _baseUrl = "https://traders.testwebs.in";
+
   Future<dynamic> showProducts() async {
     dynamic response = await _apiServices.getApi(AppUrl.product);
     return response;
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // ✅ Upload single image → returns relative path string
+  //    POST /upload-image/
+  //    Response: { "path": "/media/products/xyz.png" }
+  // ─────────────────────────────────────────────────────────────────────────
+  Future<String> uploadImage(File image) async {
+    final storage = GetStorage();
+    final token = storage.read("access_token");
+
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse(AppUrl.uploadImage),
+    );
+    request.headers['Authorization'] = 'Bearer $token';
+
+    if (!await image.exists()) {
+      throw Exception("Image file not found: ${image.path}");
+    }
+    final fileSize = await image.length();
+    if (fileSize > 10 * 1024 * 1024) {
+      throw Exception("Image file too large (max 10MB): ${image.path}");
+    }
+
+    request.files.add(
+      await http.MultipartFile.fromPath('image', image.path),
+    );
+
+    if (kDebugMode) print("📤 Uploading: ${image.path}");
+
+    final streamedResponse = await request.send();
+    final resStr = await streamedResponse.stream.bytesToString();
+
+    if (kDebugMode) {
+      print("📥 Upload Status: ${streamedResponse.statusCode}");
+      print("📥 Upload Body: $resStr");
+    }
+
+    if (streamedResponse.statusCode == 200 ||
+        streamedResponse.statusCode == 201) {
+      final decoded = jsonDecode(resStr);
+      final path = decoded['path'] as String?;
+      if (path == null || path.isEmpty) {
+        throw Exception("No path returned from upload API");
+      }
+      // Returns relative path e.g. "/media/products/xyz.png"
+      return path;
+    } else {
+      throw Exception(
+        "Image upload failed — status: ${streamedResponse.statusCode}. Body: $resStr",
+      );
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ✅ Helper — relative path → full URL
+  //    "/media/products/xyz.png" → "https://traders.testwebs.in/media/products/xyz.png"
+  //    already full URL → unchanged
+  // ─────────────────────────────────────────────────────────────────────────
+  static String toFullUrl(String path) {
+    if (path.startsWith('http')) return path;
+    return '$_baseUrl$path';
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ✅ Add product
+  //    imagePaths — relative paths from uploadImage()
+  //    Sent to backend as: product_image_variants = '["url1","url2"]'
+  // ─────────────────────────────────────────────────────────────────────────
   Future<dynamic> addProductApi({
     required Map<String, dynamic> fields,
-    required List<File> images,
+    required List<String> imagePaths,
   }) async {
     final storage = GetStorage();
     final token = storage.read("access_token");
@@ -26,167 +97,105 @@ class ItemService {
       'POST',
       Uri.parse(AppUrl.product),
     );
+    request.headers['Authorization'] = 'Bearer $token';
 
-    request.headers.addAll({
-      'Authorization': 'Bearer $token',
-    });
-
-    // ✅ Add fields
+    // Add text fields
     fields.forEach((key, value) {
       if (value != null) {
         request.fields[key] = value.toString();
       }
     });
 
-    // ✅ Add images with error handling
-    for (var i = 0; i < images.length; i++) {
-      try {
-        final image = images[i];
-
-        // ✅ Check if file exists
-        if (!await image.exists()) {
-          throw Exception("Image file not found: ${image.path}");
-        }
-
-        // ✅ Check file size (optional, max 10MB)
-        final fileSize = await image.length();
-        if (fileSize > 10 * 1024 * 1024) {
-          throw Exception("Image file too large (max 10MB): ${image.path}");
-        }
-
-        request.files.add(
-          await http.MultipartFile.fromPath(
-            'product_image_variants_files',
-            image.path,
-          ),
-        );
-
-        if (kDebugMode) {
-          print("✅ Added image ${i + 1}: ${image.path}");
-        }
-      } catch (e) {
-        if (kDebugMode) {
-          print("❌ Error adding image ${i + 1}: $e");
-        }
-        rethrow;
-      }
-    }
+    // ✅ Convert relative paths → full URLs → JSON array string
+    // Backend expects: ["https://.../img1.jpg", "https://.../img2.jpg"]
+    final List<String> fullUrls = imagePaths.map(toFullUrl).toList();
+    request.fields['product_image_variants'] = jsonEncode(fullUrls);
 
     if (kDebugMode) {
-      print("📤 Sending request with ${images.length} images");
+      print("📤 Add product — image_variants: ${jsonEncode(fullUrls)}");
+      print("📤 Fields: $fields");
     }
 
-    http.StreamedResponse response = await request.send();
+    final response = await request.send();
     final resStr = await response.stream.bytesToString();
 
     if (kDebugMode) {
-      print("📥 Response Status: ${response.statusCode}");
-      print("📥 Response Body: $resStr");
+      print("📥 Add Product Status: ${response.statusCode}");
+      print("📥 Add Product Body: $resStr");
     }
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(resStr);
     } else {
-      // ✅ Better error message
       final decoded = jsonDecode(resStr);
       String errorMessage = "Failed to add product";
-
       if (decoded is Map && decoded.containsKey('product_image')) {
         errorMessage = decoded['product_image'][0];
       } else if (decoded is Map && decoded.containsKey('message')) {
         errorMessage = decoded['message'];
       }
-
       throw Exception(errorMessage);
     }
   }
 
-
-// Future<dynamic> addProductApi(data) async {
-  //   dynamic response = await _apiServices.postApi(data, AppUrl.product);
-  //   return response;
-  // }
-
-  Future<dynamic> hsnCodeList() async{
+  Future<dynamic> hsnCodeList() async {
     dynamic response = await _apiServices.getApi(AppUrl.hsnCode);
     return response;
   }
 
-  Future<dynamic> addHsn(data)async{
+  Future<dynamic> addHsn(data) async {
     dynamic response = await _apiServices.postApi(data, AppUrl.hsnCode);
     return response;
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // ✅ Edit product
+  //    imagePaths — relative paths (empty list = keep existing images)
+  //    Sent as: product_image_variants = '["url1","url2"]'
+  // ─────────────────────────────────────────────────────────────────────────
   Future<dynamic> editProduct({
     required Map<String, dynamic> fields,
-    required List<File> images,
+    required List<String> imagePaths,
     required int productId,
   }) async {
     final storage = GetStorage();
     final token = storage.read("access_token");
 
     var request = http.MultipartRequest(
-      'PUT', // ✅ Using PUT method
+      'PUT',
       Uri.parse("${AppUrl.editProduct}/$productId"),
     );
+    request.headers['Authorization'] = 'Bearer $token';
 
-    request.headers.addAll({
-      'Authorization': 'Bearer $token',
-    });
-
-    // ✅ Add fields
+    // Add text fields
     fields.forEach((key, value) {
       if (value != null) {
         request.fields[key] = value.toString();
       }
     });
 
-    // ✅ Add images (only if new images selected)
-    if (images.isNotEmpty) {
-      for (var i = 0; i < images.length; i++) {
-        try {
-          final image = images[i];
+    // ✅ Only send image_variants if new images were uploaded
+    if (imagePaths.isNotEmpty) {
+      final List<String> fullUrls = imagePaths.map(toFullUrl).toList();
+      request.fields['product_image_variants'] = jsonEncode(fullUrls);
 
-          if (!await image.exists()) {
-            throw Exception("Image file not found: ${image.path}");
-          }
-
-          final fileSize = await image.length();
-          if (fileSize > 10 * 1024 * 1024) {
-            throw Exception("Image file too large (max 10MB): ${image.path}");
-          }
-
-          request.files.add(
-            await http.MultipartFile.fromPath(
-              'product_image_variants_files',
-              image.path,
-            ),
-          );
-
-          if (kDebugMode) {
-            print("✅ Added image ${i + 1}: ${image.path}");
-          }
-        } catch (e) {
-          if (kDebugMode) {
-            print("❌ Error adding image ${i + 1}: $e");
-          }
-          rethrow;
-        }
+      if (kDebugMode) {
+        print("📤 Edit product — image_variants: ${jsonEncode(fullUrls)}");
       }
+    } else {
+      if (kDebugMode) print("⚠️ No new images — keeping existing on backend.");
     }
 
     if (kDebugMode) {
-      print("📤 Sending edit request for product ID: $productId");
-      print("📤 Fields: $fields");
-      print("📤 Images: ${images.length}");
+      print("📤 Edit product ID $productId — fields: $fields");
     }
 
-    http.StreamedResponse response = await request.send();
+    final response = await request.send();
     final resStr = await response.stream.bytesToString();
 
     if (kDebugMode) {
-      print("📥 Response Status: ${response.statusCode}");
-      print("📥 Response Body: $resStr");
+      print("📥 Edit Product Status: ${response.statusCode}");
+      print("📥 Edit Product Body: $resStr");
     }
 
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -194,30 +203,19 @@ class ItemService {
     } else {
       final decoded = jsonDecode(resStr);
       String errorMessage = "Failed to update product";
-
       if (decoded is Map && decoded.containsKey('message')) {
         errorMessage = decoded['message'];
       }
-
       throw Exception(errorMessage);
     }
   }
 
   /// ✅ Delete Product API
   Future<dynamic> deleteProduct(int productId) async {
-    final url = "${AppUrl.deleteProduct}/$productId";
-
-    if (kDebugMode) {
-      print("🗑️ Deleting product with ID: $productId");
-      print("🗑️ DELETE URL: $url");
-    }
-
+    final url = "${AppUrl.deleteProduct}/$productId/";
+    if (kDebugMode) print("🗑️ DELETE $url");
     dynamic response = await _apiServices.deleteApi(url);
-
-    if (kDebugMode) {
-      print("✅ Product deleted successfully: $response");
-    }
-
+    if (kDebugMode) print("✅ Deleted: $response");
     return response;
   }
 }

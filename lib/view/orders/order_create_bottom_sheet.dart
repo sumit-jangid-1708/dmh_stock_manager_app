@@ -23,7 +23,6 @@ class OrderCreateBottomSheet extends StatelessWidget {
     final ProductModel? scannedProduct = await Get.to(
           () => const QrScannerWidget(),
     );
-
     if (scannedProduct != null) {
       orderController.addScannedProduct(scannedProduct);
     }
@@ -63,7 +62,7 @@ class OrderCreateBottomSheet extends StatelessWidget {
                     _buildHeader(),
                     const SizedBox(height: 24),
 
-                    // SECTION: CUSTOMER INFO
+                    // ── SECTION: ORDER DETAILS ─────────────────────────────
                     _buildSectionTitle("Order Details", Icons.assignment_outlined),
                     const SizedBox(height: 12),
 
@@ -80,7 +79,6 @@ class OrderCreateBottomSheet extends StatelessWidget {
                         orderController.selectedChannel.value = val;
                       },
                     ),
-
                     const SizedBox(height: 12),
 
                     // Channel Order ID
@@ -89,7 +87,6 @@ class OrderCreateBottomSheet extends StatelessWidget {
                       hintText: "Channel Order ID",
                       prefixIcon: Icons.tag,
                     ),
-
                     const SizedBox(height: 12),
 
                     // Customer Name
@@ -104,10 +101,9 @@ class OrderCreateBottomSheet extends StatelessWidget {
                         return null;
                       },
                     ),
-
                     const SizedBox(height: 12),
 
-                    // Email with validation
+                    // Email
                     AppTextField(
                       controller: orderController.emailController,
                       hintText: "Email*",
@@ -123,7 +119,6 @@ class OrderCreateBottomSheet extends StatelessWidget {
                         return null;
                       },
                     ),
-
                     const SizedBox(height: 12),
 
                     // Phone Field
@@ -144,7 +139,6 @@ class OrderCreateBottomSheet extends StatelessWidget {
                         return null;
                       },
                     ),
-
                     const SizedBox(height: 12),
 
                     // Remarks
@@ -154,37 +148,37 @@ class OrderCreateBottomSheet extends StatelessWidget {
                       prefixIcon: Icons.notes,
                       maxLines: 2,
                     ),
+                    const SizedBox(height: 12),
+
+                    // ✅ Package Expense — decimal input
+                    AppTextField(
+                      controller: orderController.packageExpenseController,
+                      hintText: "Package Expense (₹)",
+                      prefixIcon: Icons.inventory_2_outlined,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    ),
 
                     const SizedBox(height: 32),
 
-                    // SECTION: ITEMS
+                    // ── SECTION: ITEMS ─────────────────────────────────────
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildSectionTitle(
-                          "Product Items",
-                          Icons.shopping_bag_outlined,
-                        ),
+                        _buildSectionTitle("Product Items", Icons.shopping_bag_outlined),
                         Row(
                           children: [
-                            // Scan Button
                             TextButton.icon(
                               onPressed: _openScannerAndAddProduct,
                               icon: const Icon(Icons.qr_code_scanner, size: 20),
                               label: const Text("Scan"),
-                              style: TextButton.styleFrom(
-                                foregroundColor: Colors.blue,
-                              ),
+                              style: TextButton.styleFrom(foregroundColor: Colors.blue),
                             ),
                             const SizedBox(width: 8),
-                            // Manual Add Button
                             TextButton.icon(
                               onPressed: orderController.addItemRow,
                               icon: const Icon(Icons.add_circle_outline, size: 20),
                               label: const Text("Add"),
-                              style: TextButton.styleFrom(
-                                foregroundColor: const Color(0xFF1A1A4F),
-                              ),
+                              style: TextButton.styleFrom(foregroundColor: const Color(0xFF1A1A4F)),
                             ),
                           ],
                         ),
@@ -194,8 +188,6 @@ class OrderCreateBottomSheet extends StatelessWidget {
                     _buildItemsList(),
 
                     const SizedBox(height: 32),
-
-                    // ACTION BUTTONS
                     _buildFooterButtons(),
                   ],
                 ),
@@ -216,23 +208,14 @@ class OrderCreateBottomSheet extends StatelessWidget {
             color: const Color(0xFF1A1A4F).withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(
-            Icons.create_new_folder_outlined,
-            color: Color(0xFF1A1A4F),
-          ),
+          child: const Icon(Icons.create_new_folder_outlined, color: Color(0xFF1A1A4F)),
         ),
         const SizedBox(width: 16),
         const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Create Order",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              "Enter transaction and customer info",
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-            ),
+            Text("Create Order", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text("Enter transaction and customer info", style: TextStyle(fontSize: 12, color: Colors.grey)),
           ],
         ),
       ],
@@ -244,14 +227,7 @@ class OrderCreateBottomSheet extends StatelessWidget {
       children: [
         Icon(icon, size: 18, color: Colors.grey.shade700),
         const SizedBox(width: 8),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey.shade700,
-          ),
-        ),
+        Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey.shade700)),
       ],
     );
   }
@@ -269,13 +245,7 @@ class OrderCreateBottomSheet extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.grey.shade200),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,26 +260,16 @@ class OrderCreateBottomSheet extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: 10),
                           child: Column(
                             children: [
-                              _buildInfoTag(
-                                "SKU: ${product.sku ?? 'N/A'}",
-                                Icons.qr_code,
-                                Colors.blueGrey,
-                              ),
+                              _buildInfoTag("SKU: ${product.sku}", Icons.qr_code, Colors.blueGrey),
                               const SizedBox(height: 2),
-                              _buildInfoTag(
-                                "Cost: ₹${product.purchasePrice ?? '0'}",
-                                Icons.account_balance_wallet,
-                                Colors.green,
-                              ),
+                              _buildInfoTag("Cost: ₹${product.unitPurchasePrice}", Icons.account_balance_wallet, Colors.green),
                             ],
                           ),
                         ),
-
                       CustomSearchableDropdown<ProductModel>(
                         items: itemController.products,
                         selectedItem: item["product"] as Rx<ProductModel?>,
-                        itemAsString: (product) =>
-                        "${product.name} | ${product.size} | ${product.color}",
+                        itemAsString: (product) => "${product.name} | ${product.size} | ${product.color}",
                         hintText: "Choose Product",
                         prefixIcon: Icons.inventory_2_outlined,
                         enableSearch: true,
@@ -317,35 +277,20 @@ class OrderCreateBottomSheet extends StatelessWidget {
                         customItemBuilder: (product) => Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              product.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
+                            Text(product.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
                             const SizedBox(height: 2),
                             Text(
-                              "${product.size} | ${product.color} | SKU: ${product.sku ?? 'N/A'}",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade600,
-                              ),
+                              "${product.size} | ${product.color} | SKU: ${product.sku}",
+                              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                             ),
                           ],
                         ),
                         onChanged: (val) {
                           (item["product"] as Rx<ProductModel?>).value = val;
                           if (val == null) return;
-                          final priceController =
-                          item["purchasePrice"] as TextEditingController?;
-                          final skuController =
-                          item["skuId"] as TextEditingController?;
+                          final priceController = item["unitPrice"] as TextEditingController?;
                           if (priceController != null) {
-                            priceController.text = val.purchasePrice.toString();
-                          }
-                          if (skuController != null) {
-                            skuController.text = val.sku ?? "";
+                            priceController.text = val.unitPurchasePrice.toString();
                           }
                         },
                       ),
@@ -353,31 +298,20 @@ class OrderCreateBottomSheet extends StatelessWidget {
                   );
                 }),
                 const SizedBox(height: 12),
-
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildSmallField(item["quantity"], "Qty", Icons.numbers),
                     const SizedBox(height: 8),
-                    _buildSmallField(
-                      item["unitPrice"],
-                      "Sale Price",
-                      Icons.payments_outlined,
-                    ),
+                    _buildSmallField(item["unitPrice"], "Sale Price", Icons.payments_outlined),
                     const SizedBox(height: 8),
                     Align(
                       alignment: Alignment.centerRight,
                       child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        decoration: BoxDecoration(color: Colors.red.shade50, borderRadius: BorderRadius.circular(12)),
                         child: IconButton(
                           onPressed: () => orderController.removeItemRow(index),
-                          icon: const Icon(
-                            Icons.delete_outline,
-                            color: Colors.redAccent,
-                          ),
+                          icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                         ),
                       ),
                     ),
@@ -394,30 +328,12 @@ class OrderCreateBottomSheet extends StatelessWidget {
   Widget _buildInfoTag(String text, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        children: [
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: color.withOpacity(0.8),
-            ),
-          ),
-        ],
-      ),
+      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+      child: Text(text, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color.withOpacity(0.8))),
     );
   }
 
-  Widget _buildSmallField(
-      TextEditingController ctrl,
-      String label,
-      IconData icon,
-      ) {
+  Widget _buildSmallField(TextEditingController ctrl, String label, IconData icon) {
     return AppTextField(
       controller: ctrl,
       hintText: label,
@@ -434,9 +350,7 @@ class OrderCreateBottomSheet extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 15),
               side: BorderSide(color: Colors.grey.shade300),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () => orderController.clearForm(),
             child: const Text("Clear", style: TextStyle(color: Colors.black54)),
@@ -446,16 +360,9 @@ class OrderCreateBottomSheet extends StatelessWidget {
         Expanded(
           flex: 2,
           child: Obx(() => AppGradientButton(
-            onPressed: orderController.isLoading.value
-                ? null
-                : () {
-              // ✅ Form validation will happen in createOrder()
-              orderController.createOrder();
-            },
+            onPressed: orderController.isLoading.value ? null : () => orderController.createOrder(),
             height: 50,
-            text: orderController.isLoading.value
-                ? "Creating..."
-                : "Submit Order",
+            text: orderController.isLoading.value ? "Creating..." : "Submit Order",
           )),
         ),
       ],

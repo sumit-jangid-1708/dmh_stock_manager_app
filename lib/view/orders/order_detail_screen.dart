@@ -206,10 +206,11 @@ class OrderDetailScreen extends StatelessWidget {
                                 ? "-"
                                 : order.channelOrderId),
                         _buildInfoRow(
-                            "Remarks",
-                            order.remarks.isEmpty
-                                ? "No remarks"
-                                : order.remarks),
+                          "Remarks",
+                          order.remarks.isEmpty
+                              ? "No remarks"
+                              : order.remarks.map((e) => e.toString()).join(", "),
+                        ),
 
                         if (order.paymentMethod != null) ...[
                           const Divider(height: 20),
