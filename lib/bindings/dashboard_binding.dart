@@ -21,8 +21,6 @@ class DashboardBinding extends Bindings {
     Get.put(OrderController());
     Get.lazyPut(() => HomeController());
     Get.lazyPut(() => VendorController());
-    Get.lazyPut(() => ItemController());
-
-
+    Get.put(ItemController(), permanent: true);
   }
 }
