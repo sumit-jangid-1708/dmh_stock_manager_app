@@ -36,6 +36,8 @@ class AppUrl {
   static const String updateVendor = '$baseUrl/vendors-updated/';
   static const String deleteProduct = "$baseUrl/products-delete";
   static const String uploadImage = "$baseUrl/upload-image/";
+  static const String cancelOrder = "$baseUrl/order";
+  static const String deleteOrder = "$baseUrl/order";
 }
 
 

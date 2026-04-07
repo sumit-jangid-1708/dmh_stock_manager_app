@@ -43,4 +43,24 @@ class OrderService {
     );
     return OrderBarcodeResponse.fromJson(response);
   }
+
+  // POST /api/orders/{orderId}/add-remark/
+  Future<dynamic> addRemark(int orderId, String remark) async {
+    final url = "${AppUrl.orders}$orderId/add-remark/";
+    final response = await _apiServices.postApi({"remark": remark}, url);
+    return response;
+  }
+
+  Future<dynamic> cancelOrder(int orderId) async {
+    final url = "${AppUrl.cancelOrder}/$orderId/cancel/";
+    final response = await _apiServices.postApi({}, url);
+    return response;
+  }
+
+
+  Future<dynamic> softDeleteOrder(int orderId) async {
+    final url = "${AppUrl.deleteOrder}/$orderId/soft-delete/";
+    final response = await _apiServices.deleteApi(url);
+    return response;
+  }
 }

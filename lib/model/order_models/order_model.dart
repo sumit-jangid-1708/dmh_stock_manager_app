@@ -3,30 +3,37 @@ class OrderDetailModel {
   final List<OrderItem> items;
   final String customerName;
   final DateTime createdAt;
-
-  final List<String> remarks; // ✅ FIXED (was String?)
-
+  final List<OrderRemark> remarks;
+  final String status;
+  final bool isDeleted; // ✅ NEW
   final int channel;
   final String countryCode;
   final String mobile;
-
   final String? channelOrderId;
   final String? customerEmail;
   final String? paymentMethod;
   final DateTime? paymentDate;
   final String paidStatus;
   final String? transactionId;
+  final String packageExpence;
+  final String totalAmount;
+  final String paidAmount;
 
   OrderDetailModel({
     required this.id,
     required this.items,
     required this.customerName,
     required this.createdAt,
+    required this.status,
+    required this.isDeleted, // ✅ NEW
     required this.channel,
     required this.countryCode,
     required this.mobile,
     required this.paidStatus,
-    required this.remarks, // ✅ required now
+    required this.remarks,
+    required this.packageExpence,
+    required this.totalAmount,
+    required this.paidAmount,
     this.customerEmail,
     this.channelOrderId,
     this.paymentMethod,
@@ -37,16 +44,23 @@ class OrderDetailModel {
   factory OrderDetailModel.fromJson(Map<String, dynamic> json) {
     return OrderDetailModel(
       id: json['id'] ?? 0,
+
       items: (json['items'] as List? ?? [])
           .map((e) => OrderItem.fromJson(e))
           .toList(),
-      customerName: json['customer_name'] ?? '',
-      createdAt: DateTime.tryParse(json['created_at'] ?? '') ??
-          DateTime.now(),
 
-      // ✅ FIXED HERE
-      remarks:
-      (json['remarks'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      customerName: json['customer_name'] ?? '',
+
+      createdAt:
+      DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+
+      remarks: (json['remarks'] as List? ?? [])
+          .map((e) => OrderRemark.fromJson(e))
+          .toList(),
+
+      status: json['status'] ?? "ACTIVE",
+
+      isDeleted: json['is_deleted'] ?? false, // ✅ NEW
 
       channel: json['channel'] ?? 0,
       countryCode: json['country_code'] ?? '',
@@ -59,6 +73,9 @@ class OrderDetailModel {
           : null,
       paidStatus: json['paid_status'] ?? 'UNPAID',
       transactionId: json['transaction_id'],
+      packageExpence: json['package_expence'] ?? "0.00",
+      totalAmount: json['total_amount'] ?? "0.00",
+      paidAmount: json['paid_amount'] ?? "0.00",
     );
   }
 }
@@ -152,4 +169,22 @@ class Product {
   }
 }
 
+class OrderRemark {
+  final int id;
+  final String remark;
+  final DateTime createdAt;
 
+  OrderRemark({
+    required this.id,
+    required this.remark,
+    required this.createdAt,
+  });
+
+  factory OrderRemark.fromJson(Map<String, dynamic> json) {
+    return OrderRemark(
+      id: json['id'] ?? 0,
+      remark: json['remark'] ?? '',
+      createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+    );
+  }
+}

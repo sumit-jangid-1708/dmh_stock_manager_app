@@ -7,8 +7,20 @@ import 'order_create_bottom_sheet.dart';
 class OrderScreen extends StatelessWidget {
   final OrderController orderController = Get.put(OrderController());
   final TextEditingController searchController = TextEditingController();
-final ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController();
+
   OrderScreen({super.key});
+
+  Color _getStatusColor(String? status) {
+    switch (status?.toLowerCase()) {
+      case "cancelled":
+        return Colors.red;
+      case "active":
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +30,6 @@ final ScrollController _scrollController = ScrollController();
         height: 60,
         width: 60,
         decoration: BoxDecoration(
-          // shape: BoxShape.circle,
           borderRadius: BorderRadius.circular(15),
           gradient: const LinearGradient(
             colors: [Color(0xFF1A1A4F), Color(0xFF4A4ABF)],
@@ -29,12 +40,11 @@ final ScrollController _scrollController = ScrollController();
             BoxShadow(
               color: const Color(0xFF1A1A4F).withOpacity(0.4),
               blurRadius: 12,
-              offset: const Offset(0, 6), // Gives it a nice lifted effect
+              offset: const Offset(0, 6),
             ),
           ],
         ),
         child: FloatingActionButton(
-          // We make the FAB itself transparent to show the Container's gradient
           backgroundColor: Colors.transparent,
           elevation: 0,
           highlightElevation: 0,
@@ -46,7 +56,7 @@ final ScrollController _scrollController = ScrollController();
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- Header Section ---
+            // ── Header ────────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 10),
               child: Column(
@@ -73,75 +83,56 @@ final ScrollController _scrollController = ScrollController();
               ),
             ),
 
-            // --- Modern Search Bar ---
+            // ── Search Bar ────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: TextField(
-                        controller: searchController,
-                        onChanged: (value) {
-
-                          orderController.filterOrders(value);
-                        },
-                        decoration: InputDecoration(
-                          hintText: "Search by ID or customer name...",
-                          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                          prefixIcon: const Icon(Icons.search, color: Color(0xFF1A1A4F), size: 20),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 15),
-                        ),
-                      ),
+              child: Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
                     ),
+                  ],
+                ),
+                child: TextField(
+                  controller: searchController,
+                  onChanged: (value) => orderController.filterOrders(value),
+                  decoration: InputDecoration(
+                    hintText: "Search by ID or customer name...",
+                    hintStyle: TextStyle(
+                      color: Colors.grey.shade400,
+                      fontSize: 14,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: Color(0xFF1A1A4F),
+                      size: 20,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 15),
                   ),
-                  const SizedBox(width: 12),
-                  // Filter Button
-                  // Container(
-                  //   height: 50,
-                  //   width: 50,
-                  //   decoration: BoxDecoration(
-                  //     color: const Color(0xFF1A1A4F),
-                  //     borderRadius: BorderRadius.circular(12),
-                  //   ),
-                  //   child: IconButton(
-                  //     icon: const Icon(Icons.tune_rounded, color: Colors.white, size: 22),
-                  //     onPressed: () {
-                  //       // Filter logic
-                  //     },
-                  //   ),
-                  // ),
-                ],
+                ),
               ),
             ),
 
-            // --- Orders List ---
+            // ── Orders List ───────────────────────────────────────────────
             Expanded(
               child: RefreshIndicator(
                 color: const Color(0xFF1A1A4F),
                 onRefresh: () async => await orderController.getOrderList(),
                 child: Obx(() {
-                  if (orderController.isLoading.value && orderController.orders.isEmpty) {
+                  if (orderController.isLoading.value &&
+                      orderController.orders.isEmpty) {
                     return const Center(child: CircularProgressIndicator());
                   }
-
                   if (orderController.orders.isEmpty) {
                     return _buildEmptyState();
                   }
-
                   return Scrollbar(
                     controller: _scrollController,
                     thumbVisibility: true,
@@ -149,11 +140,11 @@ final ScrollController _scrollController = ScrollController();
                     radius: const Radius.circular(10),
                     child: ListView.builder(
                       controller: _scrollController,
-                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 80), // Bottom padding for FAB
+                      padding: const EdgeInsets.fromLTRB(20, 10, 20, 80),
                       itemCount: orderController.filteredOrders.length,
                       itemBuilder: (context, index) {
                         final order = orderController.filteredOrders[index];
-                        return _buildOrderCard(order);
+                        return _buildOrderCard(context, order);
                       },
                     ),
                   );
@@ -166,7 +157,15 @@ final ScrollController _scrollController = ScrollController();
     );
   }
 
-  Widget _buildOrderCard(dynamic order) {
+  Widget _buildOrderCard(BuildContext context, dynamic order) {
+    final status = orderController.orders;
+    String latestRemark = "NO REMARKS";
+    if (order.remarks != null && order.remarks.isNotEmpty) {
+      final sorted = List.from(order.remarks)
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      latestRemark = sorted.first.remark;
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -181,20 +180,13 @@ final ScrollController _scrollController = ScrollController();
         ],
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        // onTap: () => Get.to(() => const OrderDetailScreen(), arguments: order),
-      //   onTap: (){
-      //     Get.toNamed('/orderDetail/${order.id}');
-      // },
-        // },
+        contentPadding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
         onTap: () {
           Get.toNamed(
             RouteName.orderDetailScreen,
-            parameters: {'id': order.id.toString()},   // ← pass as string
+            parameters: {'id': order.id.toString()},
           );
-          print("🤬🤬🤬🤬🤬🤬🤬🤬🤬🤬🤬🤬🤬 ${order.id}");
         },
-        // Circle leading with Order Initial
         leading: Container(
           width: 48,
           height: 48,
@@ -206,13 +198,43 @@ final ScrollController _scrollController = ScrollController();
             child: Icon(Icons.receipt_long_rounded, color: Color(0xFF1A1A4F)),
           ),
         ),
-        title: Text(
-          order.customerName ?? "Unknown Customer",
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: Colors.black87,
-          ),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                order.customerName ?? "Unknown Customer",
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            // ✅ Status Widget (Static Active)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: _getStatusColor(order.status).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: _getStatusColor(order.status).withOpacity(0.3),
+                  width: 0.5,
+                ),
+              ),
+              child: Text(
+                order.status?.toUpperCase() ?? "N/A",
+                style: TextStyle(
+                  color: _getStatusColor(order.status),
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+          ],
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
@@ -221,31 +243,85 @@ final ScrollController _scrollController = ScrollController();
             children: [
               Text(
                 "ID: #${order.id} • ${order.createdAt.toLocal().toString().split(' ')[0]}",
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
               ),
-              const SizedBox(height: 8),
-              // Tiny status pill
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
+              const SizedBox(height: 6),
+              Text(
+                "REMARK: ${latestRemark.toUpperCase()}",
+                style: TextStyle(
+                  color: latestRemark == "NO REMARKS"
+                      ? Colors.grey
+                      : Colors.blueGrey,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
                 ),
-                child: Text(
-                  order.remarks.isEmpty
-                      ? "NO REMARKS"
-                      : order.remarks.join(", ").toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.green,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
         ),
-        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+        // ✅ Trailing Delete Icon Button
+        trailing: IconButton(
+          icon: const Icon(
+            Icons.delete_outline_rounded,
+            color: Colors.redAccent,
+            size: 22,
+          ),
+          onPressed: () => _showDeleteConfirmDialog(context, order.id),
+          tooltip: 'Delete Order',
+        ),
+      ),
+    );
+  }
+
+  // ✅ Confirm dialog before delete
+  void _showDeleteConfirmDialog(BuildContext context, int orderId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 24),
+            SizedBox(width: 8),
+            Text(
+              "Delete Order",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Text(
+          "Are you sure you want to delete order #$orderId?",
+          style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              "Cancel",
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              orderController.deleteOrderFromList(orderId);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text(
+              "Delete",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -274,252 +350,3 @@ final ScrollController _scrollController = ScrollController();
     );
   }
 }
-
-
-
-// import 'package:dmj_stock_manager/view/orders/order_detail_screen.dart';
-// import 'package:dmj_stock_manager/view_models/controller/order_controller.dart';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-//
-// import 'order_create_bottom_sheet.dart';
-//
-// class OrderScreen extends StatelessWidget {
-//   final OrderController orderController = Get.put(OrderController());
-//   OrderScreen({super.key});
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: Colors.white,
-//       body: SafeArea(
-//         child: RefreshIndicator(
-//           onRefresh: () async {
-//             await orderController.getOrderList();
-//           },
-//           child: SingleChildScrollView(
-//             child: Padding(
-//               padding: const EdgeInsets.symmetric(
-//                 horizontal: 20.0,
-//                 vertical: 20.0,
-//               ),
-//               child: Column(
-//                 children: [
-//                   Row(
-//                     mainAxisAlignment: MainAxisAlignment.end,
-//                     crossAxisAlignment: CrossAxisAlignment.center,
-//                     children: [
-//                       // Container(
-//                       //   width: 40,
-//                       //   height: 40,
-//                       //   decoration: BoxDecoration(
-//                       //     border: Border.all(
-//                       //       width: 1,
-//                       //       color: Colors.grey.shade500,
-//                       //     ),
-//                       //     borderRadius: BorderRadius.circular(50),
-//                       //   ),
-//                       //   child: IconButton(
-//                       //     icon: const Icon(Icons.arrow_back),
-//                       //     onPressed: () {
-//                       //       Get.back();
-//                       //     },
-//                       //   ),
-//                       // ),
-//                       ElevatedButton(
-//                         style: ElevatedButton.styleFrom(
-//                           backgroundColor: const Color(0xFF1A1A4F),
-//                           fixedSize: const Size(100, 40),
-//                           shape: RoundedRectangleBorder(
-//                             borderRadius: BorderRadius.circular(12),
-//                           ),
-//                         ),
-//                         onPressed: () {
-//                           showModalBottomSheet(
-//                             elevation: 10,
-//                             context: context,
-//                             isScrollControlled:
-//                                 true, // for full screen height support
-//                             shape: const RoundedRectangleBorder(
-//                               borderRadius: BorderRadius.vertical(
-//                                 top: Radius.circular(20),
-//                               ),
-//                             ),
-//                             builder: (context) {
-//                               return OrderCreateBottomSheet();
-//                             },
-//                           );
-//                         },
-//                         child: const Text(
-//                           "Create",
-//                           style: TextStyle(color: Colors.white),
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                   const SizedBox(height: 20),
-//                   Container(
-//                     height: 60,
-//                     width: double.infinity,
-//                     padding: const EdgeInsets.all(15),
-//                     decoration: BoxDecoration(
-//                       color: Colors.grey.shade200,
-//                       borderRadius: BorderRadius.circular(15),
-//                     ),
-//                     child: const Row(
-//                       children: [
-//                         Text(
-//                           "Orders List",
-//                           style: TextStyle(
-//                             fontSize: 18,
-//                             fontWeight: FontWeight.bold,
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                   const SizedBox(height: 20),
-//                   Obx(() {
-//                     if (orderController.isLoading.value) {
-//                       return const Center(child: CircularProgressIndicator());
-//                     }
-//
-//                     if (orderController.orders.isEmpty) {
-//                       return const Center(child: Text("No orders found"));
-//                     }
-//
-//                     return ListView.builder(
-//                       shrinkWrap: true, // 👈 important
-//                       physics:
-//                           const NeverScrollableScrollPhysics(), // 👈 disable inner scroll
-//                       // padding: const EdgeInsets.all(12),
-//                       itemCount: orderController.orders.length,
-//                       itemBuilder: (context, index) {
-//                         final order = orderController.orders[index];
-//                         return _buildOrderCard(order);
-//                         // return Card(
-//                         //   color: Colors.white,
-//                         //   // margin: const EdgeInsets.only(bottom: 12),
-//                         //   shape: RoundedRectangleBorder(
-//                         //     borderRadius: BorderRadius.circular(12),
-//                         //   ),
-//                         //   child: ListTile(
-//                         //     title: Text(
-//                         //       "Order #${order.id}",
-//                         //       style: const TextStyle(
-//                         //         fontSize: 16,
-//                         //         color: Colors.black,
-//                         //         fontWeight: FontWeight.w500,
-//                         //       ),
-//                         //     ),
-//                         //     subtitle: Text(
-//                         //       "Customer: ${order.customerName}\n"
-//                         //       "${(order.mobile != null && order.mobile != '0') ? "Mobile: ${(order.countryCode ?? '')}${order.mobile}\n" : ""}"
-//                         //       "Date: ${order.createdAt.toLocal().toString().split(' ')[0]}",
-//                         //     ),
-//                         //     trailing: Text(
-//                         //       order.remarks,
-//                         //       style: const TextStyle(
-//                         //         color: Colors.green,
-//                         //         fontWeight: FontWeight.bold,
-//                         //       ),
-//                         //     ),
-//                         //     onTap: () {
-//                         //       if (order != null) {
-//                         //         // Make sure 'order' is an OrderDetailModel, not OrderModel
-//                         //         Get.to(
-//                         //           () => const OrderDetailScreen(),
-//                         //           arguments: order,
-//                         //         );
-//                         //       } else {
-//                         //         Get.snackbar("Error", "Order details missing");
-//                         //       }
-//                         //     },
-//                         //   ),
-//                         // );
-//                       },
-//                     );
-//                   }),
-//                 ],
-//               ),
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-//
-//   Widget _buildOrderCard(dynamic order) {
-//     return Container(
-//       margin: const EdgeInsets.only(bottom: 16),
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         borderRadius: BorderRadius.circular(16),
-//         boxShadow: [
-//           BoxShadow(
-//             color: Colors.black.withOpacity(0.04),
-//             blurRadius: 10,
-//             offset: const Offset(0, 4),
-//           ),
-//         ],
-//       ),
-//       child: ListTile(
-//         contentPadding: const EdgeInsets.symmetric(
-//           horizontal: 20,
-//           vertical: 10,
-//         ),
-//         onTap: () => Get.to(() => const OrderDetailScreen(), arguments: order),
-//         // Circle leading with Order Initial
-//         leading: Container(
-//           width: 48,
-//           height: 48,
-//           decoration: BoxDecoration(
-//             color: const Color(0xFF1A1A4F).withOpacity(0.05),
-//             shape: BoxShape.circle,
-//           ),
-//           child: const Center(
-//             child: Icon(Icons.receipt_long_rounded, color: Color(0xFF1A1A4F)),
-//           ),
-//         ),
-//         title: Text(
-//           order.customerName ?? "Unknown Customer",
-//           style: const TextStyle(
-//             fontWeight: FontWeight.bold,
-//             fontSize: 16,
-//             color: Colors.black87,
-//           ),
-//         ),
-//         subtitle: Padding(
-//           padding: const EdgeInsets.only(top: 4),
-//           child: Column(
-//             crossAxisAlignment: CrossAxisAlignment.start,
-//             children: [
-//               Text(
-//                 "ID: #${order.id} • ${order.createdAt.toLocal().toString().split(' ')[0]}",
-//                 style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-//               ),
-//               const SizedBox(height: 8),
-//               // Tiny status pill
-//               Container(
-//                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-//                 decoration: BoxDecoration(
-//                   color: Colors.green.withOpacity(0.1),
-//                   borderRadius: BorderRadius.circular(4),
-//                 ),
-//                 child: Text(
-//                   order.remarks?.toUpperCase() ?? "COMPLETED",
-//                   style: const TextStyle(
-//                     color: Colors.green,
-//                     fontSize: 10,
-//                     fontWeight: FontWeight.bold,
-//                   ),
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//         trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-//       ),
-//     );
-//   }
-// }

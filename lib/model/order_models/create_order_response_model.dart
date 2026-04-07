@@ -1,3 +1,5 @@
+import 'package:dmj_stock_manager/model/order_models/order_detail_model.dart';
+
 class CreateOrderResponseModel {
   final OrderModel order;
   final List<AllocatedBarcodeModel> allocatedBarcodes;
@@ -42,7 +44,10 @@ class OrderModel {
   final List<OrderItem> items;
   final String customerName;
   final DateTime createdAt;
-  final String? remarks;
+
+  // ✅ FIXED: was String?, now List<OrderRemark>
+  final List<OrderRemark> remarks;
+
   final int channel;
   final String countryCode;
   final String mobile;
@@ -53,6 +58,7 @@ class OrderModel {
   final DateTime? paymentDate;
   final String paidStatus;
   final String? transactionId;
+  final String packageExpence;
 
   OrderModel({
     required this.id,
@@ -63,12 +69,13 @@ class OrderModel {
     required this.countryCode,
     required this.mobile,
     required this.paidStatus,
-    this.remarks,
+    required this.remarks,
     this.customerEmail,
     this.channelOrderId,
     this.paymentMethod,
     this.paymentDate,
     this.transactionId,
+    required this.packageExpence,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
@@ -78,8 +85,13 @@ class OrderModel {
           .map((e) => OrderItem.fromJson(e))
           .toList(),
       customerName: json['customer_name'] ?? '',
-      createdAt: DateTime.parse(json['created_at']),
-      remarks: json['remarks'],
+      createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+
+      // ✅ FIXED: parse remarks as List<OrderRemark>
+      remarks: (json['remarks'] as List? ?? [])
+          .map((e) => OrderRemark.fromJson(e as Map<String, dynamic>))
+          .toList(),
+
       channel: json['channel'] ?? 0,
       countryCode: json['country_code'] ?? '',
       mobile: json['mobile'] ?? '',
@@ -87,10 +99,11 @@ class OrderModel {
       channelOrderId: json['channel_order_id'],
       paymentMethod: json['payment_method'],
       paymentDate: json['payment_date'] != null
-          ? DateTime.parse(json['payment_date'])
+          ? DateTime.tryParse(json['payment_date'])
           : null,
       paidStatus: json['paid_status'] ?? 'UNPAID',
       transactionId: json['transaction_id'],
+      packageExpence: json['package_expence'] ?? "0.00",
     );
   }
 }

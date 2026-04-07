@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:dmj_stock_manager/model/bills_model/create_bill_model.dart';
 import 'package:dmj_stock_manager/model/order_models/create_order_response_model.dart';
 import 'package:dmj_stock_manager/model/order_models/order_model.dart';
@@ -33,7 +31,6 @@ class OrderController extends GetxController with BaseController {
   var isLoading = false.obs;
   var scannedSku = "".obs;
 
-  // Form State Variables
   var countryCode = "".obs;
   var phoneNumber = "".obs;
   final Rx<ChannelModel?> selectedChannel = Rx<ChannelModel?>(null);
@@ -44,17 +41,18 @@ class OrderController extends GetxController with BaseController {
   final TextEditingController packageExpenseController = TextEditingController();
   final RxList<Map<String, dynamic>> items = <Map<String, dynamic>>[].obs;
 
-  // Return Orders
+  final RxBool isAddingRemark = false.obs;
+  final RxBool isCancellingOrder = false.obs;
+
   var returnOrders = <ReturnOrderHistory>[].obs;
   var selectedReason = "".obs;
   var selectedCondition = "".obs;
 
-  // ✅ Bill Creation Variables
   var selectedMethod = "NET_BANKING".obs;
   var paymentDate = DateTime.now().obs;
   var paidStatus = "UNPAID".obs;
   var transactionId = "".obs;
-  var partialAmount = "".obs; // ✅ Added for partial payment amount
+  var partialAmount = "".obs;
   final billStatus = <CreateBillModel>[].obs;
 
   var filteredOrders = <OrderDetailModel>[].obs;
@@ -63,7 +61,6 @@ class OrderController extends GetxController with BaseController {
   final orderDetail = Rxn<OrderDetailsModel>();
   var isLoadingDetail = false.obs;
 
-  // Form Logic Methods
   void addItemRow() {
     items.add({
       "product": Rx<ProductModel?>(null),
@@ -95,15 +92,12 @@ class OrderController extends GetxController with BaseController {
     channelOrderId.text = "";
     emailController.text = "";
     remarkController.text = "";
-
     items.clear();
-
     if (formKey.currentState != null) {
       formKey.currentState!.reset();
     }
   }
 
-  /// ✅ Clear Bill Form
   void clearBillForm() {
     selectedMethod.value = "NET_BANKING";
     paymentDate.value = DateTime.now();
@@ -112,10 +106,7 @@ class OrderController extends GetxController with BaseController {
     partialAmount.value = "";
   }
 
-  void removeItemRow(int index) {
-    items.removeAt(index);
-  }
-
+  void removeItemRow(int index) => items.removeAt(index);
   void resetForm() => clearForm();
 
   @override
@@ -137,7 +128,6 @@ class OrderController extends GetxController with BaseController {
       if (qtyController is TextEditingController) qtyController.dispose();
       if (priceController is TextEditingController) priceController.dispose();
     }
-
     super.onClose();
   }
 
@@ -146,7 +136,9 @@ class OrderController extends GetxController with BaseController {
       isLoading.value = true;
       final response = await orderService.getOrderDetailApi();
       final List<dynamic> data = response;
-      orders.value = data.map((item) => OrderDetailModel.fromJson(item)).toList();
+      final allOrders = data.map((item) => OrderDetailModel.fromJson(item)).toList();
+      // ✅ Filter out soft-deleted orders from list
+      orders.value = allOrders.where((o) => !o.isDeleted).toList();
       filteredOrders.assignAll(orders);
     } catch (e) {
       handleError(e, onRetry: () => getOrderList());
@@ -155,29 +147,22 @@ class OrderController extends GetxController with BaseController {
     }
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Create order
+  // ─────────────────────────────────────────────────────────────────────────
   Future<void> createOrder() async {
     if (!(formKey.currentState?.validate() ?? false)) return;
-
-    if (phoneNumber.value.isEmpty) {
-      AppAlerts.error("Please enter phone number");
-      return;
-    }
-
-    if (items.isEmpty) {
-      AppAlerts.error("Please add at least one product");
-      return;
-    }
+    if (phoneNumber.value.isEmpty) { AppAlerts.error("Please enter phone number"); return; }
+    if (items.isEmpty) { AppAlerts.error("Please add at least one product"); return; }
 
     try {
       isLoading.value = true;
 
-      // ✅ Prepare Item List
       List<Map<String, dynamic>> itemList = items.map((item) {
         final productRx = item["product"] as Rx<ProductModel?>?;
         final product = productRx?.value;
         final qtyController = item["quantity"] as TextEditingController;
         final priceController = item["unitPrice"] as TextEditingController;
-
         return {
           "product": product?.id,
           "quantity": int.tryParse(qtyController.text) ?? 0,
@@ -185,80 +170,105 @@ class OrderController extends GetxController with BaseController {
         };
       }).toList();
 
-      // ✅ Calculate Total Amount
-      // double totalAmount = 0.0;
-      //
-      // for (var item in itemList) {
-      //   double price = item["unit_price"] ?? 0.0;
-      //   int qty = item["quantity"] ?? 0;
-      //   totalAmount += price * qty;
-      // }
+      final remarkText = remarkController.text.trim();
 
-      // ❌ Safety check
-      // if (totalAmount <= 0) {
-      //   AppAlerts.error("Total amount must be greater than 0");
-      //   return;
-      // }
-
-      // ✅ Final Payload
       final data = {
         "channel": selectedChannel.value?.id,
         "customer_name": customerNameController.text.trim(),
         "customer_email": emailController.text.trim(),
         "channel_order_id": channelOrderId.text.trim(),
-        "remarks": remarkController.text.trim(),
+        // ✅ FIXED: remarks as list
+        "remarks": remarkText.isNotEmpty ? [remarkText] : [],
         "items": itemList,
         "country_code": countryCode.value,
         "mobile": phoneNumber.value,
         "package_expence": double.tryParse(packageExpenseController.text.trim()) ?? 0.0,
-        // "total_amount": totalAmount,
       };
 
-      // ✅ API Call
       final response = await orderService.createOrderApi(data);
+      if (kDebugMode) print("🟢 RAW API RESPONSE: $response");
 
-      print("🟢 RAW API RESPONSE: $response");
+      if (response is! Map<String, dynamic>) { AppAlerts.error("Invalid server response"); return; }
 
-      // ✅ Proper Response Handling
-      if (response is Map<String, dynamic>) {
-        if (response.containsKey("error")) {
-          AppAlerts.error(response["error"] ?? "Something went wrong");
-          return;
-        }
-
-        final order = CreateOrderResponseModel.fromJson(response);
-        createOrderResponse.add(order);
-      } else {
-        AppAlerts.error("Invalid server response");
+      final bool isSuccess = response.containsKey('order_id') ||
+          response.containsKey('id') ||
+          response.containsKey('order');
+      if (!isSuccess) {
+        final firstError = response.values.first;
+        final errorMsg = firstError is List ? firstError.first.toString() : firstError.toString();
+        AppAlerts.error(errorMsg);
         return;
       }
 
+      final order = CreateOrderResponseModel.fromJson(response);
+      createOrderResponse.add(order);
+
       if (Get.isBottomSheetOpen ?? false) Get.back();
-
       AppAlerts.success("Order created successfully ✅");
-
       clearForm();
       await getOrderList();
       stockController.fetchInventoryList();
-
     } catch (e) {
       handleError(e);
-      print("❌ Create Order Error: $e");
+      if (kDebugMode) print("❌ Create Order Error: $e");
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> addRemark(int orderId, String remark) async {
+    if (remark.trim().isEmpty) { AppAlerts.error("Please enter a remark"); return; }
+    try {
+      isAddingRemark.value = true;
+      await orderService.addRemark(orderId, remark.trim());
+      AppAlerts.success("Remark added successfully");
+      await loadOrderDetail(orderId);
+      await getOrderList();
+    } catch (e) {
+      handleError(e);
+    } finally {
+      isAddingRemark.value = false;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ✅ Soft delete order — no success alert, just remove and go back
+  // ─────────────────────────────────────────────────────────────────────────
+  Future<void> cancelOrder(int orderId) async {
+    try {
+      isCancellingOrder.value = true;
+      await orderService.cancelOrder(orderId);
+      // ✅ Fresh updated list load karo
+      await getOrderList();
+      if (Get.isDialogOpen ?? false) Get.back();
+      Get.back();
+    } catch (e, s) {
+      handleError(e);
+      debugPrint("🤖🤖 order cancel error $s");
+    } finally {
+      isCancellingOrder.value = false;
+    }
+  }
+
+  // ✅ Delete from order screen card directly
+  Future<void> deleteOrderFromList(int orderId) async {
+    try {
+      await orderService.softDeleteOrder(orderId);
+      orders.removeWhere((o) => o.id == orderId);
+      filteredOrders.removeWhere((o) => o.id == orderId);
+    } catch (e) {
+      handleError(e);
     }
   }
 
   void setScannedSku(String sku) {
     final itemController = Get.find<ItemController>();
     final product = itemController.products.firstWhereOrNull((p) => p.sku == sku);
-
     if (product != null) {
       final existingIndex = items.indexWhere((item) {
         final p = (item["product"] as Rx<ProductModel?>?)?.value;
         return p?.id == product.id;
       });
-
       if (existingIndex != -1) {
         final qtyController = items[existingIndex]["quantity"] as TextEditingController;
         int currentQty = int.tryParse(qtyController.text) ?? 0;
@@ -292,61 +302,33 @@ class OrderController extends GetxController with BaseController {
     }
   }
 
-  /// ✅ Create Order Bill with Amount Calculation
   Future<void> createOrderBill(int orderId) async {
-    // ✅ Calculate amount based on paid status
     double amount = 0.0;
-
     if (paidStatus.value == "PAID") {
-      // PAID: Order ka total amount
       final order = orderDetail.value;
-      if (order != null) {
-        amount = order.items.fold(0.0, (sum, item) => sum + item.totalPrice);
-      }
+      if (order != null) amount = order.items.fold(0.0, (sum, item) => sum + item.totalPrice);
     } else if (paidStatus.value == "PARTIAL") {
-      // PARTIAL: User entered amount
       amount = double.tryParse(partialAmount.value) ?? 0.0;
-
-      // ✅ Validation: Partial amount cannot be 0 or empty
-      if (amount <= 0) {
-        AppAlerts.error("Please enter a valid partial amount");
-        return;
-      }
-    } else if (paidStatus.value == "UNPAID") {
-      // UNPAID: Amount = 0
-      amount = 0.0;
+      if (amount <= 0) { AppAlerts.error("Please enter a valid partial amount"); return; }
     }
 
     String formattedDate = DateFormat('yyyy-MM-dd').format(paymentDate.value);
-
     Map<String, dynamic> data = {
       "payment_method": selectedMethod.value,
       "payment_date": formattedDate,
       "paid_status": paidStatus.value,
-      "amount": amount, // ✅ Added amount field
+      "amount": amount,
     };
-
-    if (transactionId.value.isNotEmpty) {
-      data["transaction_id"] = transactionId.value;
-    }
+    if (transactionId.value.isNotEmpty) data["transaction_id"] = transactionId.value;
 
     try {
       isLoading.value = true;
       final response = await orderService.createBill(data, orderId);
-
       if (response == null) throw Exception("Empty response from server");
-
       final apiResponse = CreateBillModel.fromJson(response);
-
       if (Get.isDialogOpen ?? false) Get.back();
-
-      AppAlerts.success(
-        apiResponse.message.isEmpty ? "Bill Created" : apiResponse.message,
-      );
-
-      // ✅ Clear bill form after success
+      AppAlerts.success(apiResponse.message.isEmpty ? "Bill Created" : apiResponse.message);
       clearBillForm();
-
       await getOrderList();
       Get.to(() => BillingScreen());
       billingController.refreshBills();
@@ -373,13 +355,7 @@ class OrderController extends GetxController with BaseController {
   }
 
   void openOrderBottomSheet() {
-    Get.bottomSheet(
-      OrderCreateBottomSheet(),
-      isScrollControlled: true,
-      isDismissible: true,
-      enableDrag: true,
-      backgroundColor: Colors.white,
-    );
+    Get.bottomSheet(OrderCreateBottomSheet(), isScrollControlled: true, isDismissible: true, enableDrag: true, backgroundColor: Colors.white);
   }
 
   void addScannedProduct(ProductModel product) {
@@ -387,36 +363,22 @@ class OrderController extends GetxController with BaseController {
       final p = (item["product"] as Rx<ProductModel?>).value;
       return p?.id == product.id;
     });
-
     if (existingIndex != -1) {
       final qtyController = items[existingIndex]["quantity"] as TextEditingController;
       int currentQty = int.tryParse(qtyController.text) ?? 0;
       qtyController.text = (currentQty + 1).toString();
-      Get.snackbar(
-        "Updated",
-        "${product.name} quantity increased to ${currentQty + 1}",
-        duration: const Duration(seconds: 2),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.blue,
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-      );
+      Get.snackbar("Updated", "${product.name} quantity increased to ${currentQty + 1}",
+          duration: const Duration(seconds: 2), snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.blue, colorText: Colors.white, margin: const EdgeInsets.all(16));
     } else {
       items.add({
         "product": Rx<ProductModel?>(product),
         "quantity": TextEditingController(text: "1"),
         "unitPrice": TextEditingController(text: product.unitPurchasePrice.toString()),
       });
-
-      Get.snackbar(
-        "Added",
-        "${product.name} added to order",
-        duration: const Duration(seconds: 2),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(16),
-      );
+      Get.snackbar("Added", "${product.name} added to order",
+          duration: const Duration(seconds: 2), snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.green, colorText: Colors.white, margin: const EdgeInsets.all(16));
     }
   }
 
@@ -424,8 +386,7 @@ class OrderController extends GetxController with BaseController {
     final itemController = Get.find<ItemController>();
     final product = itemController.products.firstWhereOrNull((p) => p.sku == scanProduct.sku);
     if (product == null) {
-      Get.snackbar("Not Found", "Scanned product not in product list",
-          backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar("Not Found", "Scanned product not in product list", backgroundColor: Colors.red, colorText: Colors.white);
       return;
     }
     addScannedProduct(product);
