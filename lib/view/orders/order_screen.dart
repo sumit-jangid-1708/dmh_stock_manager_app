@@ -158,7 +158,10 @@ class OrderScreen extends StatelessWidget {
   }
 
   Widget _buildOrderCard(BuildContext context, dynamic order) {
-    final status = orderController.orders;
+    // Logic for Status Colors
+    final bool isActive = order.status?.toLowerCase() == "active";
+    final Color statusColor = _getStatusColor(order.status);
+
     String latestRemark = "NO REMARKS";
     if (order.remarks != null && order.remarks.isNotEmpty) {
       final sorted = List.from(order.remarks)
@@ -167,109 +170,93 @@ class OrderScreen extends StatelessWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: Colors.grey.withOpacity(0.1)), // Subtle border
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
-        onTap: () {
-          Get.toNamed(
-            RouteName.orderDetailScreen,
-            parameters: {'id': order.id.toString()},
-          );
-        },
-        leading: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: const Color(0xFF1A1A4F).withOpacity(0.05),
-            shape: BoxShape.circle,
-          ),
-          child: const Center(
-            child: Icon(Icons.receipt_long_rounded, color: Color(0xFF1A1A4F)),
-          ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => Get.toNamed(
+          RouteName.orderDetailScreen,
+          parameters: {'id': order.id.toString()},
         ),
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                order.customerName ?? "Unknown Customer",
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.black87,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            // ✅ Status Widget (Static Active)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: _getStatusColor(order.status).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: _getStatusColor(order.status).withOpacity(0.3),
-                  width: 0.5,
-                ),
-              ),
-              child: Text(
-                order.status?.toUpperCase() ?? "N/A",
-                style: TextStyle(
-                  color: _getStatusColor(order.status),
-                  fontSize: 9,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-          ],
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
             children: [
-              Text(
-                "ID: #${order.id} • ${order.createdAt.toLocal().toString().split(' ')[0]}",
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                "REMARK: ${latestRemark.toUpperCase()}",
-                style: TextStyle(
-                  color: latestRemark == "NO REMARKS"
-                      ? Colors.grey
-                      : Colors.blueGrey,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
+              // ── Indicator Dot (Green/Red) ──────────────────
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: statusColor,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: statusColor.withOpacity(0.3),
+                      blurRadius: 4,
+                      spreadRadius: 1,
+                    ),
+                  ],
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(width: 16),
+
+              // ── Main Content ───────────────────────────────
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      order.customerName ?? "Unknown Customer",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: Color(0xFF1A1A4F),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "ID: #${order.id}  •  ${order.createdAt.toLocal().toString().split(' ')[0]}",
+                      style: TextStyle(
+                        color: Colors.grey.shade500,
+                        fontSize: 12,
+                      ),
+                    ),
+                    if (latestRemark != "NO REMARKS") ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        latestRemark.toUpperCase(),
+                        style: TextStyle(
+                          color: Colors.blueGrey.shade400,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.5,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              // ── Action Button ──────────────────────────────
+              IconButton(
+                onPressed: () => _showDeleteConfirmDialog(context, order.id),
+                icon: Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.red.shade300,
+                  size: 22,
+                ),
+                visualDensity: VisualDensity.compact,
               ),
             ],
           ),
-        ),
-        // ✅ Trailing Delete Icon Button
-        trailing: IconButton(
-          icon: const Icon(
-            Icons.delete_outline_rounded,
-            color: Colors.redAccent,
-            size: 22,
-          ),
-          onPressed: () => _showDeleteConfirmDialog(context, order.id),
-          tooltip: 'Delete Order',
         ),
       ),
     );
