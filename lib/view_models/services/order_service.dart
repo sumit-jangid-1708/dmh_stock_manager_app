@@ -3,6 +3,7 @@ import 'package:dmj_stock_manager/res/app_url/app_url.dart';
 
 import '../../model/courier_return/courier_return_response.dart';
 import '../../model/customer_return/customer_return_response.dart';
+import '../../model/order_models/courier_partner_model.dart';
 import '../../model/order_models/order_detail_by_id_model.dart';
 import '../../model/order_models/order_detail_model.dart';
 
@@ -57,10 +58,35 @@ class OrderService {
     return response;
   }
 
-
   Future<dynamic> softDeleteOrder(int orderId) async {
     final url = "${AppUrl.deleteOrder}/$orderId/soft-delete/";
     final response = await _apiServices.deleteApi(url);
+    return response;
+  }
+
+  Future<dynamic> createCourierPartner(Map<String, dynamic> data) async {
+    final response = await _apiServices.postApi(
+      data,
+      AppUrl.createCourierPartner,
+    ); // AppUrl me "api/courier/create/" add karna
+    return response;
+  }
+
+  Future<List<CourierPartnerDetailModel>> getCourierPartners() async {
+    final response = await _apiServices.getApi(AppUrl.courierList);
+    final List<dynamic> data = response as List<dynamic>;
+    return data.map((e) => CourierPartnerDetailModel.fromJson(e)).toList();
+  }
+
+  Future<dynamic>createShipment(Map<String, dynamic> data, int orderId) async{
+    final response = await _apiServices.postApi(data, "${AppUrl.createShipment}/$orderId/create-shipment/");
+    return response;
+  }
+
+  Future<List<dynamic>> getOrdersWithShipments() async {
+    final response = await _apiServices.getApi(
+      AppUrl.shipmentList,
+    );
     return response;
   }
 }

@@ -14,7 +14,10 @@ import 'package:get/get.dart';
 import 'package:dmj_stock_manager/model/channel_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../model/order_models/courier_partner_model.dart';
 import '../../model/order_models/order_detail_model.dart';
+import '../../model/order_models/order_with_shipment_model.dart';
+import '../../model/order_models/shipment_model.dart';
 import '../../model/product_models/product_model.dart';
 import '../../model/order_models/return_order_history_model.dart';
 import '../../model/product_models/scan_product_response_model.dart';
@@ -41,6 +44,12 @@ class OrderController extends GetxController with BaseController {
   final TextEditingController packageExpenseController = TextEditingController();
   final RxList<Map<String, dynamic>> items = <Map<String, dynamic>>[].obs;
 
+  // ✅ UPDATED: Typed courier partners list (was Map-based before)
+  final RxList<CourierPartnerDetailModel> courierPartners =
+      <CourierPartnerDetailModel>[].obs;
+  final RxBool isLoadingCouriers = false.obs;
+  final RxBool isCreatingCourier = false.obs;
+
   final RxBool isAddingRemark = false.obs;
   final RxBool isCancellingOrder = false.obs;
 
@@ -60,6 +69,11 @@ class OrderController extends GetxController with BaseController {
 
   final orderDetail = Rxn<OrderDetailsModel>();
   var isLoadingDetail = false.obs;
+
+  var isCreatingShipment = false.obs;
+  var shipments = <ShipmentModel>[].obs;
+  var ordersWithShipments = <OrderWithShipmentModel>[].obs;
+  var isLoadingShipmentsList = false.obs;
 
   void addItemRow() {
     items.add({
@@ -113,6 +127,8 @@ class OrderController extends GetxController with BaseController {
   void onReady() {
     super.onReady();
     getOrderList();
+    fetchCourierPartners(); // ✅ Load couriers on controller ready
+    getOrdersWithShipments();
   }
 
   @override
@@ -131,19 +147,57 @@ class OrderController extends GetxController with BaseController {
     super.onClose();
   }
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // ✅ NEW: Fetch courier partners from API
+  // ─────────────────────────────────────────────────────────────────────────
+  Future<void> fetchCourierPartners() async {
+    try {
+      isLoadingCouriers.value = true;
+      final result = await orderService.getCourierPartners();
+      courierPartners.assignAll(result);
+    } catch (e) {
+      handleError(e, onRetry: fetchCourierPartners);
+    } finally {
+      isLoadingCouriers.value = false;
+    }
+  }
+
   Future<void> getOrderList() async {
     try {
       isLoading.value = true;
       final response = await orderService.getOrderDetailApi();
       final List<dynamic> data = response;
       final allOrders = data.map((item) => OrderDetailModel.fromJson(item)).toList();
-      // ✅ Filter out soft-deleted orders from list
       orders.value = allOrders.where((o) => !o.isDeleted).toList();
       filteredOrders.assignAll(orders);
     } catch (e) {
       handleError(e, onRetry: () => getOrderList());
     } finally {
       isLoading.value = false;
+    }
+  }
+
+// order_controller.dart
+  Future<void> getOrdersWithShipments() async {
+    try {
+      isLoadingShipmentsList.value = true;
+      final response = await orderService.getOrdersWithShipments();
+      // ✅ Debug karo pehle
+      debugPrint("📦 Shipments API response length: ${response.length}");
+      // ✅ Safe cast
+      if (response is! List) {
+        debugPrint("❌ Expected List but got: ${response.runtimeType}");
+        return;
+      }
+      ordersWithShipments.value = response
+          .map((e) => OrderWithShipmentModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+      debugPrint("✅ ordersWithShipments loaded: ${ordersWithShipments.length}");
+    } catch (e, s) {
+      debugPrint("❌ getOrdersWithShipments error: $e\n$s");
+      handleError(e, onRetry: getOrdersWithShipments);
+    } finally {
+      isLoadingShipmentsList.value = false;
     }
   }
 
@@ -177,7 +231,6 @@ class OrderController extends GetxController with BaseController {
         "customer_name": customerNameController.text.trim(),
         "customer_email": emailController.text.trim(),
         "channel_order_id": channelOrderId.text.trim(),
-        // ✅ FIXED: remarks as list
         "remarks": remarkText.isNotEmpty ? [remarkText] : [],
         "items": itemList,
         "country_code": countryCode.value,
@@ -231,14 +284,10 @@ class OrderController extends GetxController with BaseController {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // ✅ Soft delete order — no success alert, just remove and go back
-  // ─────────────────────────────────────────────────────────────────────────
   Future<void> cancelOrder(int orderId) async {
     try {
       isCancellingOrder.value = true;
       await orderService.cancelOrder(orderId);
-      // ✅ Fresh updated list load karo
       await getOrderList();
       if (Get.isDialogOpen ?? false) Get.back();
       Get.back();
@@ -250,7 +299,6 @@ class OrderController extends GetxController with BaseController {
     }
   }
 
-  // ✅ Delete from order screen card directly
   Future<void> deleteOrderFromList(int orderId) async {
     try {
       await orderService.softDeleteOrder(orderId);
@@ -339,6 +387,96 @@ class OrderController extends GetxController with BaseController {
     }
   }
 
+  // ✅ UPDATED: Now adds CourierPartnerDetailModel to typed list
+  Future<void> createCourierPartner({
+    required String title,
+    required List<String> mediatorTitles,
+  }) async {
+    if (title.trim().isEmpty) {
+      AppAlerts.error("Please enter courier partner name");
+      return;
+    }
+    try {
+      isCreatingCourier.value = true;
+
+      final data = {
+        "title": title.trim(),
+        "mediators": mediatorTitles
+            .where((m) => m.trim().isNotEmpty)
+            .map((m) => {"title": m.trim()})
+            .toList(),
+      };
+
+      final response = await orderService.createCourierPartner(data);
+
+      if (response != null && response["data"] != null) {
+        // ✅ Parse typed model and add to list
+        final newCourier = CourierPartnerDetailModel.fromJson(
+          response["data"] as Map<String, dynamic>,
+        );
+        courierPartners.add(newCourier);
+        AppAlerts.success(response["message"] ?? "Courier created successfully ✅");
+        if (Get.isDialogOpen ?? false) Get.back();
+      } else {
+        // ✅ If API doesn't return data object, refresh the full list
+        AppAlerts.success("Courier created successfully ✅");
+        if (Get.isDialogOpen ?? false) Get.back();
+        await fetchCourierPartners();
+      }
+    } catch (e) {
+      handleError(e);
+    } finally {
+      isCreatingCourier.value = false;
+    }
+  }
+
+  Future<void> createShipment({
+    required int orderId,
+    required int courierPartnerId,
+    required int mediatorId,
+    required String trackingId,
+    required String shippingDate,
+    required String trackingUrl,
+    required double shippingExpense,
+    required double otherExpense,
+    String notes = "",
+  }) async {
+    if (trackingId.trim().isEmpty) {
+      AppAlerts.error("Please enter tracking ID");
+      return;
+    }
+    try {
+      isCreatingShipment.value = true;
+      final data = {
+        "courier_partner": courierPartnerId,
+        "mediator": mediatorId,
+        "tracking_id": trackingId.trim(),
+        "shipping_date": shippingDate,
+        "tracking_url": trackingUrl.trim(),
+        "shipping_expense": shippingExpense,
+        "other_expense": otherExpense,
+        "notes": notes.trim(),
+      };
+
+      final response = await orderService.createShipment(data, orderId);
+
+      if (response != null) {
+        // ✅ Success message
+        final message = response["message"] ?? "Shipment created successfully ✅";
+        AppAlerts.success(message);
+        if (Get.isBottomSheetOpen ?? false) Get.back();
+        await getOrdersWithShipments();
+      } else {
+        AppAlerts.error("Failed to create shipment");
+      }
+    } catch (e) {
+      handleError(e);
+    } finally {
+      isCreatingShipment.value = false;
+    }
+  }
+
+
   void filterOrders(String query) {
     if (query.isEmpty) {
       filteredOrders.assignAll(orders);
@@ -355,7 +493,13 @@ class OrderController extends GetxController with BaseController {
   }
 
   void openOrderBottomSheet() {
-    Get.bottomSheet(OrderCreateBottomSheet(), isScrollControlled: true, isDismissible: true, enableDrag: true, backgroundColor: Colors.white);
+    Get.bottomSheet(
+      OrderCreateBottomSheet(),
+      isScrollControlled: true,
+      isDismissible: true,
+      enableDrag: true,
+      backgroundColor: Colors.white,
+    );
   }
 
   void addScannedProduct(ProductModel product) {
@@ -367,18 +511,30 @@ class OrderController extends GetxController with BaseController {
       final qtyController = items[existingIndex]["quantity"] as TextEditingController;
       int currentQty = int.tryParse(qtyController.text) ?? 0;
       qtyController.text = (currentQty + 1).toString();
-      Get.snackbar("Updated", "${product.name} quantity increased to ${currentQty + 1}",
-          duration: const Duration(seconds: 2), snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.blue, colorText: Colors.white, margin: const EdgeInsets.all(16));
+      Get.snackbar(
+        "Updated",
+        "${product.name} quantity increased to ${currentQty + 1}",
+        duration: const Duration(seconds: 2),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.blue,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
     } else {
       items.add({
         "product": Rx<ProductModel?>(product),
         "quantity": TextEditingController(text: "1"),
         "unitPrice": TextEditingController(text: product.unitPurchasePrice.toString()),
       });
-      Get.snackbar("Added", "${product.name} added to order",
-          duration: const Duration(seconds: 2), snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green, colorText: Colors.white, margin: const EdgeInsets.all(16));
+      Get.snackbar(
+        "Added",
+        "${product.name} added to order",
+        duration: const Duration(seconds: 2),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+      );
     }
   }
 
@@ -386,7 +542,12 @@ class OrderController extends GetxController with BaseController {
     final itemController = Get.find<ItemController>();
     final product = itemController.products.firstWhereOrNull((p) => p.sku == scanProduct.sku);
     if (product == null) {
-      Get.snackbar("Not Found", "Scanned product not in product list", backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        "Not Found",
+        "Scanned product not in product list",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return;
     }
     addScannedProduct(product);

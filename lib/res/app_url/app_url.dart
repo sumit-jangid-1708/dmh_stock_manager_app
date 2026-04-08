@@ -38,6 +38,10 @@ class AppUrl {
   static const String uploadImage = "$baseUrl/upload-image/";
   static const String cancelOrder = "$baseUrl/order";
   static const String deleteOrder = "$baseUrl/order";
+  static const String createCourierPartner = "$baseUrl/courier/create/";
+  static const String courierList = '$baseUrl/courier/list/';
+  static const String createShipment = "$baseUrl/order";
+  static const String shipmentList = "$baseUrl/order-with-shipments";
 }
 
 
