@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../../model/order_models/order_with_shipment_model.dart';
 import '../../model/order_models/shipment_model.dart';
@@ -48,11 +49,17 @@ class ShippingScreen extends StatelessWidget {
                           children: [
                             Text(
                               "Shipping",
-                              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             Text(
                               "See shipping orders here",
-                              style: TextStyle(fontSize: 14, color: Colors.grey),
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                              ),
                             ),
                           ],
                         ),
@@ -103,9 +110,19 @@ class ShippingScreen extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.local_shipping_outlined, size: 60, color: Colors.grey.shade300),
+                        Icon(
+                          Icons.local_shipping_outlined,
+                          size: 60,
+                          color: Colors.grey.shade300,
+                        ),
                         const SizedBox(height: 12),
-                        Text("No Shipments Found", style: TextStyle(fontSize: 16, color: Colors.grey.shade500)),
+                        Text(
+                          "No Shipments Found",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
                         const SizedBox(height: 8),
                         TextButton.icon(
                           onPressed: () => controller.getOrdersWithShipments(),
@@ -118,11 +135,15 @@ class ShippingScreen extends StatelessWidget {
                 }
 
                 final filtered = allOrders.where((order) {
-                  final matchesSearch = query.isEmpty ||
-                      order.customerName.toLowerCase().contains(query.toLowerCase()) ||
+                  final matchesSearch =
+                      query.isEmpty ||
+                      order.customerName.toLowerCase().contains(
+                        query.toLowerCase(),
+                      ) ||
                       order.orderId.toString().contains(query);
 
-                  final matchesCategory = category == "All" ||
+                  final matchesCategory =
+                      category == "All" ||
                       (category == "Shipped" && order.shipments.isNotEmpty) ||
                       (category == "Pending" && order.shipments.isEmpty);
 
@@ -131,8 +152,13 @@ class ShippingScreen extends StatelessWidget {
 
                 if (filtered.isEmpty) {
                   return Center(
-                    child: Text("No results for \"$query\"",
-                        style: TextStyle(fontSize: 15, color: Colors.grey.shade500)),
+                    child: Text(
+                      "No results for \"$query\"",
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
                   );
                 }
 
@@ -142,7 +168,8 @@ class ShippingScreen extends StatelessWidget {
                   child: ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     itemCount: filtered.length,
-                    itemBuilder: (context, index) => _buildOrderShipmentBlock(filtered[index]),
+                    itemBuilder: (context, index) =>
+                        _buildOrderShipmentBlock(filtered[index]),
                   ),
                 );
               }),
@@ -166,12 +193,14 @@ class ShippingScreen extends StatelessWidget {
 
     return Column(
       children: order.shipments
-          .map((shipment) => _buildShippingCard(
-        orderId: "#ORD${order.orderId}",
-        customer: order.customerName,
-        totalAmount: order.totalAmount,
-        shipment: shipment,
-      ))
+          .map(
+            (shipment) => _buildShippingCard(
+              orderId: "#ORD${order.orderId}",
+              customer: order.customerName,
+              totalAmount: order.totalAmount,
+              shipment: shipment,
+            ),
+          )
           .toList(),
     );
   }
@@ -183,14 +212,14 @@ class ShippingScreen extends StatelessWidget {
     required ShipmentModel? shipment,
   }) {
     // ── Derive display values from ShipmentModel ──
-    final trackingId =
-    (shipment?.trackingId.isNotEmpty ?? false) ? shipment!.trackingId : "—";
+    final trackingId = (shipment?.trackingId.isNotEmpty ?? false)
+        ? shipment!.trackingId
+        : "—";
     final shippingDate = shipment?.shippingDate ?? "—";
     final notes = shipment?.notes ?? "";
     final shippingExpense =
         double.tryParse(shipment?.shippingExpense ?? "0") ?? 0.0;
-    final otherExpense =
-        double.tryParse(shipment?.otherExpense ?? "0") ?? 0.0;
+    final otherExpense = double.tryParse(shipment?.otherExpense ?? "0") ?? 0.0;
     final totalExpense = shippingExpense + otherExpense;
 
     // ── Status chip (extend when API provides status) ──
@@ -226,7 +255,9 @@ class ShippingScreen extends StatelessWidget {
                   Text(
                     orderId,
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -236,8 +267,10 @@ class ShippingScreen extends StatelessWidget {
                 ],
               ),
               Container(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: statusBg,
                   borderRadius: BorderRadius.circular(20),
@@ -245,9 +278,10 @@ class ShippingScreen extends StatelessWidget {
                 child: const Text(
                   status,
                   style: TextStyle(
-                      color: statusText,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold),
+                    color: statusText,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -273,20 +307,52 @@ class ShippingScreen extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                Icon(Icons.link_rounded,
-                    size: 14, color: Colors.blue.shade400),
+                Icon(Icons.link_rounded, size: 14, color: Colors.blue.shade400),
                 const SizedBox(width: 6),
+
+                /// URL Text
                 Expanded(
-                  child: Text(
-                    shipment!.trackingUrl,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.blue.shade600,
-                      decoration: TextDecoration.underline,
+                  child: GestureDetector(
+                    onTap: () {
+                      Clipboard.setData(
+                        ClipboardData(text: shipment!.trackingUrl ?? ""),
+                      );
+
+                      Get.snackbar(
+                        "Copied",
+                        "Tracking URL copied",
+                        snackPosition: SnackPosition.BOTTOM,
+                        duration: const Duration(seconds: 2),
+                      );
+                    },
+                    child: Text(
+                      shipment!.trackingUrl ?? "",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.blue.shade600,
+                        decoration: TextDecoration.underline,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
+                ),
+
+                /// Copy Icon Button
+                IconButton(
+                  icon: const Icon(Icons.copy, size: 16),
+                  onPressed: () {
+                    Clipboard.setData(
+                      ClipboardData(text: shipment!.trackingUrl ?? ""),
+                    );
+
+                    Get.snackbar(
+                      "Copied",
+                      "Tracking URL copied",
+                      snackPosition: SnackPosition.TOP,
+                      duration: const Duration(seconds: 2),
+                    );
+                  },
                 ),
               ],
             ),
@@ -300,14 +366,16 @@ class ShippingScreen extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.note_outlined,
-                    size: 14, color: Colors.grey.shade500),
+                Icon(
+                  Icons.note_outlined,
+                  size: 14,
+                  color: Colors.grey.shade500,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     notes,
-                    style: TextStyle(
-                        fontSize: 12, color: Colors.grey.shade600),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                 ),
               ],
@@ -334,9 +402,7 @@ class ShippingScreen extends StatelessWidget {
                 margin: const EdgeInsets.only(right: 10),
                 padding: const EdgeInsets.symmetric(horizontal: 25),
                 decoration: BoxDecoration(
-                  color: isSelected
-                      ? const Color(0xFF2E2E8A)
-                      : Colors.white,
+                  color: isSelected ? const Color(0xFF2E2E8A) : Colors.white,
                   borderRadius: BorderRadius.circular(25),
                   border: Border.all(
                     color: isSelected
@@ -365,12 +431,12 @@ class ShippingScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(color: Colors.grey, fontSize: 11)),
+        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 11)),
         const SizedBox(height: 4),
-        Text(value,
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, fontSize: 13)),
+        Text(
+          value,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        ),
       ],
     );
   }

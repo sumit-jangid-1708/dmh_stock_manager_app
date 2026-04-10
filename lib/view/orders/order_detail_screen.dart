@@ -10,6 +10,7 @@ import '../../model/order_models/order_detail_model.dart';
 import '../../res/components/widgets/courier_return_bottom_sheet.dart';
 import '../../res/components/widgets/create_bill_dialog_widget.dart';
 import '../../res/components/widgets/customer_return_bottom_sheet.dart';
+import '../../res/components/widgets/package_form_widget.dart';
 import '../../view_models/services/other_services/barcode_pdf_service.dart';
 
 class OrderDetailScreen extends StatelessWidget {
@@ -739,8 +740,9 @@ class OrderDetailScreen extends StatelessWidget {
                                       context,
                                       order,
                                     );
-                                    if (context.mounted)
+                                    if (context.mounted) {
                                       Navigator.of(context).pop();
+                                    }
                                   },
                                   icon: const Icon(
                                     Icons.download_outlined,
@@ -766,7 +768,17 @@ class OrderDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                   ],
-
+                  if (order.orderStatus == 1) ...[
+                    AppGradientButton(
+                      onPressed: () =>
+                          PackOrderBottomSheet.show(context, orderId: orderId),
+                      text: "Pack the Order",
+                      icon: Icons.inventory_2_outlined,
+                      width: double.infinity,
+                      height: 50,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   // ── Action Buttons ────────────────────────────────────────
                   AppGradientButton(
                     onPressed: () =>
@@ -784,8 +796,9 @@ class OrderDetailScreen extends StatelessWidget {
                           onPressed: () {
                             final oldOrder = orderController.orders
                                 .firstWhereOrNull((o) => o.id == orderId);
-                            if (oldOrder != null)
+                            if (oldOrder != null) {
                               showCourierReturnDialog(context, oldOrder);
+                            }
                           },
                           text: "Courier Return",
                           height: 50,
@@ -797,8 +810,9 @@ class OrderDetailScreen extends StatelessWidget {
                           onPressed: () {
                             final oldOrder = orderController.orders
                                 .firstWhereOrNull((o) => o.id == orderId);
-                            if (oldOrder != null)
+                            if (oldOrder != null) {
                               showCustomerReturnDialog(context, oldOrder);
+                            }
                           },
                           text: "Customer Return",
                           height: 50,

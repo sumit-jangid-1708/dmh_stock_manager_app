@@ -1,3 +1,7 @@
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
+
 class OrderDetailModel {
   final int id;
   final List<OrderItem> items;
@@ -5,7 +9,8 @@ class OrderDetailModel {
   final DateTime createdAt;
   final List<OrderRemark> remarks;
   final String status;
-  final bool isDeleted; // ✅ NEW
+  final int orderStatus; // ✅ NEW
+  final bool isDeleted;
   final int channel;
   final String countryCode;
   final String mobile;
@@ -25,7 +30,8 @@ class OrderDetailModel {
     required this.customerName,
     required this.createdAt,
     required this.status,
-    required this.isDeleted, // ✅ NEW
+    required this.orderStatus, // ✅ NEW
+    required this.isDeleted,
     required this.channel,
     required this.countryCode,
     required this.mobile,
@@ -44,24 +50,19 @@ class OrderDetailModel {
   factory OrderDetailModel.fromJson(Map<String, dynamic> json) {
     return OrderDetailModel(
       id: json['id'] ?? 0,
-
       items: (json['items'] as List? ?? [])
           .map((e) => OrderItem.fromJson(e))
           .toList(),
-
       customerName: json['customer_name'] ?? '',
-
-      createdAt:
-      DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
-
+      createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
       remarks: (json['remarks'] as List? ?? [])
           .map((e) => OrderRemark.fromJson(e))
           .toList(),
-
       status: json['status'] ?? "ACTIVE",
-
-      isDeleted: json['is_deleted'] ?? false, // ✅ NEW
-
+      orderStatus: json['order_status'] is int
+          ? json['order_status']
+          : int.tryParse('${json['order_status']}') ?? 0, // ✅ NEW
+      isDeleted: json['is_deleted'] ?? false,
       channel: json['channel'] ?? 0,
       countryCode: json['country_code'] ?? '',
       mobile: json['mobile'] ?? '',
@@ -77,6 +78,44 @@ class OrderDetailModel {
       totalAmount: json['total_amount'] ?? "0.00",
       paidAmount: json['paid_amount'] ?? "0.00",
     );
+  }
+
+  String get orderStatusText {
+    switch (orderStatus) {
+      case 1:
+        return "In Process";
+      case 2:
+        return "Packed";
+      case 3:
+        return "In Transit";
+      case 4:
+        return "Delivered";
+      case 5:
+        return "Courier Return";
+      case 6:
+        return "Customer Return";
+      default:
+        return "Unknown";
+    }
+  }
+
+  Color get orderStatusColor {
+    switch (orderStatus) {
+      case 1:
+        return const Color(0xFFFF9800); // Orange
+      case 2:
+        return const Color(0xFF2196F3); // Blue
+      case 3:
+        return const Color(0xFF9C27B0); // Purple
+      case 4:
+        return const Color(0xFF4CAF50); // Green
+      case 5:
+        return const Color(0xFFF44336); // Red
+      case 6:
+        return const Color(0xFFFF5722); // Deep Orange
+      default:
+        return Colors.grey;
+    }
   }
 }
 

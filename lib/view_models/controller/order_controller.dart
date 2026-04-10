@@ -26,7 +26,8 @@ import '../../view/orders/order_create_bottom_sheet.dart';
 class OrderController extends GetxController with BaseController {
   final OrderService orderService = OrderService();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-  late final BillingController billingController = Get.find<BillingController>();
+  late final BillingController billingController =
+      Get.find<BillingController>();
   final StockController stockController = Get.find<StockController>();
 
   var orders = <OrderDetailModel>[].obs;
@@ -41,7 +42,8 @@ class OrderController extends GetxController with BaseController {
   final TextEditingController channelOrderId = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController remarkController = TextEditingController();
-  final TextEditingController packageExpenseController = TextEditingController();
+  final TextEditingController packageExpenseController =
+      TextEditingController();
   final RxList<Map<String, dynamic>> items = <Map<String, dynamic>>[].obs;
 
   // ✅ UPDATED: Typed courier partners list (was Map-based before)
@@ -167,7 +169,9 @@ class OrderController extends GetxController with BaseController {
       isLoading.value = true;
       final response = await orderService.getOrderDetailApi();
       final List<dynamic> data = response;
-      final allOrders = data.map((item) => OrderDetailModel.fromJson(item)).toList();
+      final allOrders = data
+          .map((item) => OrderDetailModel.fromJson(item))
+          .toList();
       orders.value = allOrders.where((o) => !o.isDeleted).toList();
       filteredOrders.assignAll(orders);
     } catch (e) {
@@ -177,7 +181,7 @@ class OrderController extends GetxController with BaseController {
     }
   }
 
-// order_controller.dart
+  // order_controller.dart
   Future<void> getOrdersWithShipments() async {
     try {
       isLoadingShipmentsList.value = true;
@@ -190,7 +194,9 @@ class OrderController extends GetxController with BaseController {
         return;
       }
       ordersWithShipments.value = response
-          .map((e) => OrderWithShipmentModel.fromJson(e as Map<String, dynamic>))
+          .map(
+            (e) => OrderWithShipmentModel.fromJson(e as Map<String, dynamic>),
+          )
           .toList();
       debugPrint("✅ ordersWithShipments loaded: ${ordersWithShipments.length}");
     } catch (e, s) {
@@ -206,8 +212,14 @@ class OrderController extends GetxController with BaseController {
   // ─────────────────────────────────────────────────────────────────────────
   Future<void> createOrder() async {
     if (!(formKey.currentState?.validate() ?? false)) return;
-    if (phoneNumber.value.isEmpty) { AppAlerts.error("Please enter phone number"); return; }
-    if (items.isEmpty) { AppAlerts.error("Please add at least one product"); return; }
+    if (phoneNumber.value.isEmpty) {
+      AppAlerts.error("Please enter phone number");
+      return;
+    }
+    if (items.isEmpty) {
+      AppAlerts.error("Please add at least one product");
+      return;
+    }
 
     try {
       isLoading.value = true;
@@ -235,20 +247,27 @@ class OrderController extends GetxController with BaseController {
         "items": itemList,
         "country_code": countryCode.value,
         "mobile": phoneNumber.value,
-        "package_expence": double.tryParse(packageExpenseController.text.trim()) ?? 0.0,
+        "package_expence":
+            double.tryParse(packageExpenseController.text.trim()) ?? 0.0,
       };
 
       final response = await orderService.createOrderApi(data);
       if (kDebugMode) print("🟢 RAW API RESPONSE: $response");
 
-      if (response is! Map<String, dynamic>) { AppAlerts.error("Invalid server response"); return; }
+      if (response is! Map<String, dynamic>) {
+        AppAlerts.error("Invalid server response");
+        return;
+      }
 
-      final bool isSuccess = response.containsKey('order_id') ||
+      final bool isSuccess =
+          response.containsKey('order_id') ||
           response.containsKey('id') ||
           response.containsKey('order');
       if (!isSuccess) {
         final firstError = response.values.first;
-        final errorMsg = firstError is List ? firstError.first.toString() : firstError.toString();
+        final errorMsg = firstError is List
+            ? firstError.first.toString()
+            : firstError.toString();
         AppAlerts.error(errorMsg);
         return;
       }
@@ -270,7 +289,10 @@ class OrderController extends GetxController with BaseController {
   }
 
   Future<void> addRemark(int orderId, String remark) async {
-    if (remark.trim().isEmpty) { AppAlerts.error("Please enter a remark"); return; }
+    if (remark.trim().isEmpty) {
+      AppAlerts.error("Please enter a remark");
+      return;
+    }
     try {
       isAddingRemark.value = true;
       await orderService.addRemark(orderId, remark.trim());
@@ -311,14 +333,17 @@ class OrderController extends GetxController with BaseController {
 
   void setScannedSku(String sku) {
     final itemController = Get.find<ItemController>();
-    final product = itemController.products.firstWhereOrNull((p) => p.sku == sku);
+    final product = itemController.products.firstWhereOrNull(
+      (p) => p.sku == sku,
+    );
     if (product != null) {
       final existingIndex = items.indexWhere((item) {
         final p = (item["product"] as Rx<ProductModel?>?)?.value;
         return p?.id == product.id;
       });
       if (existingIndex != -1) {
-        final qtyController = items[existingIndex]["quantity"] as TextEditingController;
+        final qtyController =
+            items[existingIndex]["quantity"] as TextEditingController;
         int currentQty = int.tryParse(qtyController.text) ?? 0;
         qtyController.text = (currentQty + 1).toString();
       } else {
@@ -354,10 +379,14 @@ class OrderController extends GetxController with BaseController {
     double amount = 0.0;
     if (paidStatus.value == "PAID") {
       final order = orderDetail.value;
-      if (order != null) amount = order.items.fold(0.0, (sum, item) => sum + item.totalPrice);
+      if (order != null)
+        amount = order.items.fold(0.0, (sum, item) => sum + item.totalPrice);
     } else if (paidStatus.value == "PARTIAL") {
       amount = double.tryParse(partialAmount.value) ?? 0.0;
-      if (amount <= 0) { AppAlerts.error("Please enter a valid partial amount"); return; }
+      if (amount <= 0) {
+        AppAlerts.error("Please enter a valid partial amount");
+        return;
+      }
     }
 
     String formattedDate = DateFormat('yyyy-MM-dd').format(paymentDate.value);
@@ -367,7 +396,8 @@ class OrderController extends GetxController with BaseController {
       "paid_status": paidStatus.value,
       "amount": amount,
     };
-    if (transactionId.value.isNotEmpty) data["transaction_id"] = transactionId.value;
+    if (transactionId.value.isNotEmpty)
+      data["transaction_id"] = transactionId.value;
 
     try {
       isLoading.value = true;
@@ -375,7 +405,9 @@ class OrderController extends GetxController with BaseController {
       if (response == null) throw Exception("Empty response from server");
       final apiResponse = CreateBillModel.fromJson(response);
       if (Get.isDialogOpen ?? false) Get.back();
-      AppAlerts.success(apiResponse.message.isEmpty ? "Bill Created" : apiResponse.message);
+      AppAlerts.success(
+        apiResponse.message.isEmpty ? "Bill Created" : apiResponse.message,
+      );
       clearBillForm();
       await getOrderList();
       Get.to(() => BillingScreen());
@@ -391,6 +423,7 @@ class OrderController extends GetxController with BaseController {
   Future<void> createCourierPartner({
     required String title,
     required List<String> mediatorTitles,
+    VoidCallback? onSuccess, // ✅ callback add kiya
   }) async {
     if (title.trim().isEmpty) {
       AppAlerts.error("Please enter courier partner name");
@@ -410,17 +443,15 @@ class OrderController extends GetxController with BaseController {
       final response = await orderService.createCourierPartner(data);
 
       if (response != null && response["data"] != null) {
-        // ✅ Parse typed model and add to list
         final newCourier = CourierPartnerDetailModel.fromJson(
           response["data"] as Map<String, dynamic>,
         );
         courierPartners.add(newCourier);
         AppAlerts.success(response["message"] ?? "Courier created successfully ✅");
-        if (Get.isDialogOpen ?? false) Get.back();
+        onSuccess?.call(); // ✅ controller se nahi, widget se band karo
       } else {
-        // ✅ If API doesn't return data object, refresh the full list
         AppAlerts.success("Courier created successfully ✅");
-        if (Get.isDialogOpen ?? false) Get.back();
+        onSuccess?.call(); // ✅ yahan bhi
         await fetchCourierPartners();
       }
     } catch (e) {
@@ -440,6 +471,7 @@ class OrderController extends GetxController with BaseController {
     required double shippingExpense,
     required double otherExpense,
     String notes = "",
+    VoidCallback? onSuccess, // ✅ callback add kiya
   }) async {
     if (trackingId.trim().isEmpty) {
       AppAlerts.error("Please enter tracking ID");
@@ -457,14 +489,14 @@ class OrderController extends GetxController with BaseController {
         "other_expense": otherExpense,
         "notes": notes.trim(),
       };
-
       final response = await orderService.createShipment(data, orderId);
-
       if (response != null) {
-        // ✅ Success message
-        final message = response["message"] ?? "Shipment created successfully ✅";
-        AppAlerts.success(message);
-        if (Get.isBottomSheetOpen ?? false) Get.back();
+        AppAlerts.success(
+          response["message"] ?? "Shipment created successfully ✅",
+        );
+        // ✅ Widget se close karo — controller se nahi
+        onSuccess?.call();
+        // ✅ List refresh karo
         await getOrdersWithShipments();
       } else {
         AppAlerts.error("Failed to create shipment");
@@ -475,7 +507,6 @@ class OrderController extends GetxController with BaseController {
       isCreatingShipment.value = false;
     }
   }
-
 
   void filterOrders(String query) {
     if (query.isEmpty) {
@@ -508,7 +539,8 @@ class OrderController extends GetxController with BaseController {
       return p?.id == product.id;
     });
     if (existingIndex != -1) {
-      final qtyController = items[existingIndex]["quantity"] as TextEditingController;
+      final qtyController =
+          items[existingIndex]["quantity"] as TextEditingController;
       int currentQty = int.tryParse(qtyController.text) ?? 0;
       qtyController.text = (currentQty + 1).toString();
       Get.snackbar(
@@ -524,7 +556,9 @@ class OrderController extends GetxController with BaseController {
       items.add({
         "product": Rx<ProductModel?>(product),
         "quantity": TextEditingController(text: "1"),
-        "unitPrice": TextEditingController(text: product.unitPurchasePrice.toString()),
+        "unitPrice": TextEditingController(
+          text: product.unitPurchasePrice.toString(),
+        ),
       });
       Get.snackbar(
         "Added",
@@ -540,7 +574,9 @@ class OrderController extends GetxController with BaseController {
 
   void addScannedProductFromScan(ScanProductModel scanProduct) {
     final itemController = Get.find<ItemController>();
-    final product = itemController.products.firstWhereOrNull((p) => p.sku == scanProduct.sku);
+    final product = itemController.products.firstWhereOrNull(
+      (p) => p.sku == scanProduct.sku,
+    );
     if (product == null) {
       Get.snackbar(
         "Not Found",

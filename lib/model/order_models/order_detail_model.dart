@@ -1,5 +1,9 @@
 // lib/model/order_models/order_details_model.dart
 
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
+
 class OrderDetailsModel {
   final int orderId;
   final String channel;
@@ -8,7 +12,7 @@ class OrderDetailsModel {
   final String customerEmail;
   final String mobile;
   final String countryCode;
-
+  final int orderStatus;
   // ✅ Changed: String -> List<dynamic>
   final List<OrderRemark> remarks;
 
@@ -26,6 +30,7 @@ class OrderDetailsModel {
     required this.channelOrderId,
     required this.customerName,
     required this.customerEmail,
+    required this.orderStatus,
     required this.mobile,
     required this.countryCode,
     required this.remarks,
@@ -48,6 +53,8 @@ class OrderDetailsModel {
       channelOrderId: json['channel_order_id'] ?? '',
       customerName: json['customer_name'] ?? '',
       customerEmail: json['customer_email'] ?? '',
+      orderStatus: json['order_status'] ?? 0, // ✅ NEW
+
       mobile: json['mobile'] ?? '',
       countryCode: json['country_code'] ?? '',
 
@@ -77,6 +84,45 @@ class OrderDetailsModel {
             )
           : [],
     );
+  }
+
+
+  String get orderStatusText {
+    switch (orderStatus) {
+      case 1:
+        return "In Process";
+      case 2:
+        return "Packed";
+      case 3:
+        return "In Transit";
+      case 4:
+        return "Delivered";
+      case 5:
+        return "Courier Return";
+      case 6:
+        return "Customer Return";
+      default:
+        return "Unknown";
+    }
+  }
+
+  Color get orderStatusColor {
+    switch (orderStatus) {
+      case 1:
+        return const Color(0xFFFF9800); // Orange
+      case 2:
+        return const Color(0xFF2196F3); // Blue
+      case 3:
+        return const Color(0xFF9C27B0); // Purple
+      case 4:
+        return const Color(0xFF4CAF50); // Green
+      case 5:
+        return const Color(0xFFF44336); // Red
+      case 6:
+        return const Color(0xFFFF5722); // Deep Orange
+      default:
+        return Colors.grey;
+    }
   }
 }
 

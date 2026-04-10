@@ -7,7 +7,6 @@ import '../../res/components/widgets/custom_text_field.dart';
 import '../../view_models/controller/order_controller.dart';
 
 // ─── Public entry point ───────────────────────────────────────────────────────
-
 void showShippingDetailsBottomSheet(BuildContext context, int orderId) {
   Get.bottomSheet(
     _ShippingDetailBottomSheet(orderId: orderId),
@@ -15,6 +14,8 @@ void showShippingDetailsBottomSheet(BuildContext context, int orderId) {
     backgroundColor: Colors.transparent,
     enableDrag: true,
     isDismissible: true,
+    // ✅ keyboard ke liye zaroori
+    ignoreSafeArea: false,
   );
 }
 
@@ -31,14 +32,12 @@ class _ShippingDetailBottomSheetState
     extends State<_ShippingDetailBottomSheet> {
   final OrderController _ctrl = Get.find<OrderController>();
 
-  // ✅ Controllers initialised in initState, disposed in dispose — no leaks
   late final TextEditingController _trackingIdCtrl;
   late final TextEditingController _trackingUrlCtrl;
   late final TextEditingController _shippingExpCtrl;
   late final TextEditingController _additionalExpCtrl;
   late final TextEditingController _notesCtrl;
 
-  // ✅ Rx state for reactive dropdowns & date picker
   final Rx<CourierPartnerDetailModel?> _selectedCourier =
       Rx<CourierPartnerDetailModel?>(null);
   final Rx<MediatorDetailModel?> _selectedMediator = Rx<MediatorDetailModel?>(
@@ -54,8 +53,6 @@ class _ShippingDetailBottomSheetState
     _shippingExpCtrl = TextEditingController();
     _additionalExpCtrl = TextEditingController();
     _notesCtrl = TextEditingController();
-
-    // Refresh courier list each time sheet opens
     _ctrl.fetchCourierPartners();
   }
 
@@ -69,12 +66,10 @@ class _ShippingDetailBottomSheetState
     super.dispose();
   }
 
-  // ─── Add Courier Dialog ─────────────────────────────────────────────────
   void _openAddCourierDialog() {
     Get.dialog(const _AddCourierDialog(), barrierDismissible: false);
   }
 
-  // ─── Date picker ────────────────────────────────────────────────────────
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -85,31 +80,43 @@ class _ShippingDetailBottomSheetState
     if (picked != null) _shippingDate.value = picked;
   }
 
-  // ─── Submit ─────────────────────────────────────────────────────────────
   void _submit() {
     if (_selectedCourier.value == null) {
-      Get.snackbar("Error", "Please select courier partner");
+      Get.snackbar(
+        "Error",
+        "Please select courier partner",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return;
     }
-
     if (_selectedMediator.value == null) {
-      Get.snackbar("Error", "Please select mediator");
+      Get.snackbar(
+        "Error",
+        "Please select mediator",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return;
     }
-
     if (_trackingIdCtrl.text.trim().isEmpty) {
-      Get.snackbar("Error", "Please enter tracking ID");
+      Get.snackbar(
+        "Error",
+        "Please enter tracking ID",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return;
     }
-
     if (_shippingDate.value == null) {
-      Get.snackbar("Error", "Please select shipping date");
+      Get.snackbar(
+        "Error",
+        "Please select shipping date",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return;
     }
-
-    final shippingExpense = double.tryParse(_shippingExpCtrl.text.trim()) ?? 0;
-
-    final otherExpense = double.tryParse(_additionalExpCtrl.text.trim()) ?? 0;
 
     _ctrl.createShipment(
       orderId: widget.orderId,
@@ -118,231 +125,227 @@ class _ShippingDetailBottomSheetState
       trackingId: _trackingIdCtrl.text.trim(),
       shippingDate: DateFormat('yyyy-MM-dd').format(_shippingDate.value!),
       trackingUrl: _trackingUrlCtrl.text.trim(),
-      shippingExpense: shippingExpense,
-      otherExpense: otherExpense,
+      shippingExpense: double.tryParse(_shippingExpCtrl.text.trim()) ?? 0,
+      otherExpense: double.tryParse(_additionalExpCtrl.text.trim()) ?? 0,
       notes: _notesCtrl.text.trim(),
+      // ✅ Problem 2 Fix: callback se close karo — controller pe depend mat karo
+      onSuccess: () {
+        if (mounted) Navigator.of(context).pop();
+      },
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // ✅ FIX: viewInsets.bottom handled inside build so keyboard inset
-    //    is reactive; avoids the 99461-px overflow caused by a fixed
-    //    Column that didn't account for available height.
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
+    // ✅ Problem 1 Fix: viewInsets yahan lao — bahar nahi
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return Container(
+      // ✅ height = screen - status bar - keyboard
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.92,
       ),
-      child: Container(
-        // ✅ FIX: constrain max height so Column never overflows
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.92,
-        ),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // ── Drag handle ──────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.only(top: 12, bottom: 8),
-              child: Container(
-                width: 40,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(10),
-                ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Drag handle ──
+          Padding(
+            padding: const EdgeInsets.only(top: 12, bottom: 8),
+            child: Container(
+              width: 40,
+              height: 5,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
+          ),
 
-            // ── Scrollable body ──────────────────────────────────────────
-            // ✅ FIX: Expanded + SingleChildScrollView means content can
-            //    grow without overflowing the RenderFlex.
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 4, 24, 32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Create Shipment",
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1A1A4F),
-                      ),
+          // ✅ Problem 1 Fix: bottomInset as padding inside scroll view
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(24, 4, 24, 32 + bottomInset),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Create Shipment",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A1A4F),
                     ),
-                    const SizedBox(height: 20),
+                  ),
+                  const SizedBox(height: 20),
 
-                    // ── 1. Courier Partner ───────────────────────────────
-                    _SheetLabel("Courier Partner"),
-                    Obx(() {
-                      final couriers = _ctrl.courierPartners;
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: _ctrl.isLoadingCouriers.value
-                                ? _loadingDropdown("Loading couriers…")
-                                : _CourierDropdown<CourierPartnerDetailModel>(
-                                    items: couriers,
-                                    selectedObs: _selectedCourier,
-                                    labelOf: (c) => c.title,
-                                    hint: couriers.isEmpty
-                                        ? "No couriers available"
-                                        : "Select Courier",
-                                    prefixIcon: Icons.local_shipping_outlined,
-                                    onChanged: (val) {
-                                      _selectedCourier.value = val;
-                                      _selectedMediator.value =
-                                          null; // reset mediator
-                                    },
-                                  ),
-                          ),
-                          const SizedBox(width: 10),
-                          _AddIconButton(onTap: _openAddCourierDialog),
-                        ],
-                      );
-                    }),
-                    const SizedBox(height: 16),
-
-                    // ── 2. Mediator Partner ──────────────────────────────
-                    _SheetLabel("Mediator Partner"),
-                    Obx(() {
-                      final mediators = _selectedCourier.value?.mediators ?? [];
-                      return _CourierDropdown<MediatorDetailModel>(
-                        items: mediators,
-                        selectedObs: _selectedMediator,
-                        labelOf: (m) => m.title,
-                        hint: mediators.isEmpty
-                            ? "Select courier first"
-                            : "Select Mediator",
-                        prefixIcon: Icons.handshake_outlined,
-                      );
-                    }),
-                    const SizedBox(height: 16),
-
-                    // ── 3. Tracking ID & Shipping Date ───────────────────
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  // ── 1. Courier Partner ──
+                  _SheetLabel("Courier Partner"),
+                  Obx(() {
+                    final couriers = _ctrl.courierPartners;
+                    return Row(
                       children: [
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _SheetLabel("Tracking ID"),
-                              AppTextField(
-                                controller: _trackingIdCtrl,
-                                hintText: "Enter ID",
-                                prefixIcon: Icons.qr_code_scanner_rounded,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _SheetLabel("Shipping Date"),
-                              Obx(
-                                () => _DatePickerTile(
-                                  label: _shippingDate.value == null
-                                      ? "Date"
-                                      : DateFormat(
-                                          'dd/MM/yy',
-                                        ).format(_shippingDate.value!),
-                                  isEmpty: _shippingDate.value == null,
-                                  onTap: _pickDate,
+                          child: _ctrl.isLoadingCouriers.value
+                              ? _loadingDropdown("Loading couriers…")
+                              : _CourierDropdown<CourierPartnerDetailModel>(
+                                  items: couriers,
+                                  selectedObs: _selectedCourier,
+                                  labelOf: (c) => c.title,
+                                  hint: couriers.isEmpty
+                                      ? "No couriers available"
+                                      : "Select Courier",
+                                  prefixIcon: Icons.local_shipping_outlined,
+                                  onChanged: (val) {
+                                    _selectedCourier.value = val;
+                                    _selectedMediator.value = null;
+                                  },
                                 ),
-                              ),
-                            ],
-                          ),
                         ),
+                        const SizedBox(width: 10),
+                        _AddIconButton(onTap: _openAddCourierDialog),
                       ],
-                    ),
-                    const SizedBox(height: 16),
+                    );
+                  }),
+                  const SizedBox(height: 16),
 
-                    // ── 4. Tracking URL ──────────────────────────────────
-                    _SheetLabel("Tracking / Reference URL"),
-                    AppTextField(
-                      controller: _trackingUrlCtrl,
-                      hintText: "https://tracking-link.com",
-                      prefixIcon: Icons.link_rounded,
-                      keyboardType: TextInputType.url,
-                    ),
-                    const SizedBox(height: 16),
+                  // ── 2. Mediator Partner ──
+                  _SheetLabel("Mediator Partner"),
+                  Obx(() {
+                    final mediators = _selectedCourier.value?.mediators ?? [];
+                    return _CourierDropdown<MediatorDetailModel>(
+                      items: mediators,
+                      selectedObs: _selectedMediator,
+                      labelOf: (m) => m.title,
+                      hint: mediators.isEmpty
+                          ? "Select courier first"
+                          : "Select Mediator",
+                      prefixIcon: Icons.handshake_outlined,
+                    );
+                  }),
+                  const SizedBox(height: 16),
 
-                    // ── 5. Expenses ──────────────────────────────────────
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _SheetLabel("Shipping Expense"),
-                              AppTextField(
-                                controller: _shippingExpCtrl,
-                                hintText: "Amount",
-                                prefixIcon: Icons.currency_rupee,
-                                keyboardType: TextInputType.number,
-                              ),
-                            ],
-                          ),
+                  // ── 3. Tracking ID & Shipping Date ──
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _SheetLabel("Tracking ID"),
+                            AppTextField(
+                              controller: _trackingIdCtrl,
+                              hintText: "Enter ID",
+                              prefixIcon: Icons.qr_code_scanner_rounded,
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _SheetLabel("Other Expense"),
-                              AppTextField(
-                                controller: _additionalExpCtrl,
-                                hintText: "Amount",
-                                prefixIcon: Icons.add_card_outlined,
-                                keyboardType: TextInputType.number,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // ── 6. Notes ─────────────────────────────────────────
-                    _SheetLabel("Notes / Remarks"),
-                    AppTextField(
-                      controller: _notesCtrl,
-                      hintText: "Write details here…",
-                      prefixIcon: Icons.note_add_outlined,
-                      maxLines: 4,
-                      keyboardType: TextInputType.multiline,
-                    ),
-                    const SizedBox(height: 28),
-
-                    // ── 7. Submit ────────────────────────────────────────
-                    Obx(
-                      () => AppGradientButton(
-                        width: double.infinity,
-                        height: 55,
-                        text: _ctrl.isCreatingShipment.value
-                            ? "Creating..."
-                            : "Confirm Shipment",
-                        onPressed: _ctrl.isCreatingShipment.value
-                            ? null
-                            : _submit,
                       ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _SheetLabel("Shipping Date"),
+                            Obx(
+                              () => _DatePickerTile(
+                                label: _shippingDate.value == null
+                                    ? "Date"
+                                    : DateFormat(
+                                        'dd/MM/yy',
+                                      ).format(_shippingDate.value!),
+                                isEmpty: _shippingDate.value == null,
+                                onTap: _pickDate,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── 4. Tracking URL ──
+                  _SheetLabel("Tracking / Reference URL"),
+                  AppTextField(
+                    controller: _trackingUrlCtrl,
+                    hintText: "https://tracking-link.com",
+                    prefixIcon: Icons.link_rounded,
+                    keyboardType: TextInputType.url,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── 5. Expenses ──
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _SheetLabel("Shipping Expense"),
+                            AppTextField(
+                              controller: _shippingExpCtrl,
+                              hintText: "Amount",
+                              prefixIcon: Icons.currency_rupee,
+                              keyboardType: TextInputType.number,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _SheetLabel("Other Expense"),
+                            AppTextField(
+                              controller: _additionalExpCtrl,
+                              hintText: "Amount",
+                              prefixIcon: Icons.add_card_outlined,
+                              keyboardType: TextInputType.number,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── 6. Notes ──
+                  _SheetLabel("Notes / Remarks"),
+                  AppTextField(
+                    controller: _notesCtrl,
+                    hintText: "Write details here…",
+                    prefixIcon: Icons.note_add_outlined,
+                    maxLines: 4,
+                    keyboardType: TextInputType.multiline,
+                  ),
+                  const SizedBox(height: 28),
+
+                  // ── 7. Submit ──
+                  Obx(
+                    () => AppGradientButton(
+                      width: double.infinity,
+                      height: 55,
+                      text: _ctrl.isCreatingShipment.value
+                          ? "Creating..."
+                          : "Confirm Shipment",
+                      onPressed: _ctrl.isCreatingShipment.value
+                          ? null
+                          : _submit,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -400,6 +403,9 @@ class _AddCourierDialogState extends State<_AddCourierDialog> {
     _ctrl.createCourierPartner(
       title: _courierTitleCtrl.text.trim(),
       mediatorTitles: mediatorTitles,
+      onSuccess: () {
+        if (mounted) Navigator.of(context).pop();
+      },
     );
     // Dialog is closed by the controller on success
   }
