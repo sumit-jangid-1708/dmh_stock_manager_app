@@ -550,7 +550,7 @@ class _PackedInfoCard extends StatelessWidget {
       if (extra.length?.isNotEmpty == true)
         _DimEntry('Length', '${extra.length} cm'),
       if (extra.weight?.isNotEmpty == true)
-        _DimEntry('Weight', '${extra.weight} kg'),
+        _DimEntry('Weight', '${extra.weight} gram'),
     ];
 
     return Container(
