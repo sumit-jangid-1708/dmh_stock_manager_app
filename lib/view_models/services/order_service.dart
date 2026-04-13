@@ -89,4 +89,14 @@ class OrderService {
     );
     return response;
   }
+
+  Future<dynamic> updateOrderStatus(Map<String, dynamic>data) async{
+    final response = await _apiServices.postApi(data, AppUrl.orderStatus);
+    return response;
+  }
+
+  Future<dynamic> getAllOrderStatus(int orderId)async{
+    final response = await _apiServices.getApi("${AppUrl.orderStatus}?order_id=$orderId");
+    return response;
+  }
 }

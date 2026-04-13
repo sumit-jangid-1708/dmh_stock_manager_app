@@ -42,6 +42,7 @@ class AppUrl {
   static const String courierList = '$baseUrl/courier/list/';
   static const String createShipment = "$baseUrl/order";
   static const String shipmentList = "$baseUrl/order-with-shipments";
+  static const String orderStatus = "$baseUrl/order-status/";
 }
 
 

@@ -76,32 +76,34 @@ void showCourierReturnDialog(BuildContext context, OrderDetailModel order) {
             const SizedBox(height: 20),
 
             // Product Selection Dropdown
-            Obx(() => DropdownButtonFormField<OrderItem>(
-              value: selectedProduct.value,
-              decoration: Utils.inputDecoration(
-                "Select Product *",
-                Icons.inventory_2_outlined,
+            Obx(
+              () => DropdownButtonFormField<OrderItem>(
+                value: selectedProduct.value,
+                decoration: Utils.inputDecoration(
+                  "Select Product *",
+                  Icons.inventory_2_outlined,
+                ),
+                hint: const Text("Choose a product"),
+                items: order.items.map((item) {
+                  return DropdownMenuItem(
+                    value: item,
+                    child: Text(
+                      "${item.product.name} (Qty: ${item.quantity})",
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  selectedProduct.value = val;
+                  qtyController.clear();
+                  condition.value = null;
+                  claimStatus.value = null;
+                  claimResult.value = null;
+                  claimAmountController.clear();
+                  remarksController.clear();
+                },
               ),
-              hint: const Text("Choose a product"),
-              items: order.items.map((item) {
-                return DropdownMenuItem(
-                  value: item,
-                  child: Text(
-                    "${item.product.name} (Qty: ${item.quantity})",
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                );
-              }).toList(),
-              onChanged: (val) {
-                selectedProduct.value = val;
-                qtyController.clear();
-                condition.value = null;
-                claimStatus.value = null;
-                claimResult.value = null;
-                claimAmountController.clear();
-                remarksController.clear();
-              },
-            )),
+            ),
 
             const SizedBox(height: 16),
 
@@ -116,29 +118,28 @@ void showCourierReturnDialog(BuildContext context, OrderDetailModel order) {
             const SizedBox(height: 16),
 
             // Condition Dropdown
-            Obx(() => DropdownButtonFormField<ReturnCondition>(
-              value: condition.value,
-              decoration: Utils.inputDecoration(
-                "Condition *",
-                Icons.info_outline,
+            Obx(
+              () => DropdownButtonFormField<ReturnCondition>(
+                value: condition.value,
+                decoration: Utils.inputDecoration(
+                  "Condition *",
+                  Icons.info_outline,
+                ),
+                hint: const Text("Select condition"),
+                items: conditions.map((c) {
+                  return DropdownMenuItem(value: c, child: Text(c.apiValue));
+                }).toList(),
+                onChanged: (val) {
+                  condition.value = val;
+                  if (val == ReturnCondition.safe) {
+                    claimStatus.value = null;
+                    claimResult.value = null;
+                    claimAmountController.clear();
+                    remarksController.clear();
+                  }
+                },
               ),
-              hint: const Text("Select condition"),
-              items: conditions.map((c) {
-                return DropdownMenuItem(
-                  value: c,
-                  child: Text(c.apiValue),
-                );
-              }).toList(),
-              onChanged: (val) {
-                condition.value = val;
-                if (val == ReturnCondition.safe) {
-                  claimStatus.value = null;
-                  claimResult.value = null;
-                  claimAmountController.clear();
-                  remarksController.clear();
-                }
-              },
-            )),
+            ),
 
             // Show additional fields only for DAMAGED condition
             Obx(() {
@@ -224,124 +225,133 @@ void showCourierReturnDialog(BuildContext context, OrderDetailModel order) {
             const SizedBox(height: 24),
 
             // Submit Button
-            Obx(() => SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1A1A4F),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            Obx(
+              () => SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1A1A4F),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                ),
-                onPressed: returnController.isLoading.value
-                    ? null
-                    : () async {
-                  // Validation
-                  if (selectedProduct.value == null) {
-                    AppAlerts.error("Please select a product");
-                    return;
-                  }
+                  onPressed: returnController.isLoading.value
+                      ? null
+                      : () async {
+                          // Validation
+                          if (selectedProduct.value == null) {
+                            AppAlerts.error("Please select a product");
+                            return;
+                          }
 
-                  final qty = int.tryParse(qtyController.text) ?? 0;
-                  if (qty <= 0) {
-                    AppAlerts.error("Please enter valid quantity");
-                    return;
-                  }
+                          final qty = int.tryParse(qtyController.text) ?? 0;
+                          if (qty <= 0) {
+                            AppAlerts.error("Please enter valid quantity");
+                            return;
+                          }
 
-                  if (condition.value == null) {
-                    AppAlerts.error("Please select condition");
-                    return;
-                  }
+                          if (condition.value == null) {
+                            AppAlerts.error("Please select condition");
+                            return;
+                          }
 
-                  // Additional validation for DAMAGED
-                  if (condition.value == ReturnCondition.damaged) {
-                    if (claimStatus.value == null) {
-                      AppAlerts.error("Please select claim status");
-                      return;
-                    }
+                          // Additional validation for DAMAGED
+                          if (condition.value == ReturnCondition.damaged) {
+                            if (claimStatus.value == null) {
+                              AppAlerts.error("Please select claim status");
+                              return;
+                            }
 
-                    if (claimStatus.value == ClaimStatus.claimed) {
-                      if (claimResult.value == null) {
-                        AppAlerts.error("Please select claim result");
-                        return;
-                      }
+                            if (claimStatus.value == ClaimStatus.claimed) {
+                              if (claimResult.value == null) {
+                                AppAlerts.error("Please select claim result");
+                                return;
+                              }
 
-                      if (claimResult.value == ClaimResult.received) {
-                        final claimAmount =
-                            int.tryParse(claimAmountController.text) ??
-                                0;
-                        if (claimAmount <= 0) {
-                          AppAlerts.error(
-                              "Please enter valid claim amount");
-                          return;
-                        }
-                      }
-                    }
+                              if (claimResult.value == ClaimResult.received) {
+                                final claimAmount =
+                                    int.tryParse(claimAmountController.text) ??
+                                    0;
+                                if (claimAmount <= 0) {
+                                  AppAlerts.error(
+                                    "Please enter valid claim amount",
+                                  );
+                                  return;
+                                }
+                              }
+                            }
 
-                    if (claimStatus.value == ClaimStatus.notClaimed) {
-                      if (remarksController.text.trim().isEmpty) {
-                        AppAlerts.error(
-                            "Remarks are mandatory for NOT CLAIMED status");
-                        return;
-                      }
-                    }
-                  }
+                            if (claimStatus.value == ClaimStatus.notClaimed) {
+                              if (remarksController.text.trim().isEmpty) {
+                                AppAlerts.error(
+                                  "Remarks are mandatory for NOT CLAIMED status",
+                                );
+                                return;
+                              }
+                            }
+                          }
 
-                  // Create CourierReturnRequest
-                  try {
-                    final request = CourierReturnRequest(
-                      order: order.id,
-                      product: selectedProduct.value!.product.id,
-                      quantity: qty,
-                      condition: condition.value!,
-                      claimStatus: claimStatus.value,
-                      claimResult: claimResult.value,
-                      claimAmount:
-                      claimResult.value == ClaimResult.received
-                          ? int.tryParse(claimAmountController.text)
-                          : null,
-                      remarks:
-                      claimStatus.value == ClaimStatus.notClaimed
-                          ? remarksController.text.trim()
-                          : null,
-                    );
+                          // Create CourierReturnRequest
+                          try {
+                            final request = CourierReturnRequest(
+                              order: order.id,
+                              product: selectedProduct.value!.product.id,
+                              quantity: qty,
+                              condition: condition.value!,
+                              claimStatus: claimStatus.value,
+                              claimResult: claimResult.value,
+                              claimAmount:
+                                  claimResult.value == ClaimResult.received
+                                  ? int.tryParse(claimAmountController.text)
+                                  : null,
+                              remarks:
+                                  claimStatus.value == ClaimStatus.notClaimed
+                                  ? remarksController.text.trim()
+                                  : null,
+                            );
 
-                    // Convert to JSON and call API
-                    final payload = request.toJson();
+                            // Convert to JSON and call API
+                            final payload = request.toJson();
 
-                    // ✅ Call ReturnController API with callback to refresh orders
-                    await returnController.courierReturn(
-                      body: payload,
-                      onSuccess: () {
-                        // Refresh order list after success
-                        orderController.getOrderList();
-                        Get.toNamed(RouteName.returnScreen);
-                      },
-                    );
-                  } catch (e) {
-                    AppAlerts.error(e.toString());
-                  }
-                },
-                child: returnController.isLoading.value
-                    ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
-                )
-                    : const Text(
-                  "Submit Courier Return",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                            // ✅ Call ReturnController API with callback to refresh orders
+                            await returnController.courierReturn(
+                              body: payload,
+                              onSuccess: () {
+                                orderController.updateOrderStatus(
+                                  orderId: order.id,
+                                  status: 5,
+                                  note: "Courier Return",
+                                );
+                                // Refresh order list after success
+                                orderController.getOrderList();
+                                Get.toNamed(RouteName.returnScreen);
+                              },
+                            );
+                          } catch (e) {
+                            AppAlerts.error(e.toString());
+                          }
+                        },
+                  child: returnController.isLoading.value
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          "Submit Courier Return",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
-            )),
+            ),
           ],
         ),
       ),

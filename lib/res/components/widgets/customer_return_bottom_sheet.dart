@@ -263,6 +263,11 @@ void showCustomerReturnDialog(BuildContext context, OrderDetailModel order) {
                   await returnController.customerReturn(
                     request: request,
                     onSuccess: () {
+                      orderController.updateOrderStatus(
+                        orderId: order.id,
+                        status: 6,
+                        note: "Customer Return",
+                      );
                       // Refresh order list after success
                       orderController.getOrderList();
                       Get.toNamed(RouteName.returnScreen);

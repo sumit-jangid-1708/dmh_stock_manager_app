@@ -1,6 +1,10 @@
+import 'dart:io';
+import 'dart:math';
+
 import 'package:dmj_stock_manager/model/bills_model/create_bill_model.dart';
 import 'package:dmj_stock_manager/model/order_models/create_order_response_model.dart';
 import 'package:dmj_stock_manager/model/order_models/order_model.dart';
+import 'package:dmj_stock_manager/model/order_models/order_status_log_model.dart'; // ✅ NEW
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
 import 'package:dmj_stock_manager/utils/utils.dart';
 import 'package:dmj_stock_manager/view/billings/billing_screen.dart';
@@ -8,6 +12,7 @@ import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/billing_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/stock_controller.dart';
+import 'package:dmj_stock_manager/view_models/services/items_service%20.dart';
 import 'package:dmj_stock_manager/view_models/services/order_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -25,9 +30,9 @@ import '../../view/orders/order_create_bottom_sheet.dart';
 
 class OrderController extends GetxController with BaseController {
   final OrderService orderService = OrderService();
+  final ItemService itemService = ItemService();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-  late final BillingController billingController =
-      Get.find<BillingController>();
+  late final BillingController billingController = Get.find<BillingController>();
   final StockController stockController = Get.find<StockController>();
 
   var orders = <OrderDetailModel>[].obs;
@@ -42,11 +47,9 @@ class OrderController extends GetxController with BaseController {
   final TextEditingController channelOrderId = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController remarkController = TextEditingController();
-  final TextEditingController packageExpenseController =
-      TextEditingController();
+  final TextEditingController packageExpenseController = TextEditingController();
   final RxList<Map<String, dynamic>> items = <Map<String, dynamic>>[].obs;
 
-  // ✅ UPDATED: Typed courier partners list (was Map-based before)
   final RxList<CourierPartnerDetailModel> courierPartners =
       <CourierPartnerDetailModel>[].obs;
   final RxBool isLoadingCouriers = false.obs;
@@ -76,6 +79,19 @@ class OrderController extends GetxController with BaseController {
   var shipments = <ShipmentModel>[].obs;
   var ordersWithShipments = <OrderWithShipmentModel>[].obs;
   var isLoadingShipmentsList = false.obs;
+
+  final RxList<File> selectedPackageImages = <File>[].obs;
+  final RxList<String> uploadedPackageImagePaths = <String>[].obs;
+  final RxSet<int> uploadingPackageIndices = <int>{}.obs;
+  bool get isAnyPackageImageUploading => uploadingPackageIndices.isNotEmpty;
+
+  // ✅ NEW: Order status logs
+  final RxList<OrderStatusLog> orderStatusLogs = <OrderStatusLog>[].obs;
+  final RxBool isLoadingStatusLogs = false.obs;
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Unchanged methods below — only loadOrderDetail & updateOrderStatus modified
+  // ──────────────────────────────────────────────────────────────────────────
 
   void addItemRow() {
     items.add({
@@ -129,7 +145,7 @@ class OrderController extends GetxController with BaseController {
   void onReady() {
     super.onReady();
     getOrderList();
-    fetchCourierPartners(); // ✅ Load couriers on controller ready
+    fetchCourierPartners();
     getOrdersWithShipments();
   }
 
@@ -149,9 +165,6 @@ class OrderController extends GetxController with BaseController {
     super.onClose();
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // ✅ NEW: Fetch courier partners from API
-  // ─────────────────────────────────────────────────────────────────────────
   Future<void> fetchCourierPartners() async {
     try {
       isLoadingCouriers.value = true;
@@ -169,9 +182,8 @@ class OrderController extends GetxController with BaseController {
       isLoading.value = true;
       final response = await orderService.getOrderDetailApi();
       final List<dynamic> data = response;
-      final allOrders = data
-          .map((item) => OrderDetailModel.fromJson(item))
-          .toList();
+      final allOrders =
+      data.map((item) => OrderDetailModel.fromJson(item)).toList();
       orders.value = allOrders.where((o) => !o.isDeleted).toList();
       filteredOrders.assignAll(orders);
     } catch (e) {
@@ -181,14 +193,11 @@ class OrderController extends GetxController with BaseController {
     }
   }
 
-  // order_controller.dart
   Future<void> getOrdersWithShipments() async {
     try {
       isLoadingShipmentsList.value = true;
       final response = await orderService.getOrdersWithShipments();
-      // ✅ Debug karo pehle
       debugPrint("📦 Shipments API response length: ${response.length}");
-      // ✅ Safe cast
       if (response is! List) {
         debugPrint("❌ Expected List but got: ${response.runtimeType}");
         return;
@@ -196,9 +205,10 @@ class OrderController extends GetxController with BaseController {
       ordersWithShipments.value = response
           .map(
             (e) => OrderWithShipmentModel.fromJson(e as Map<String, dynamic>),
-          )
+      )
           .toList();
-      debugPrint("✅ ordersWithShipments loaded: ${ordersWithShipments.length}");
+      debugPrint(
+          "✅ ordersWithShipments loaded: ${ordersWithShipments.length}");
     } catch (e, s) {
       debugPrint("❌ getOrdersWithShipments error: $e\n$s");
       handleError(e, onRetry: getOrdersWithShipments);
@@ -207,9 +217,24 @@ class OrderController extends GetxController with BaseController {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Create order
-  // ─────────────────────────────────────────────────────────────────────────
+  // ✅ NEW: Fetch status logs for a specific order
+  Future<void> fetchOrderStatusLogs(int orderId) async {
+    try {
+      isLoadingStatusLogs.value = true;
+      final response = await orderService.getAllOrderStatus(orderId);
+      final result = OrderStatusLogResponse.fromJson(
+        response as Map<String, dynamic>,
+      );
+      orderStatusLogs.assignAll(result.data);
+      debugPrint("✅ Status logs loaded: ${orderStatusLogs.length}");
+    } catch (e) {
+      // Non-critical — don't surface error to user; log silently
+      debugPrint("❌ fetchOrderStatusLogs error: $e");
+    } finally {
+      isLoadingStatusLogs.value = false;
+    }
+  }
+
   Future<void> createOrder() async {
     if (!(formKey.currentState?.validate() ?? false)) return;
     if (phoneNumber.value.isEmpty) {
@@ -248,7 +273,7 @@ class OrderController extends GetxController with BaseController {
         "country_code": countryCode.value,
         "mobile": phoneNumber.value,
         "package_expence":
-            double.tryParse(packageExpenseController.text.trim()) ?? 0.0,
+        double.tryParse(packageExpenseController.text.trim()) ?? 0.0,
       };
 
       final response = await orderService.createOrderApi(data);
@@ -259,8 +284,7 @@ class OrderController extends GetxController with BaseController {
         return;
       }
 
-      final bool isSuccess =
-          response.containsKey('order_id') ||
+      final bool isSuccess = response.containsKey('order_id') ||
           response.containsKey('id') ||
           response.containsKey('order');
       if (!isSuccess) {
@@ -333,9 +357,8 @@ class OrderController extends GetxController with BaseController {
 
   void setScannedSku(String sku) {
     final itemController = Get.find<ItemController>();
-    final product = itemController.products.firstWhereOrNull(
-      (p) => p.sku == sku,
-    );
+    final product =
+    itemController.products.firstWhereOrNull((p) => p.sku == sku);
     if (product != null) {
       final existingIndex = items.indexWhere((item) {
         final p = (item["product"] as Rx<ProductModel?>?)?.value;
@@ -343,7 +366,7 @@ class OrderController extends GetxController with BaseController {
       });
       if (existingIndex != -1) {
         final qtyController =
-            items[existingIndex]["quantity"] as TextEditingController;
+        items[existingIndex]["quantity"] as TextEditingController;
         int currentQty = int.tryParse(qtyController.text) ?? 0;
         qtyController.text = (currentQty + 1).toString();
       } else {
@@ -379,8 +402,9 @@ class OrderController extends GetxController with BaseController {
     double amount = 0.0;
     if (paidStatus.value == "PAID") {
       final order = orderDetail.value;
-      if (order != null)
+      if (order != null) {
         amount = order.items.fold(0.0, (sum, item) => sum + item.totalPrice);
+      }
     } else if (paidStatus.value == "PARTIAL") {
       amount = double.tryParse(partialAmount.value) ?? 0.0;
       if (amount <= 0) {
@@ -389,15 +413,17 @@ class OrderController extends GetxController with BaseController {
       }
     }
 
-    String formattedDate = DateFormat('yyyy-MM-dd').format(paymentDate.value);
+    String formattedDate =
+    DateFormat('yyyy-MM-dd').format(paymentDate.value);
     Map<String, dynamic> data = {
       "payment_method": selectedMethod.value,
       "payment_date": formattedDate,
       "paid_status": paidStatus.value,
       "amount": amount,
     };
-    if (transactionId.value.isNotEmpty)
+    if (transactionId.value.isNotEmpty) {
       data["transaction_id"] = transactionId.value;
+    }
 
     try {
       isLoading.value = true;
@@ -419,11 +445,10 @@ class OrderController extends GetxController with BaseController {
     }
   }
 
-  // ✅ UPDATED: Now adds CourierPartnerDetailModel to typed list
   Future<void> createCourierPartner({
     required String title,
     required List<String> mediatorTitles,
-    VoidCallback? onSuccess, // ✅ callback add kiya
+    VoidCallback? onSuccess,
   }) async {
     if (title.trim().isEmpty) {
       AppAlerts.error("Please enter courier partner name");
@@ -447,11 +472,12 @@ class OrderController extends GetxController with BaseController {
           response["data"] as Map<String, dynamic>,
         );
         courierPartners.add(newCourier);
-        AppAlerts.success(response["message"] ?? "Courier created successfully ✅");
-        onSuccess?.call(); // ✅ controller se nahi, widget se band karo
+        AppAlerts.success(
+            response["message"] ?? "Courier created successfully ✅");
+        onSuccess?.call();
       } else {
         AppAlerts.success("Courier created successfully ✅");
-        onSuccess?.call(); // ✅ yahan bhi
+        onSuccess?.call();
         await fetchCourierPartners();
       }
     } catch (e) {
@@ -471,7 +497,7 @@ class OrderController extends GetxController with BaseController {
     required double shippingExpense,
     required double otherExpense,
     String notes = "",
-    VoidCallback? onSuccess, // ✅ callback add kiya
+    VoidCallback? onSuccess,
   }) async {
     if (trackingId.trim().isEmpty) {
       AppAlerts.error("Please enter tracking ID");
@@ -492,11 +518,13 @@ class OrderController extends GetxController with BaseController {
       final response = await orderService.createShipment(data, orderId);
       if (response != null) {
         AppAlerts.success(
-          response["message"] ?? "Shipment created successfully ✅",
-        );
-        // ✅ Widget se close karo — controller se nahi
+            response["message"] ?? "Shipment created successfully ✅");
         onSuccess?.call();
-        // ✅ List refresh karo
+        await updateOrderStatus(
+          orderId: orderId,
+          status: 3,
+          note: "Shipped",
+        );
         await getOrdersWithShipments();
       } else {
         AppAlerts.error("Failed to create shipment");
@@ -540,7 +568,7 @@ class OrderController extends GetxController with BaseController {
     });
     if (existingIndex != -1) {
       final qtyController =
-          items[existingIndex]["quantity"] as TextEditingController;
+      items[existingIndex]["quantity"] as TextEditingController;
       int currentQty = int.tryParse(qtyController.text) ?? 0;
       qtyController.text = (currentQty + 1).toString();
       Get.snackbar(
@@ -574,9 +602,8 @@ class OrderController extends GetxController with BaseController {
 
   void addScannedProductFromScan(ScanProductModel scanProduct) {
     final itemController = Get.find<ItemController>();
-    final product = itemController.products.firstWhereOrNull(
-      (p) => p.sku == scanProduct.sku,
-    );
+    final product = itemController.products
+        .firstWhereOrNull((p) => p.sku == scanProduct.sku);
     if (product == null) {
       Get.snackbar(
         "Not Found",
@@ -589,16 +616,75 @@ class OrderController extends GetxController with BaseController {
     addScannedProduct(product);
   }
 
+  // ✅ UPDATED: Also fetches status logs + refreshes order list
   Future<void> loadOrderDetail(int orderId) async {
     try {
       isLoadingDetail.value = true;
       orderDetail.value = await orderService.getOrderDetailById(orderId);
       debugPrint("✅ Order detail loaded: ${orderDetail.value?.orderId}");
+      // Fetch logs in parallel with detail — non-blocking if it fails
+      await fetchOrderStatusLogs(orderId);
     } catch (e, s) {
       handleError(e);
       debugPrint("❌ Error loading order detail: $e, $s");
     } finally {
       isLoadingDetail.value = false;
+    }
+  }
+
+  Future<void> uploadPackageImageAtIndex(File image, int index) async {
+    uploadingPackageIndices.add(index);
+    try {
+      final String path = await itemService.uploadImage(image);
+      if (index < uploadedPackageImagePaths.length) {
+        uploadedPackageImagePaths[index] = path;
+      } else {
+        while (uploadedPackageImagePaths.length < index) {
+          uploadedPackageImagePaths.add('');
+        }
+        uploadedPackageImagePaths.add(path);
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Image upload failed");
+      if (index < selectedPackageImages.length) {
+        selectedPackageImages.removeAt(index);
+      }
+    } finally {
+      uploadingPackageIndices.remove(index);
+    }
+  }
+
+  // ✅ UPDATED: Refreshes order list after status change so cards reflect new status
+  Future<void> updateOrderStatus({
+    required int orderId,
+    required int status,
+    required String note,
+    Map<String, dynamic>? extraData,
+  }) async {
+    try {
+      final Map<String, dynamic> jsonPayload = {
+        "note": note,
+        "updated_by": "admin",
+      };
+      if (extraData != null) jsonPayload.addAll(extraData);
+
+      final data = {
+        "order_id": orderId,
+        "status": status,
+        "json": jsonPayload,
+      };
+
+      await orderService.updateOrderStatus(data);
+      debugPrint(
+          "✅ order status updated: orderId=$orderId, status=$status");
+
+      // Refresh detail + logs
+      await loadOrderDetail(orderId);
+      // ✅ Refresh list so order card chip updates
+      await getOrderList();
+    } catch (e) {
+      debugPrint("❌ updateOrderStatus error: $e");
+      handleError("Something went wrong");
     }
   }
 }

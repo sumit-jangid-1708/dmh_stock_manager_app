@@ -1,6 +1,5 @@
 import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/view/orders/shipping_detail_form.dart';
-import 'package:dmj_stock_manager/view_models/controller/home_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/order_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/billing_controller.dart';
 import 'package:flutter/material.dart';
@@ -9,19 +8,32 @@ import 'package:intl/intl.dart';
 import '../../model/order_models/order_detail_model.dart';
 import '../../res/components/widgets/courier_return_bottom_sheet.dart';
 import '../../res/components/widgets/create_bill_dialog_widget.dart';
+import '../../res/components/widgets/custom_text_field.dart';
 import '../../res/components/widgets/customer_return_bottom_sheet.dart';
+import '../../res/components/widgets/order_status_section.dart';
 import '../../res/components/widgets/package_form_widget.dart';
 import '../../view_models/services/other_services/barcode_pdf_service.dart';
 
 class OrderDetailScreen extends StatelessWidget {
   const OrderDetailScreen({super.key});
 
+  /// Shared white card decoration
+  static BoxDecoration get _cardDecoration => BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(12),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withOpacity(0.04),
+        blurRadius: 8,
+        offset: const Offset(0, 2),
+      ),
+    ],
+  );
+
   @override
   Widget build(BuildContext context) {
     final int orderId = int.parse(Get.parameters['id']!);
-
     final orderController = Get.find<OrderController>();
-    final homeController = Get.find<HomeController>();
     final billingController = Get.find<BillingController>();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -40,7 +52,7 @@ class OrderDetailScreen extends StatelessWidget {
 
           final order = orderController.orderDetail.value;
           if (order == null) {
-            return const Center(child: Text("Order not found"));
+            return const Center(child: Text('Order not found'));
           }
 
           final bool hasBill = billingController.bills.any(
@@ -81,7 +93,7 @@ class OrderDetailScreen extends StatelessWidget {
                           onPressed: () =>
                               showCreateBillDialog(context, order.orderId),
                           icon: Icons.receipt_long,
-                          text: "Create Bill",
+                          text: 'Create Bill',
                         )
                       else
                         Container(
@@ -110,7 +122,7 @@ class OrderDetailScreen extends StatelessWidget {
                               ),
                               SizedBox(width: 8),
                               Text(
-                                "Bill Paid",
+                                'Bill Paid',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -125,12 +137,13 @@ class OrderDetailScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
                   const Text(
-                    "Order Details",
+                    'Order Details',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "Order #${order.orderId} • ${order.createdAt.toLocal().toString().split(' ')[0]}",
+                    'Order #${order.orderId} • '
+                    '${order.createdAt.toLocal().toString().split(' ')[0]}',
                     style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 20),
@@ -148,16 +161,16 @@ class OrderDetailScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         _buildStatItem(
-                          "Total Items",
+                          'Total Items',
                           order.totalItems.toString(),
                           Icons.shopping_bag,
                         ),
                         _buildDivider(),
-                        _buildStatItem("Channel", order.channel, Icons.store),
+                        _buildStatItem('Channel', order.channel, Icons.store),
                         _buildDivider(),
                         _buildStatItem(
-                          "Total",
-                          "₹${_calculateTotal(order).toStringAsFixed(2)}",
+                          'Total',
+                          '₹${_calculateTotal(order).toStringAsFixed(2)}',
                           Icons.currency_rupee,
                         ),
                       ],
@@ -170,66 +183,56 @@ class OrderDetailScreen extends StatelessWidget {
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
+                    decoration: _cardDecoration,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          "Customer Info",
+                          'Customer Info',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 12),
-                        _buildInfoRow("Name", order.customerName),
+                        _buildInfoRow('Name', order.customerName),
                         _buildInfoRow(
-                          "Mobile",
-                          "${order.countryCode}${order.mobile}",
+                          'Mobile',
+                          '${order.countryCode}${order.mobile}',
                         ),
                         _buildInfoRow(
-                          "Email",
+                          'Email',
                           order.customerEmail.isEmpty
-                              ? "No Email"
+                              ? 'No Email'
                               : order.customerEmail,
                         ),
                         _buildInfoRow(
-                          "Channel ID",
+                          'Channel ID',
                           order.channelOrderId.isEmpty
-                              ? "-"
+                              ? '-'
                               : order.channelOrderId,
                         ),
                         if (order.paymentMethod != null) ...[
                           const Divider(height: 20),
                           const Text(
-                            "Payment Info",
+                            'Payment Info',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          _buildInfoRow("Method", order.paymentMethod!),
+                          _buildInfoRow('Method', order.paymentMethod!),
                           if (order.paymentDate != null)
                             _buildInfoRow(
-                              "Date",
+                              'Date',
                               order.paymentDate!.toLocal().toString().split(
                                 ' ',
                               )[0],
                             ),
                           if (order.transactionId != null)
                             _buildInfoRow(
-                              "Transaction ID",
+                              'Transaction ID',
                               order.transactionId!,
                             ),
                         ],
@@ -251,7 +254,7 @@ class OrderDetailScreen extends StatelessWidget {
 
                   // ── Ordered Items ─────────────────────────────────────────
                   const Text(
-                    "Ordered Items",
+                    'Ordered Items',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
@@ -260,569 +263,77 @@ class OrderDetailScreen extends StatelessWidget {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: order.items.length,
-                    itemBuilder: (context, index) {
-                      final item = order.items[index];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                          border: Border.all(color: Colors.grey.shade200),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(14),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: item.productImageVariants.isNotEmpty
-                                        ? Image.network(
-                                            item.productImageVariants.first,
-                                            width: 70,
-                                            height: 70,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) =>
-                                                Container(
-                                                  width: 70,
-                                                  height: 70,
-                                                  color: Colors.grey.shade200,
-                                                  child: const Icon(
-                                                    Icons.image_not_supported,
-                                                    color: Colors.grey,
-                                                  ),
-                                                ),
-                                          )
-                                        : Container(
-                                            width: 70,
-                                            height: 70,
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey.shade200,
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: const Icon(
-                                              Icons.image_not_supported,
-                                              color: Colors.grey,
-                                            ),
-                                          ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          item.productName,
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xFF1A1A4F),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 4,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.blue.shade50,
-                                            borderRadius: BorderRadius.circular(
-                                              6,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            "SKU: ${item.productSku}",
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: Colors.blue.shade700,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Divider(color: Colors.grey.shade200, height: 1),
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Quantity",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade600,
-                                        ),
-                                      ),
-                                      Text(
-                                        "${item.orderedQuantity}",
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Unit Price",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade600,
-                                        ),
-                                      ),
-                                      Text(
-                                        "₹${item.unitPrice.toStringAsFixed(2)}",
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        "Subtotal",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade600,
-                                        ),
-                                      ),
-                                      Text(
-                                        "₹${item.totalPrice.toStringAsFixed(2)}",
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF1A1A4F),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              if (item.productBarcode.isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade50,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: Colors.grey.shade200,
-                                    ),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.qr_code,
-                                            size: 16,
-                                            color: Colors.grey.shade700,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            "Product Barcode",
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.grey.shade700,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        item.productBarcode,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          fontFamily: 'monospace',
-                                          color: Color(0xFF1A1A4F),
-                                        ),
-                                      ),
-                                      if (item.productBarcodeImage != null &&
-                                          item
-                                              .productBarcodeImage!
-                                              .isNotEmpty) ...[
-                                        const SizedBox(height: 8),
-                                        Center(
-                                          child: Image.network(
-                                            item.productBarcodeImage!,
-                                            height: 60,
-                                            fit: BoxFit.contain,
-                                            loadingBuilder: (c, child, p) =>
-                                                p == null
-                                                ? child
-                                                : const SizedBox(
-                                                    height: 60,
-                                                    child: Center(
-                                                      child:
-                                                          CircularProgressIndicator(
-                                                            strokeWidth: 2,
-                                                          ),
-                                                    ),
-                                                  ),
-                                            errorBuilder: (c, e, s) =>
-                                                const SizedBox(
-                                                  height: 40,
-                                                  child: Center(
-                                                    child: Text(
-                                                      "Image not available",
-                                                      style: TextStyle(
-                                                        fontSize: 10,
-                                                        color: Colors.grey,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                              ],
-                              if (item.serials.isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade50,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: Colors.grey.shade200,
-                                    ),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.numbers,
-                                            size: 16,
-                                            color: Colors.grey.shade700,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            "Serials (${item.serials.length})",
-                                            style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.grey.shade700,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                      ...item.serials.map(
-                                        (serial) => Container(
-                                          margin: const EdgeInsets.only(
-                                            bottom: 10,
-                                          ),
-                                          padding: const EdgeInsets.all(10),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                            border: Border.all(
-                                              color: Colors.blue.shade200,
-                                            ),
-                                          ),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 6,
-                                                      vertical: 2,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.blue.shade50,
-                                                  borderRadius:
-                                                      BorderRadius.circular(4),
-                                                ),
-                                                child: Text(
-                                                  serial.serialNumber,
-                                                  style: TextStyle(
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w600,
-                                                    fontFamily: 'monospace',
-                                                    color: Colors.blue.shade700,
-                                                  ),
-                                                ),
-                                              ),
-                                              if (serial
-                                                  .barcodeImage
-                                                  .isNotEmpty) ...[
-                                                const SizedBox(height: 8),
-                                                Center(
-                                                  child: Image.network(
-                                                    serial.barcodeImage,
-                                                    height: 60,
-                                                    fit: BoxFit.contain,
-                                                    loadingBuilder:
-                                                        (
-                                                          c,
-                                                          child,
-                                                          p,
-                                                        ) => p == null
-                                                        ? child
-                                                        : const SizedBox(
-                                                            height: 60,
-                                                            child: Center(
-                                                              child:
-                                                                  CircularProgressIndicator(
-                                                                    strokeWidth:
-                                                                        2,
-                                                                  ),
-                                                            ),
-                                                          ),
-                                                    errorBuilder: (c, e, s) =>
-                                                        const SizedBox(
-                                                          height: 40,
-                                                          child: Center(
-                                                            child: Text(
-                                                              "Image not available",
-                                                              style: TextStyle(
-                                                                fontSize: 10,
-                                                                color:
-                                                                    Colors.grey,
-                                                              ),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+                    itemBuilder: (_, index) =>
+                        _OrderItemCard(item: order.items[index]),
                   ),
 
                   const SizedBox(height: 20),
 
                   // ── Barcode PDF ───────────────────────────────────────────
                   if (order.items.any((item) => item.serials.isNotEmpty)) ...[
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.04),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                        border: Border.all(color: Colors.grey.shade200),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.print,
-                                size: 16,
-                                color: Colors.grey.shade700,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                "Serial Barcodes",
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey.shade800,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: () async {
-                                    showDialog(
-                                      context: context,
-                                      barrierDismissible: false,
-                                      builder: (_) => const Center(
-                                        child: CircularProgressIndicator(
-                                          color: Color(0xFF1A1A4F),
-                                        ),
-                                      ),
-                                    );
-                                    await BarcodePdfService.printBarcodePdf(
-                                      context,
-                                      order,
-                                    );
-                                    if (context.mounted)
-                                      Navigator.of(context).pop();
-                                  },
-                                  icon: const Icon(
-                                    Icons.print_outlined,
-                                    size: 18,
-                                  ),
-                                  label: const Text("Print"),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: const Color(0xFF1A1A4F),
-                                    side: const BorderSide(
-                                      color: Color(0xFF1A1A4F),
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: ElevatedButton.icon(
-                                  onPressed: () async {
-                                    showDialog(
-                                      context: context,
-                                      barrierDismissible: false,
-                                      builder: (_) => const Center(
-                                        child: CircularProgressIndicator(
-                                          color: Color(0xFF1A1A4F),
-                                        ),
-                                      ),
-                                    );
-                                    await BarcodePdfService.downloadBarcodePdf(
-                                      context,
-                                      order,
-                                    );
-                                    if (context.mounted) {
-                                      Navigator.of(context).pop();
-                                    }
-                                  },
-                                  icon: const Icon(
-                                    Icons.download_outlined,
-                                    size: 18,
-                                  ),
-                                  label: const Text("Download PDF"),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF1A1A4F),
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+                    _BarcodePdfCard(order: order),
                     const SizedBox(height: 20),
                   ],
-                  if (order.orderStatus == 1) ...[
-                    AppGradientButton(
-                      onPressed: () =>
-                          PackOrderBottomSheet.show(context, orderId: orderId),
-                      text: "Pack the Order",
-                      icon: Icons.inventory_2_outlined,
-                      width: double.infinity,
-                      height: 50,
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                  // ── Action Buttons ────────────────────────────────────────
-                  AppGradientButton(
-                    onPressed: () =>
-                        showShippingDetailsBottomSheet(context, orderId),
-                    text: "Create Shipment",
-                    icon: Icons.local_shipping_outlined,
-                    width: double.infinity,
-                    height: 50,
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: AppGradientButton(
-                          onPressed: () {
-                            final oldOrder = orderController.orders
-                                .firstWhereOrNull((o) => o.id == orderId);
-                            if (oldOrder != null) {
-                              showCourierReturnDialog(context, oldOrder);
-                            }
-                          },
-                          text: "Courier Return",
-                          height: 50,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: AppGradientButton(
-                          onPressed: () {
-                            final oldOrder = orderController.orders
-                                .firstWhereOrNull((o) => o.id == orderId);
-                            if (oldOrder != null) {
-                              showCustomerReturnDialog(context, oldOrder);
-                            }
-                          },
-                          text: "Customer Return",
-                          height: 50,
-                        ),
-                      ),
-                    ],
-                  ),
+
+                  OrderStatusSection(order: order, orderId: orderId),
+
+                  // if (order.orderStatus == 1) ...[
+                  //   AppGradientButton(
+                  //     onPressed: () =>
+                  //         PackOrderBottomSheet.show(context, orderId: orderId),
+                  //     text: 'Pack the Order',
+                  //     icon: Icons.inventory_2_outlined,
+                  //     width: double.infinity,
+                  //     height: 50,
+                  //   ),
+                  //   const SizedBox(height: 12),
+                  // ],
+                  //
+                  // // ── Action Buttons ────────────────────────────────────────
+                  // AppGradientButton(
+                  //   onPressed: () =>
+                  //       showShippingDetailsBottomSheet(context, orderId),
+                  //   text: 'Create Shipment',
+                  //   icon: Icons.local_shipping_outlined,
+                  //   width: double.infinity,
+                  //   height: 50,
+                  // ),
+                  // const SizedBox(height: 12),
+                  //
+                  // Row(
+                  //   children: [
+                  //     Expanded(
+                  //       child: AppGradientButton(
+                  //         onPressed: () {
+                  //           final oldOrder = orderController.orders
+                  //               .firstWhereOrNull((o) => o.id == orderId);
+                  //           if (oldOrder != null) {
+                  //             showCourierReturnDialog(context, oldOrder);
+                  //           }
+                  //         },
+                  //         text: 'Courier Return',
+                  //         height: 50,
+                  //       ),
+                  //     ),
+                  //     const SizedBox(width: 12),
+                  //     Expanded(
+                  //       child: AppGradientButton(
+                  //         onPressed: () {
+                  //           final oldOrder = orderController.orders
+                  //               .firstWhereOrNull((o) => o.id == orderId);
+                  //           if (oldOrder != null) {
+                  //             showCustomerReturnDialog(context, oldOrder);
+                  //           }
+                  //         },
+                  //         text: 'Customer Return',
+                  //         height: 50,
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
                   const SizedBox(height: 12),
 
-                  // ✅ Cancel/Delete button — always visible, no response shown
+                  // ── Cancel Button ─────────────────────────────────────────
                   Obx(
                     () => SizedBox(
                       width: double.infinity,
@@ -851,8 +362,8 @@ class OrderDetailScreen extends StatelessWidget {
                               ),
                         label: Text(
                           orderController.isCancellingOrder.value
-                              ? "Cancelling..."
-                              : "Cancel Order",
+                              ? 'Cancelling...'
+                              : 'Cancel Order',
                           style: const TextStyle(
                             color: Colors.red,
                             fontWeight: FontWeight.bold,
@@ -882,30 +393,17 @@ class OrderDetailScreen extends StatelessWidget {
   // ── Remarks Section ───────────────────────────────────────────────────────
   Widget _buildRemarksSection(
     BuildContext context,
-    order,
+    OrderDetailsModel order,
     int orderId,
     OrderController orderController,
   ) {
-    final rawRemarks = order.remarks as List? ?? [];
-    final remarks = rawRemarks.map((e) {
-      if (e is OrderRemark) return e;
-      return OrderRemark.fromJson(e as Map<String, dynamic>);
-    }).toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final remarks = List<OrderRemark>.from(order.remarks)
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      decoration: _cardDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -913,7 +411,7 @@ class OrderDetailScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                "Remarks",
+                'Remarks',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               Obx(
@@ -941,8 +439,8 @@ class OrderDetailScreen extends StatelessWidget {
                         ),
                   label: Text(
                     orderController.isAddingRemark.value
-                        ? "Adding..."
-                        : "Add Remark",
+                        ? 'Adding...'
+                        : 'Add Remark',
                     style: const TextStyle(
                       color: Color(0xFF1A1A4F),
                       fontWeight: FontWeight.w600,
@@ -956,7 +454,7 @@ class OrderDetailScreen extends StatelessWidget {
             const SizedBox(height: 12),
             Center(
               child: Text(
-                "No remarks yet",
+                'No remarks yet',
                 style: TextStyle(
                   color: Colors.grey.shade400,
                   fontSize: 13,
@@ -967,14 +465,14 @@ class OrderDetailScreen extends StatelessWidget {
             const SizedBox(height: 8),
           ] else ...[
             const SizedBox(height: 8),
-            ...remarks.map((remark) => _buildRemarkItem(remark)),
+            ...remarks.map(_buildRemarkItem),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildRemarkItem(dynamic remark) {
+  Widget _buildRemarkItem(OrderRemark remark) {
     final formattedDate = DateFormat(
       'dd MMM yyyy, hh:mm a',
     ).format(remark.createdAt.toLocal());
@@ -1027,12 +525,17 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 
+  // ── Add Remark Dialog ─────────────────────────────────────────────────────
+  // ✅ TextField → AppTextField (consistent app styling, no manual border/fill)
+  // ✅ Obx(ElevatedButton) → AppGradientButton(isLoading:)
+  //    AppGradientButton handles: gradient disable, spinner, null onPressed
+  //    Outer Obx on actions list reads isAddingRemark reactively once
   void _showAddRemarkDialog(
     BuildContext context,
     int orderId,
     OrderController orderController,
   ) {
-    final TextEditingController remarkCtrl = TextEditingController();
+    final remarkCtrl = TextEditingController();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1047,48 +550,32 @@ class OrderDetailScreen extends StatelessWidget {
             ),
             SizedBox(width: 10),
             Text(
-              "Add Remark",
+              'Add Remark',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ],
         ),
-        content: TextField(
+        // ✅ AppTextField replaces the manual TextField with all its
+        //    border/fill/hint declarations — same look, much less code
+        content: AppTextField(
           controller: remarkCtrl,
+          hintText: 'Enter your remark...',
+          prefixIcon: Icons.comment_outlined,
           maxLines: 3,
-          autofocus: true,
-          decoration: InputDecoration(
-            hintText: "Enter your remark...",
-            hintStyle: TextStyle(color: Colors.grey.shade400),
-            filled: true,
-            fillColor: Colors.grey.shade50,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFF1A1A4F),
-                width: 1.5,
-              ),
-            ),
-            contentPadding: const EdgeInsets.all(14),
-          ),
         ),
+        // ✅ Single Obx wraps the entire actions list so isAddingRemark
+        //    is read reactively; AppGradientButton gets a plain bool
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
-              "Cancel",
+              'Cancel',
               style: TextStyle(color: Colors.grey.shade600),
             ),
           ),
           Obx(
-            () => ElevatedButton(
+            () => AppGradientButton(
+              isLoading: orderController.isAddingRemark.value,
               onPressed: orderController.isAddingRemark.value
                   ? null
                   : () async {
@@ -1097,30 +584,10 @@ class OrderDetailScreen extends StatelessWidget {
                       Navigator.of(context).pop();
                       await orderController.addRemark(orderId, text);
                     },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1A1A4F),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-              ),
-              child: orderController.isAddingRemark.value
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Text(
-                      "Submit",
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+              text: 'Submit',
+              height: 44,
+              borderRadius: 10,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
             ),
           ),
         ],
@@ -1128,7 +595,6 @@ class OrderDetailScreen extends StatelessWidget {
     );
   }
 
-  // ✅ Cancel confirm — no success response shown, just navigates back
   void _showCancelConfirmDialog(
     BuildContext context,
     int orderId,
@@ -1144,27 +610,28 @@ class OrderDetailScreen extends StatelessWidget {
             Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 24),
             SizedBox(width: 8),
             Text(
-              "Cancel Order",
+              'Cancel Order',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ],
         ),
         content: Text(
-          "Are you sure you want to cancel order #$orderId? This action cannot be undone.",
+          'Are you sure you want to cancel order #$orderId? '
+          'This action cannot be undone.',
           style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: Text(
-              "No, Keep",
+              'No, Keep',
               style: TextStyle(color: Colors.grey.shade600),
             ),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.of(ctx).pop(); // close dialog
-              orderController.cancelOrder(orderId); // soft delete + go back
+              Navigator.of(ctx).pop();
+              orderController.cancelOrder(orderId);
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
@@ -1174,7 +641,7 @@ class OrderDetailScreen extends StatelessWidget {
               ),
             ),
             child: const Text(
-              "Yes, Cancel",
+              'Yes, Cancel',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
@@ -1182,6 +649,8 @@ class OrderDetailScreen extends StatelessWidget {
       ),
     );
   }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
 
   Widget _buildStatItem(String label, String value, IconData icon) {
     return Column(
@@ -1215,16 +684,444 @@ class OrderDetailScreen extends StatelessWidget {
           style: const TextStyle(fontSize: 14, color: Colors.black87),
           children: [
             TextSpan(
-              text: "$label: ",
+              text: '$label: ',
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
-            TextSpan(text: value.isEmpty ? "-" : value),
+            TextSpan(text: value.isEmpty ? '-' : value),
           ],
         ),
       ),
     );
   }
 
-  double _calculateTotal(order) =>
+  double _calculateTotal(OrderDetailsModel order) =>
       order.items.fold(0.0, (sum, item) => sum + item.totalPrice);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Private widgets (unchanged from previous round)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _OrderItemCard extends StatelessWidget {
+  const _OrderItemCard({required this.item});
+
+  final OrderItemModel item;
+
+  static Widget buildBarcodeImage(String url) {
+    return Center(
+      child: Image.network(
+        url,
+        height: 60,
+        fit: BoxFit.contain,
+        loadingBuilder: (_, child, p) => p == null
+            ? child
+            : const SizedBox(
+                height: 60,
+                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              ),
+        errorBuilder: (_, __, ___) => const SizedBox(
+          height: 40,
+          child: Center(
+            child: Text(
+              'Image not available',
+              style: TextStyle(fontSize: 10, color: Colors.grey),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: item.productImageVariants.isNotEmpty
+                      ? Image.network(
+                          item.productImageVariants.first,
+                          width: 70,
+                          height: 70,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              const _ImagePlaceholder(),
+                        )
+                      : const _ImagePlaceholder(),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.productName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A1A4F),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'SKU: ${item.productSku}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.blue.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+            Divider(color: Colors.grey.shade200, height: 1),
+            const SizedBox(height: 12),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _AmountCol(
+                  label: 'Quantity',
+                  value: '${item.orderedQuantity}',
+                  fontSize: 18,
+                  align: CrossAxisAlignment.start,
+                ),
+                _AmountCol(
+                  label: 'Unit Price',
+                  value: '₹${item.unitPrice.toStringAsFixed(2)}',
+                  fontSize: 16,
+                  align: CrossAxisAlignment.start,
+                ),
+                _AmountCol(
+                  label: 'Subtotal',
+                  value: '₹${item.totalPrice.toStringAsFixed(2)}',
+                  fontSize: 18,
+                  align: CrossAxisAlignment.end,
+                  valueColor: const Color(0xFF1A1A4F),
+                ),
+              ],
+            ),
+
+            if (item.productBarcode.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _InfoBox(
+                icon: Icons.qr_code,
+                title: 'Product Barcode',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.productBarcode,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'monospace',
+                        color: Color(0xFF1A1A4F),
+                      ),
+                    ),
+                    if (item.productBarcodeImage != null &&
+                        item.productBarcodeImage!.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      buildBarcodeImage(item.productBarcodeImage!),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+
+            if (item.serials.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _InfoBox(
+                icon: Icons.numbers,
+                title: 'Serials (${item.serials.length})',
+                child: Column(
+                  children: item.serials
+                      .map((s) => _SerialItem(serial: s))
+                      .toList(),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SerialItem extends StatelessWidget {
+  const _SerialItem({required this.serial});
+
+  final SerialModel serial;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blue.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              serial.serialNumber,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'monospace',
+                color: Colors.blue.shade700,
+              ),
+            ),
+          ),
+          if (serial.barcodeImage.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _OrderItemCard.buildBarcodeImage(serial.barcodeImage),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoBox extends StatelessWidget {
+  const _InfoBox({
+    required this.icon,
+    required this.title,
+    required this.child,
+  });
+
+  final IconData icon;
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: Colors.grey.shade700),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _AmountCol extends StatelessWidget {
+  const _AmountCol({
+    required this.label,
+    required this.value,
+    required this.fontSize,
+    required this.align,
+    this.valueColor,
+  });
+
+  final String label;
+  final String value;
+  final double fontSize;
+  final CrossAxisAlignment align;
+  final Color? valueColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: align,
+      children: [
+        Text(
+          label,
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: fontSize,
+            fontWeight: FontWeight.bold,
+            color: valueColor,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ImagePlaceholder extends StatelessWidget {
+  const _ImagePlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 70,
+      height: 70,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Icon(Icons.image_not_supported, color: Colors.grey),
+    );
+  }
+}
+
+class _BarcodePdfCard extends StatelessWidget {
+  const _BarcodePdfCard({required this.order});
+
+  final OrderDetailsModel order;
+
+  Future<void> _handleAction(
+    BuildContext context,
+    Future<void> Function() action,
+  ) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: Color(0xFF1A1A4F)),
+      ),
+    );
+    await action();
+    if (context.mounted) Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.print, size: 16, color: Colors.grey.shade700),
+              const SizedBox(width: 8),
+              Text(
+                'Serial Barcodes',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade800,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => _handleAction(
+                    context,
+                    () => BarcodePdfService.printBarcodePdf(context, order),
+                  ),
+                  icon: const Icon(Icons.print_outlined, size: 18),
+                  label: const Text('Print'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF1A1A4F),
+                    side: const BorderSide(color: Color(0xFF1A1A4F)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _handleAction(
+                    context,
+                    () => BarcodePdfService.downloadBarcodePdf(context, order),
+                  ),
+                  icon: const Icon(Icons.download_outlined, size: 18),
+                  label: const Text('Download PDF'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1A1A4F),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

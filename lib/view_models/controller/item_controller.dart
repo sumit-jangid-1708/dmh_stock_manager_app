@@ -113,7 +113,9 @@ class ItemController extends GetxController with BaseController {
       if (index < uploadedImagePaths.length) {
         uploadedImagePaths[index] = path;
       } else {
-        while (uploadedImagePaths.length < index) uploadedImagePaths.add('');
+        while (uploadedImagePaths.length < index) {
+          uploadedImagePaths.add('');
+        }
         uploadedImagePaths.add(path);
       }
       if (kDebugMode) print("✅ Image $index uploaded → $path");
