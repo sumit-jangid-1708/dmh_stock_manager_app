@@ -74,4 +74,10 @@ class ReturnService {
     final response = await _apiServices.getApi(url);
     return response;
   }
+
+
+  Future<Map<String, dynamic>> getReturnReport() async {
+    final response = await _apiServices.getApi(AppUrl.returnReport);
+    return response;
+  }
 }

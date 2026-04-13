@@ -1,3 +1,4 @@
+import 'package:dmj_stock_manager/view/orders/return_report_screen.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/return_controller.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +16,7 @@ class ReturnOrderHistoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         backgroundColor: Colors.grey.shade50,
         body: SafeArea(
@@ -132,6 +133,17 @@ class ReturnOrderHistoryScreen extends StatelessWidget {
                               ],
                             ),
                           ),
+                          Tab(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.analytics_outlined, size: 18),
+                                SizedBox(width: 8),
+                                Text("Report"),
+                              ],
+                            ),
+                          ),
+
                         ],
                       ),
                     ),
@@ -156,6 +168,7 @@ class ReturnOrderHistoryScreen extends StatelessWidget {
                       homeController: homeController,
                       itemController: itemController,
                     ),
+                    ReturnReportScreen(),
                   ],
                 ),
               ),

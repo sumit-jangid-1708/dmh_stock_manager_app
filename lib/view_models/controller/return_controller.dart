@@ -11,17 +11,23 @@ import 'package:dmj_stock_manager/view_models/services/return_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../model/return_report_model.dart';
+
 class ReturnController extends GetxController with BaseController {
   final ReturnService returnService = ReturnService();
   var isLoading = false.obs;
   final courierReturnList = <CourierReturnListModel>[].obs;
   final customerReturnList = <CustomerReturnListModel>[].obs;
 
+  var returnReport = Rxn<ReturnReportResponse>();
+  var isReportLoading = false.obs;
+
   @override
   void onInit() {
     super.onInit();
     getCourierReturnList();
     getCustomerReturnList();
+    getReturnReport();
   }
 
   /// ✅ Courier Return API
@@ -378,6 +384,22 @@ class ReturnController extends GetxController with BaseController {
         ],
       ),
     );
+  }
+
+  Future<void> getReturnReport() async {
+    try {
+      isReportLoading.value = true;
+
+      final response = await returnService.getReturnReport();
+
+      returnReport.value = ReturnReportResponse.fromJson(response);
+
+    } catch (e) {
+      handleError(e);
+      debugPrint("Return Report Error: $e");
+    } finally {
+      isReportLoading.value = false;
+    }
   }
 }
 
