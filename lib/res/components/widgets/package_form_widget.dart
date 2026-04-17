@@ -17,7 +17,10 @@ class PackOrderBottomSheet extends StatelessWidget {
   final _heightCtrl = TextEditingController();
   final _widthCtrl = TextEditingController();
   final _lengthCtrl = TextEditingController();
-  final _weightCtrl = TextEditingController();
+  final _deadWeightCtrl = TextEditingController();
+  final _volumetricWeightCtrl = TextEditingController();
+  final _billedWeightCtrl = TextEditingController();
+
   final _formKey = GlobalKey<FormState>();
   final _isLoading = false.obs;
   // final _selectedImages = <File>[].obs;
@@ -87,17 +90,21 @@ class PackOrderBottomSheet extends StatelessWidget {
           if (_heightCtrl.text.isNotEmpty) "height": _heightCtrl.text.trim(),
           if (_widthCtrl.text.isNotEmpty) "width": _widthCtrl.text.trim(),
           if (_lengthCtrl.text.isNotEmpty) "length": _lengthCtrl.text.trim(),
-          if (_weightCtrl.text.isNotEmpty) "weight": _weightCtrl.text.trim(),
-          if (fullUrls.isNotEmpty)
-            "package_images": fullUrls,
+          if (_deadWeightCtrl.text.isNotEmpty)
+            "weight": _deadWeightCtrl.text.trim(),
+          if (_volumetricWeightCtrl.text.isNotEmpty)
+            "volumetric_weight": _volumetricWeightCtrl.text.trim(),
+          if (_billedWeightCtrl.text.isNotEmpty)
+            "billed_weight": _billedWeightCtrl.text.trim(),
+          if (fullUrls.isNotEmpty) "package_images": fullUrls,
         },
       );
 
+      Get.back();
       // optional clear
       orderController.selectedPackageImages.clear();
       orderController.uploadedPackageImagePaths.clear();
 
-      Get.back();
       onPackageSaved?.call();
     } catch (e) {
       debugPrint("❌ Pack order error: $e");
@@ -114,8 +121,9 @@ class PackOrderBottomSheet extends StatelessWidget {
       maxChildSize: 0.95,
       builder: (_, scrollController) {
         return Container(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -187,7 +195,8 @@ class PackOrderBottomSheet extends StatelessWidget {
                 Expanded(
                   child: SingleChildScrollView(
                     controller: scrollController,
-                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.manual,
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.manual,
                     physics: const ClampingScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
                     child: Column(
@@ -232,28 +241,62 @@ class PackOrderBottomSheet extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
 
-
                         // Length full width
                         AppTextField(
                           controller: _lengthCtrl,
                           hintText: "0.0",
                           labelText: "Length (cm)",
                           prefixIcon: Icons.swap_horiz,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          validator: (v) => v == null || v.isEmpty ? "Required" : null,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          validator: (v) =>
+                              v == null || v.isEmpty ? "Required" : null,
                         ),
 
                         const SizedBox(height: 12),
-
-// Weight full width (niche)
-                        AppTextField(
-                          controller: _weightCtrl,
-                          hintText: "100",
-                          labelText: "Weight ",
-                          prefixIcon: Icons.monitor_weight_outlined,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          validator: (v) => v == null || v.isEmpty ? "Required" : null,
+                        _sectionTitle(
+                          Icons.monitor_weight_outlined,
+                          "Weight Details",
                         ),
+                        const SizedBox(height: 12),
+                        // Weight full width (niche)
+                        AppTextField(
+                          controller: _deadWeightCtrl,
+                          hintText: "100",
+                          labelText: "Dead Weight",
+                          prefixIcon: Icons.monitor_weight_outlined,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          validator: (v) =>
+                              v == null || v.isEmpty ? "Required" : null,
+                        ),
+                        const SizedBox(height: 12),
+                        AppTextField(
+                          controller: _volumetricWeightCtrl,
+                          hintText: "100",
+                          labelText: "Volumetric Weight ",
+                          prefixIcon: Icons.monitor_weight_outlined,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          validator: (v) =>
+                              v == null || v.isEmpty ? "Required" : null,
+                        ),
+                        const SizedBox(height: 12),
+                        AppTextField(
+                          controller: _billedWeightCtrl,
+                          hintText: "100",
+                          labelText: "Billed Weight ",
+                          prefixIcon: Icons.monitor_weight_outlined,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          validator: (v) =>
+                              v == null || v.isEmpty ? "Required" : null,
+                        ),
+
                         // Row(
                         //   children: [
                         //     Expanded(
@@ -287,7 +330,6 @@ class PackOrderBottomSheet extends StatelessWidget {
                         //     ),
                         //   ],
                         // ),
-
                         const SizedBox(height: 24),
 
                         // ── Images ──────────────────

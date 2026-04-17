@@ -64,7 +64,9 @@ class OrderStatusExtraData {
   final String? width;
   final String? length;
   final String? weight;
-  final String? image; // ✅ NEW
+  final String? volumetricWeight;
+  final String? billedWeight;
+  final List<String>? packageImages;
 
   OrderStatusExtraData({
     this.note,
@@ -73,7 +75,9 @@ class OrderStatusExtraData {
     this.width,
     this.length,
     this.weight,
-    this.image,
+    this.volumetricWeight,
+    this.billedWeight,
+    this.packageImages,
   });
 
   factory OrderStatusExtraData.fromJson(Map<String, dynamic> json) {
@@ -84,7 +88,11 @@ class OrderStatusExtraData {
       width: json['width']?.toString(),
       length: json['length']?.toString(),
       weight: json['weight']?.toString(),
-      image: json['image'] as String?, // ✅ NEW
+      volumetricWeight: json['volumetric_weight']?.toString(),
+      billedWeight: json['billed_weight']?.toString(),
+      packageImages: (json['package_images'] as List?)
+          ?.map((e) => e.toString())
+          .toList(),
     );
   }
 
@@ -95,10 +103,18 @@ class OrderStatusExtraData {
     'width': width,
     'length': length,
     'weight': weight,
-    'image': image,
+    'volumetric_weight': volumetricWeight,
+    'billed_weight': billedWeight,
+    'package_images': packageImages,
   };
 
-  /// True if at least one dimension field is present
   bool get hasDimensions =>
-      [height, width, length, weight].any((v) => v != null && v!.isNotEmpty);
+      [height, width, length].any((v) => v != null && v.isNotEmpty);
+
+  bool get hasWeights =>
+      [volumetricWeight, billedWeight, weight]
+          .any((v) => v != null && v.isNotEmpty);
+
+  bool get hasImages =>
+      packageImages != null && packageImages!.isNotEmpty;
 }

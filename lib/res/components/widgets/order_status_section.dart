@@ -482,7 +482,7 @@ class OrderStatusSection extends StatelessWidget {
                 final extra = packedLog?.extraData;
                 if (extra == null) return const SizedBox.shrink();
                 if (!extra.hasDimensions &&
-                    (extra.image == null || extra.image!.isEmpty)) {
+                    (extra.packageImages == null || extra.packageImages!.isEmpty)) {
                   return const SizedBox.shrink();
                 }
                 return _PackedInfoCard(extra: extra);
@@ -549,8 +549,14 @@ class _PackedInfoCard extends StatelessWidget {
         _DimEntry('Width', '${extra.width} cm'),
       if (extra.length?.isNotEmpty == true)
         _DimEntry('Length', '${extra.length} cm'),
+    ];
+    final weights = [
       if (extra.weight?.isNotEmpty == true)
-        _DimEntry('Weight', '${extra.weight} gram'),
+        _DimEntry('Dead Wt.', '${extra.weight} g'),
+      if (extra.volumetricWeight?.isNotEmpty == true)
+        _DimEntry('Vol. Wt.', '${extra.volumetricWeight} g'),
+      if (extra.billedWeight?.isNotEmpty == true)
+        _DimEntry('Billed Wt.', '${extra.billedWeight} g'),
     ];
 
     return Container(
@@ -587,34 +593,32 @@ class _PackedInfoCard extends StatelessWidget {
               dims.map((d) => _DimChip(label: d.label, value: d.value)).toList(),
             ),
           ],
-          if (extra.image?.isNotEmpty == true) ...[
+          if (weights.isNotEmpty) ...[
             const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                extra.image!,
-                height: 120,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                loadingBuilder: (_, child, progress) => progress == null
-                    ? child
-                    : Container(
-                  height: 120,
-                  color: Colors.grey.shade200,
-                  child: const Center(
-                      child: CircularProgressIndicator(strokeWidth: 2)),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: weights
+                  .map((d) => _DimChip(label: d.label, value: d.value))
+                  .toList(),
+            ),
+          ],
+          if (extra.packageImages?.isNotEmpty == true) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: extra.packageImages!
+                  .map((url) => ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  url,
+                  height: 90,
+                  width: 90,
+                  fit: BoxFit.cover,
                 ),
-                errorBuilder: (_, __, ___) => Container(
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Center(
-                      child: Icon(Icons.broken_image_outlined,
-                          color: Colors.grey)),
-                ),
-              ),
+              ))
+                  .toList(),
             ),
           ],
         ],

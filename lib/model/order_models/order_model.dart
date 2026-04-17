@@ -9,7 +9,8 @@ class OrderDetailModel {
   final DateTime createdAt;
   final List<OrderRemark> remarks;
   final String status;
-  final int orderStatus; // ✅ NEW
+  final LatestStatus? latestStatus; // ✅ NEW
+  final int? orderStatus;
   final bool isDeleted;
   final int channel;
   final String countryCode;
@@ -30,7 +31,8 @@ class OrderDetailModel {
     required this.customerName,
     required this.createdAt,
     required this.status,
-    required this.orderStatus, // ✅ NEW
+    required this.latestStatus, // ✅ NEW
+    required this.orderStatus,
     required this.isDeleted,
     required this.channel,
     required this.countryCode,
@@ -59,9 +61,10 @@ class OrderDetailModel {
           .map((e) => OrderRemark.fromJson(e))
           .toList(),
       status: json['status'] ?? "ACTIVE",
-      orderStatus: json['order_status'] is int
-          ? json['order_status']
-          : int.tryParse('${json['order_status']}') ?? 0, // ✅ NEW
+      latestStatus: json['latest_status'] != null
+          ? LatestStatus.fromJson(json['latest_status'])
+          : null,
+      orderStatus: json['order_status'] ?? 0,
       isDeleted: json['is_deleted'] ?? false,
       channel: json['channel'] ?? 0,
       countryCode: json['country_code'] ?? '',
@@ -80,8 +83,11 @@ class OrderDetailModel {
     );
   }
 
+  int? get effectiveStatus =>
+      latestStatus?.status ?? orderStatus;
+
   String get orderStatusText {
-    switch (orderStatus) {
+    switch (effectiveStatus) {
       case 1:
         return "In Process";
       case 2:
@@ -95,29 +101,30 @@ class OrderDetailModel {
       case 6:
         return "Customer Return";
       default:
-        return "Unknown";
+        return status;
     }
   }
 
   Color get orderStatusColor {
-    switch (orderStatus) {
+    switch (effectiveStatus) {
       case 1:
-        return const Color(0xFFFF9800); // Orange
+        return const Color(0xFFFF9800);
       case 2:
-        return const Color(0xFF2196F3); // Blue
+        return const Color(0xFF0C5460);
       case 3:
-        return const Color(0xFF9C27B0); // Purple
+        return const Color(0xFF004085);
       case 4:
-        return const Color(0xFF4CAF50); // Green
+        return const Color(0xFF4CAF50);
       case 5:
-        return const Color(0xFFF44336); // Red
+        return const Color(0xFFF44336);
       case 6:
-        return const Color(0xFFFF5722); // Deep Orange
+        return const Color(0xFFFF5722);
       default:
         return Colors.grey;
     }
   }
 }
+
 
 class OrderItem {
   final int id;
@@ -224,6 +231,26 @@ class OrderRemark {
       id: json['id'] ?? 0,
       remark: json['remark'] ?? '',
       createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+    );
+  }
+}
+class LatestStatus {
+  final int status;
+  final String note;
+  final DateTime createdAt;
+
+  LatestStatus({
+    required this.status,
+    required this.note,
+    required this.createdAt,
+  });
+
+  factory LatestStatus.fromJson(Map<String, dynamic> json) {
+    return LatestStatus(
+      status: json['status'] ?? 0,
+      note: json['note'] ?? '',
+      createdAt:
+      DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
     );
   }
 }

@@ -89,6 +89,7 @@ class OrderController extends GetxController with BaseController {
   final RxList<OrderStatusLog> orderStatusLogs = <OrderStatusLog>[].obs;
   final RxBool isLoadingStatusLogs = false.obs;
 
+  final RxInt selectedStatusFilter = (-1).obs;
   // ──────────────────────────────────────────────────────────────────────────
   // Unchanged methods below — only loadOrderDetail & updateOrderStatus modified
   // ──────────────────────────────────────────────────────────────────────────
@@ -141,6 +142,27 @@ class OrderController extends GetxController with BaseController {
   void removeItemRow(int index) => items.removeAt(index);
   void resetForm() => clearForm();
 
+  void applyFilters() {
+    final statusFilter = selectedStatusFilter.value;
+
+    if (statusFilter == -1) {
+      filteredOrders.assignAll(orders);
+      return;
+    }
+
+    filteredOrders.assignAll(
+      orders.where((order) {
+        return order.effectiveStatus == statusFilter;
+      }).toList(),
+    );
+  }
+
+  void clearFilters() {
+    selectedStatusFilter.value = -1;
+    filteredOrders.assignAll(orders);
+  }
+
+
   @override
   void onReady() {
     super.onReady();
@@ -185,7 +207,8 @@ class OrderController extends GetxController with BaseController {
       final allOrders =
       data.map((item) => OrderDetailModel.fromJson(item)).toList();
       orders.value = allOrders.where((o) => !o.isDeleted).toList();
-      filteredOrders.assignAll(orders);
+      // filteredOrders.assignAll(orders);
+      applyFilters();
     } catch (e) {
       handleError(e, onRetry: () => getOrderList());
     } finally {
@@ -538,17 +561,21 @@ class OrderController extends GetxController with BaseController {
 
   void filterOrders(String query) {
     if (query.isEmpty) {
-      filteredOrders.assignAll(orders);
-    } else {
-      filteredOrders.assignAll(
-        orders.where((order) {
-          final name = order.customerName.toLowerCase();
-          final id = order.id.toString();
-          final searchLower = query.toLowerCase();
-          return name.contains(searchLower) || id.contains(searchLower);
-        }).toList(),
-      );
+      applyFilters(); // ✅ search clear hone par filters wapas apply ho
+      return;
     }
+    // Apply both search + active filters together
+    final statusFilter = selectedStatusFilter.value;
+    filteredOrders.assignAll(
+      orders.where((order) {
+        final name = order.customerName.toLowerCase();
+        final id = order.id.toString();
+        final searchLower = query.toLowerCase();
+        final matchesSearch = name.contains(searchLower) || id.contains(searchLower);
+        final bool statusMatch = statusFilter == -1 || order.effectiveStatus == statusFilter;
+        return matchesSearch && statusMatch ;
+      }).toList(),
+    );
   }
 
   void openOrderBottomSheet() {

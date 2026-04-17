@@ -11,6 +11,16 @@ class OrderScreen extends StatelessWidget {
 
   OrderScreen({super.key});
 
+  static const List<Map<String, dynamic>> _statusFilters = [
+    {"label": "All", "value": -1},
+    {"label": "In Process", "value": 1},
+    {"label": "Packed", "value": 2},
+    {"label": "In Transit", "value": 3},
+    {"label": "Delivered", "value": 4},
+    {"label": "Courier Return", "value": 5},
+    {"label": "Customer Return", "value": 6},
+  ];
+
   Color _getStatusColor(String? status) {
     switch (status?.toLowerCase()) {
       case "cancelled":
@@ -83,6 +93,7 @@ class OrderScreen extends StatelessWidget {
               ),
             ),
 
+            _buildFilterSection(),
             // ── Search Bar ────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -174,7 +185,9 @@ class OrderScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)), // Subtle border
+        border: Border.all(
+          color: Colors.grey.withOpacity(0.1),
+        ), // Subtle border
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -228,7 +241,10 @@ class OrderScreen extends StatelessWidget {
                         const SizedBox(width: 8),
                         // ✅ Order Status Chip
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: order.orderStatusColor.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(20),
@@ -238,6 +254,9 @@ class OrderScreen extends StatelessWidget {
                             ),
                           ),
                           child: Text(
+                            // order.latestStatus?.note?.isNotEmpty == true
+                            //     ? order.latestStatus!.note
+                            //     : order.orderStatusText,
                             order.orderStatusText,
                             style: TextStyle(
                               fontSize: 10,
@@ -364,5 +383,57 @@ class OrderScreen extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.white,
     );
+  }
+
+  Widget _buildFilterSection() {
+    return Obx(() {
+      return Container(
+        color: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: SizedBox(
+          height: 34,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            children: _statusFilters.map((f) {
+              final isSelected =
+                  orderController.selectedStatusFilter.value == f["value"];
+
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(
+                    f["label"] as String,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: isSelected
+                          ? const Color(0xFF1A1A4F)
+                          : Colors.grey.shade600,
+                    ),
+                  ),
+                  selected: isSelected,
+                  selectedColor: const Color(0xFF1A1A4F).withOpacity(0.08),
+                  backgroundColor: Colors.grey.shade100,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: isSelected
+                          ? const Color(0xFF1A1A4F)
+                          : Colors.grey.shade300,
+                    ),
+                  ),
+                  onSelected: (_) {
+                    orderController.selectedStatusFilter.value =
+                        f["value"] as int;
+                    orderController.applyFilters();
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      );
+    });
   }
 }
