@@ -1,3 +1,4 @@
+import 'package:dmj_stock_manager/res/components/widgets/shipping_info__card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -65,7 +66,7 @@ class OrderStatusSection extends StatelessWidget {
   int _currentStatusFromLogs(List<OrderStatusLog> logs) {
     if (logs.isEmpty) return order.orderStatus; // fallback to model
     final latest = logs.reduce(
-          (a, b) => a.createdAt.isAfter(b.createdAt) ? a : b,
+      (a, b) => a.createdAt.isAfter(b.createdAt) ? a : b,
     );
     return latest.status;
   }
@@ -85,102 +86,125 @@ class OrderStatusSection extends StatelessWidget {
   // ── Timeline builder — uses real log timestamps ───────────────────────────
 
   List<_TimelineStep> _buildTimeline(
-      int currentStatus, DateTime createdAt, List<OrderStatusLog> logs) {
+    int currentStatus,
+    DateTime createdAt,
+    List<OrderStatusLog> logs,
+  ) {
     final steps = <_TimelineStep>[];
 
     // Step 0: Order Created (always present)
-    steps.add(_TimelineStep(
-      icon: Icons.add_circle_outline,
-      title: 'Order Created',
-      subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(createdAt.toLocal()),
-      isDone: true,
-    ));
+    steps.add(
+      _TimelineStep(
+        icon: Icons.add_circle_outline,
+        title: 'Order Created',
+        subtitle: DateFormat(
+          'dd MMM yyyy, hh:mm a',
+        ).format(createdAt.toLocal()),
+        isDone: true,
+      ),
+    );
 
     // Step 1 → 2: Packed
     if (currentStatus >= 2) {
       final log = _logFor(logs, 2);
-      steps.add(_TimelineStep(
-        icon: Icons.inventory_2_outlined,
-        title: 'Packed',
-        subtitle: _formatLogDate(log?.createdAt),
-        isDone: true,
-      ));
+      steps.add(
+        _TimelineStep(
+          icon: Icons.inventory_2_outlined,
+          title: 'Packed',
+          subtitle: _formatLogDate(log?.createdAt),
+          isDone: true,
+        ),
+      );
     }
 
     // Step 2 → 3: In Transit
     if (currentStatus >= 3) {
       final log = _logFor(logs, 3);
-      steps.add(_TimelineStep(
-        icon: Icons.local_shipping_outlined,
-        title: 'In Transit',
-        subtitle: _formatLogDate(log?.createdAt),
-        isDone: true,
-      ));
+      steps.add(
+        _TimelineStep(
+          icon: Icons.local_shipping_outlined,
+          title: 'In Transit',
+          subtitle: _formatLogDate(log?.createdAt),
+          isDone: true,
+        ),
+      );
     }
 
     // Terminal: Delivered
     if (currentStatus == 4) {
       final log = _logFor(logs, 4);
-      steps.add(_TimelineStep(
-        icon: Icons.check_circle_outline,
-        title: 'Delivered',
-        subtitle: _formatLogDate(log?.createdAt),
-        isDone: true,
-        isLast: true,
-      ));
+      steps.add(
+        _TimelineStep(
+          icon: Icons.check_circle_outline,
+          title: 'Delivered',
+          subtitle: _formatLogDate(log?.createdAt),
+          isDone: true,
+          isLast: true,
+        ),
+      );
     }
 
     // Terminal: Courier Return
     if (currentStatus == 5) {
       final log = _logFor(logs, 5);
-      steps.add(_TimelineStep(
-        icon: Icons.assignment_return_outlined,
-        title: 'Courier Return',
-        subtitle: _formatLogDate(log?.createdAt),
-        isDone: true,
-        isReturn: true,
-        isLast: true,
-      ));
+      steps.add(
+        _TimelineStep(
+          icon: Icons.assignment_return_outlined,
+          title: 'Courier Return',
+          subtitle: _formatLogDate(log?.createdAt),
+          isDone: true,
+          isReturn: true,
+          isLast: true,
+        ),
+      );
     }
 
     // Terminal: Customer Return
     if (currentStatus == 6) {
       final log = _logFor(logs, 6);
-      steps.add(_TimelineStep(
-        icon: Icons.keyboard_return_outlined,
-        title: 'Customer Return',
-        subtitle: _formatLogDate(log?.createdAt),
-        isDone: true,
-        isReturn: true,
-        isLast: true,
-      ));
+      steps.add(
+        _TimelineStep(
+          icon: Icons.keyboard_return_outlined,
+          title: 'Customer Return',
+          subtitle: _formatLogDate(log?.createdAt),
+          isDone: true,
+          isReturn: true,
+          isLast: true,
+        ),
+      );
     }
 
     // Pending next step
     if (currentStatus == 1) {
-      steps.add(_TimelineStep(
-        icon: Icons.inventory_2_outlined,
-        title: 'Pack the Order',
-        subtitle: 'Pending',
-        isDone: false,
-        isLast: true,
-      ));
+      steps.add(
+        _TimelineStep(
+          icon: Icons.inventory_2_outlined,
+          title: 'Pack the Order',
+          subtitle: 'Pending',
+          isDone: false,
+          isLast: true,
+        ),
+      );
     } else if (currentStatus == 2) {
-      steps.add(_TimelineStep(
-        icon: Icons.local_shipping_outlined,
-        title: 'Create Shipment',
-        subtitle: 'Pending',
-        isDone: false,
-        isLast: true,
-      ));
+      steps.add(
+        _TimelineStep(
+          icon: Icons.local_shipping_outlined,
+          title: 'Create Shipment',
+          subtitle: 'Pending',
+          isDone: false,
+          isLast: true,
+        ),
+      );
     } else if (currentStatus == 3) {
-      steps.add(_TimelineStep(
-        icon: Icons.check_circle_outline,
-        title: 'Delivered / Returned',
-        subtitle: 'Pending',
-        isDone: false,
-        isLast: true,
-      ));
+      steps.add(
+        _TimelineStep(
+          icon: Icons.check_circle_outline,
+          title: 'Delivered / Returned',
+          subtitle: 'Pending',
+          isDone: false,
+          isLast: true,
+        ),
+      );
     }
 
     return steps;
@@ -193,14 +217,14 @@ class OrderStatusSection extends StatelessWidget {
     final logs = ctrl.orderStatusLogs.toList();
     // ✅ Status derived from logs at tap time
     final currentStatus = _currentStatusFromLogs(logs);
-    final createdAt =
-        ctrl.orderDetail.value?.createdAt ?? order.createdAt;
+    final createdAt = ctrl.orderDetail.value?.createdAt ?? order.createdAt;
     final steps = _buildTimeline(currentStatus, createdAt, logs);
 
     Get.bottomSheet(
       Container(
         constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.65),
+          maxHeight: MediaQuery.of(context).size.height * 0.65,
+        ),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -224,8 +248,7 @@ class OrderStatusSection extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: Text(
                 'Order Timeline',
-                style:
-                TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(height: 4),
@@ -233,35 +256,39 @@ class OrderStatusSection extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Text(
                 '${steps.where((s) => s.isDone).length} of ${steps.length} steps completed',
-                style:
-                TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
               ),
             ),
             const SizedBox(height: 16),
             Expanded(
               child: logs.isEmpty
-              // ✅ Show empty state if no logs yet
+                  // ✅ Show empty state if no logs yet
                   ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.history_toggle_off,
-                        size: 40, color: Colors.grey.shade300),
-                    const SizedBox(height: 12),
-                    Text(
-                      'No status logs found',
-                      style: TextStyle(
-                          fontSize: 13, color: Colors.grey.shade400),
-                    ),
-                  ],
-                ),
-              )
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.history_toggle_off,
+                            size: 40,
+                            color: Colors.grey.shade300,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No status logs found',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey.shade400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
                   : ListView.builder(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                itemCount: steps.length,
-                itemBuilder: (_, i) =>
-                    _TimelineItemWidget(step: steps[i]),
-              ),
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                      itemCount: steps.length,
+                      itemBuilder: (_, i) =>
+                          _TimelineItemWidget(step: steps[i]),
+                    ),
             ),
           ],
         ),
@@ -279,8 +306,7 @@ class OrderStatusSection extends StatelessWidget {
     switch (currentStatus) {
       case 1:
         return AppGradientButton(
-          onPressed: () =>
-              PackOrderBottomSheet.show(context, orderId: orderId),
+          onPressed: () => PackOrderBottomSheet.show(context, orderId: orderId),
           text: 'Pack the Order',
           icon: Icons.inventory_2_outlined,
           width: double.infinity,
@@ -289,8 +315,7 @@ class OrderStatusSection extends StatelessWidget {
 
       case 2:
         return AppGradientButton(
-          onPressed: () =>
-              showShippingDetailsBottomSheet(context, orderId),
+          onPressed: () => showShippingDetailsBottomSheet(context, orderId),
           text: 'Create Shipment',
           icon: Icons.local_shipping_outlined,
           width: double.infinity,
@@ -317,8 +342,9 @@ class OrderStatusSection extends StatelessWidget {
                 Expanded(
                   child: AppGradientButton(
                     onPressed: () {
-                      final o = ctrl.orders
-                          .firstWhereOrNull((o) => o.id == orderId);
+                      final o = ctrl.orders.firstWhereOrNull(
+                        (o) => o.id == orderId,
+                      );
                       if (o != null) showCourierReturnDialog(context, o);
                     },
                     text: 'Courier Return',
@@ -329,8 +355,9 @@ class OrderStatusSection extends StatelessWidget {
                 Expanded(
                   child: AppGradientButton(
                     onPressed: () {
-                      final o = ctrl.orders
-                          .firstWhereOrNull((o) => o.id == orderId);
+                      final o = ctrl.orders.firstWhereOrNull(
+                        (o) => o.id == orderId,
+                      );
                       if (o != null) showCustomerReturnDialog(context, o);
                     },
                     text: 'Customer Return',
@@ -345,8 +372,7 @@ class OrderStatusSection extends StatelessWidget {
       case 4:
         return AppGradientButton(
           onPressed: () {
-            final o =
-            ctrl.orders.firstWhereOrNull((o) => o.id == orderId);
+            final o = ctrl.orders.firstWhereOrNull((o) => o.id == orderId);
             if (o != null) showCustomerReturnDialog(context, o);
           },
           text: 'Customer Return',
@@ -372,8 +398,7 @@ class OrderStatusSection extends StatelessWidget {
 
       // ✅ Derive EVERYTHING from logs — not from order.orderStatus
       final currentStatus = _currentStatusFromLogs(logs.toList());
-      final createdAt =
-          ctrl.orderDetail.value?.createdAt ?? order.createdAt;
+      final createdAt = ctrl.orderDetail.value?.createdAt ?? order.createdAt;
 
       final statusBg = _bg(currentStatus);
       final statusTextColor = _textColor(currentStatus);
@@ -403,8 +428,7 @@ class OrderStatusSection extends StatelessWidget {
                 const SizedBox(width: 8),
                 const Text(
                   'Order Status',
-                  style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
                 // ✅ Small loading indicator while logs refresh
@@ -413,7 +437,9 @@ class OrderStatusSection extends StatelessWidget {
                     width: 14,
                     height: 14,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Color(0xFF1A1A4F)),
+                      strokeWidth: 2,
+                      color: Color(0xFF1A1A4F),
+                    ),
                   ),
               ],
             ),
@@ -425,7 +451,9 @@ class OrderStatusSection extends StatelessWidget {
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 12),
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: statusBg,
                   borderRadius: BorderRadius.circular(40),
@@ -456,9 +484,11 @@ class OrderStatusSection extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Icon(Icons.history_rounded,
-                        size: 16,
-                        color: statusTextColor.withOpacity(0.7)),
+                    Icon(
+                      Icons.history_rounded,
+                      size: 16,
+                      color: statusTextColor.withOpacity(0.7),
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'View Log',
@@ -476,19 +506,25 @@ class OrderStatusSection extends StatelessWidget {
             // ── Packed dimensions card (shown when status >= 2) ───────────
             if (currentStatus >= 2) ...[
               const SizedBox(height: 12),
-              Builder(builder: (_) {
-                final packedLog =
-                logs.firstWhereOrNull((l) => l.status == 2);
-                final extra = packedLog?.extraData;
-                if (extra == null) return const SizedBox.shrink();
-                if (!extra.hasDimensions &&
-                    (extra.packageImages == null || extra.packageImages!.isEmpty)) {
-                  return const SizedBox.shrink();
-                }
-                return _PackedInfoCard(extra: extra);
-              }),
+              Builder(
+                builder: (_) {
+                  final packedLog = logs.firstWhereOrNull((l) => l.status == 2);
+                  final extra = packedLog?.extraData;
+                  if (extra == null) return const SizedBox.shrink();
+                  if (!extra.hasDimensions &&
+                      (extra.packageImages == null ||
+                          extra.packageImages!.isEmpty)) {
+                    return const SizedBox.shrink();
+                  }
+                  return _PackedInfoCard(extra: extra);
+                },
+              ),
             ],
-
+            // ── Shipping details (status >= 3) ──
+            if (currentStatus >= 3) ...[
+              const SizedBox(height: 12),
+              ShippingInfoCard(orderId: orderId),
+            ],
             const SizedBox(height: 16),
 
             // ── Next step or terminal message ─────────────────────────────
@@ -507,7 +543,9 @@ class OrderStatusSection extends StatelessWidget {
             ] else ...[
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 10),
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(10),
@@ -515,13 +553,18 @@ class OrderStatusSection extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.check_circle_outline,
-                        size: 16, color: Colors.grey.shade400),
+                    Icon(
+                      Icons.check_circle_outline,
+                      size: 16,
+                      color: Colors.grey.shade400,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'No further action required',
                       style: TextStyle(
-                          fontSize: 13, color: Colors.grey.shade500),
+                        fontSize: 13,
+                        color: Colors.grey.shade500,
+                      ),
                     ),
                   ],
                 ),
@@ -535,90 +578,80 @@ class OrderStatusSection extends StatelessWidget {
 }
 
 // ── Packed Info Card ──────────────────────────────────────────────────────────
-
 class _PackedInfoCard extends StatelessWidget {
   const _PackedInfoCard({required this.extra});
   final OrderStatusExtraData extra;
 
   @override
   Widget build(BuildContext context) {
-    final dims = [
-      if (extra.height?.isNotEmpty == true)
-        _DimEntry('Height', '${extra.height} cm'),
-      if (extra.width?.isNotEmpty == true)
-        _DimEntry('Width', '${extra.width} cm'),
-      if (extra.length?.isNotEmpty == true)
-        _DimEntry('Length', '${extra.length} cm'),
-    ];
-    final weights = [
-      if (extra.weight?.isNotEmpty == true)
-        _DimEntry('Dead Wt.', '${extra.weight} g'),
-      if (extra.volumetricWeight?.isNotEmpty == true)
-        _DimEntry('Vol. Wt.', '${extra.volumetricWeight} g'),
-      if (extra.billedWeight?.isNotEmpty == true)
-        _DimEntry('Billed Wt.', '${extra.billedWeight} g'),
-    ];
-
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F4FF),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFD1E0FF)),
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.inventory_2_outlined,
-                  size: 14, color: Color(0xFF004085)),
-              SizedBox(width: 6),
-              Text(
-                'Package Details',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF004085),
+              const Icon(Icons.inventory_2_outlined, size: 14, color: Color(0xFF1A1A4F)),
+              const SizedBox(width: 6),
+              const Text('Package Details',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1A1A4F))),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Divider(height: 1),
+          const SizedBox(height: 10),
+
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Left: image ──
+              if (extra.packageImages?.isNotEmpty == true)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    extra.packageImages!.first,
+                    height: 80, width: 80, fit: BoxFit.cover,
+                  ),
+                ),
+
+              if (extra.packageImages?.isNotEmpty == true)
+                const SizedBox(width: 14),
+
+              // ── Right: dimensions ──
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (extra.height?.isNotEmpty == true)     _DimRow('Height',          '${extra.height} cm'),
+                    if (extra.width?.isNotEmpty == true)      _DimRow('Width',           '${extra.width} cm'),
+                    if (extra.length?.isNotEmpty == true)     _DimRow('Length',          '${extra.length} cm'),
+                    if (extra.weight?.isNotEmpty == true)     _DimRow('Dead Weight',     '${extra.weight} g'),
+                    if (extra.volumetricWeight?.isNotEmpty == true)
+                      _DimRow('Vol. Weight',   '${extra.volumetricWeight} g'),
+                    if (extra.billedWeight?.isNotEmpty == true)
+                      _DimRow('Billed Weight', '${extra.billedWeight} g'),
+                  ],
                 ),
               ),
             ],
           ),
-          if (dims.isNotEmpty) ...[
+
+          // ── Extra images if more than one ──
+          if ((extra.packageImages?.length ?? 0) > 1) ...[
             const SizedBox(height: 10),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children:
-              dims.map((d) => _DimChip(label: d.label, value: d.value)).toList(),
-            ),
-          ],
-          if (weights.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: weights
-                  .map((d) => _DimChip(label: d.label, value: d.value))
-                  .toList(),
-            ),
-          ],
-          if (extra.packageImages?.isNotEmpty == true) ...[
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: extra.packageImages!
-                  .map((url) => ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  url,
-                  height: 90,
-                  width: 90,
-                  fit: BoxFit.cover,
-                ),
-              ))
-                  .toList(),
+              spacing: 6, runSpacing: 6,
+              children: extra.packageImages!.skip(1).map((url) =>
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Image.network(url, height: 70, width: 70, fit: BoxFit.cover),
+                  ),
+              ).toList(),
             ),
           ],
         ],
@@ -627,44 +660,30 @@ class _PackedInfoCard extends StatelessWidget {
   }
 }
 
-class _DimEntry {
-  final String label;
-  final String value;
-  const _DimEntry(this.label, this.value);
-}
-
-class _DimChip extends StatelessWidget {
-  const _DimChip({required this.label, required this.value});
-  final String label;
-  final String value;
+class _DimRow extends StatelessWidget {
+  const _DimRow(this.label, this.value);
+  final String label, value;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFD1E0FF)),
-      ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Text('$label: ',
-              style:
-              const TextStyle(fontSize: 11, color: Color(0xFF555577))),
+          SizedBox(
+            width: 90,
+            child: Text(label,
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+          ),
           Text(value,
-              style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1A1A4F))),
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1A1A4F))),
         ],
       ),
     );
   }
 }
 
-// ── Timeline data model ───────────────────────────────────────────────────────
+// ── Timeline ──────────────────────────────────────────────────────────────────
 
 class _TimelineStep {
   final IconData icon;
@@ -684,8 +703,6 @@ class _TimelineStep {
   });
 }
 
-// ── Timeline item widget ──────────────────────────────────────────────────────
-
 class _TimelineItemWidget extends StatelessWidget {
   const _TimelineItemWidget({required this.step});
   final _TimelineStep step;
@@ -694,66 +711,53 @@ class _TimelineItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final dotColor = step.isReturn
         ? Colors.red.shade400
-        : step.isDone
-        ? const Color(0xFF1A1A4F)
-        : Colors.grey.shade300;
+        : step.isDone ? const Color(0xFF1A1A4F) : Colors.grey.shade300;
 
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Dot + line ──
           SizedBox(
-            width: 32,
+            width: 28,
             child: Column(
               children: [
                 Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                      color: dotColor, shape: BoxShape.circle),
-                  child: Icon(step.icon,
-                      size: 15,
-                      color:
-                      step.isDone ? Colors.white : Colors.grey.shade400),
+                  width: 28, height: 28,
+                  decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+                  child: Icon(step.icon, size: 13,
+                      color: step.isDone ? Colors.white : Colors.grey.shade400),
                 ),
                 if (!step.isLast)
                   Expanded(
                     child: Container(
-                      width: 2,
-                      margin: const EdgeInsets.symmetric(vertical: 4),
-                      decoration: BoxDecoration(
-                        color: step.isDone
-                            ? const Color(0xFF1A1A4F).withOpacity(0.2)
-                            : Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+                      width: 1.5,
+                      margin: const EdgeInsets.symmetric(vertical: 3),
+                      color: step.isDone
+                          ? const Color(0xFF1A1A4F).withOpacity(0.15)
+                          : Colors.grey.shade200,
                     ),
                   ),
               ],
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
+          // ── Text ──
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 20),
+              padding: const EdgeInsets.only(top: 4, bottom: 18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 6),
-                  Text(
-                    step.title,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: step.isDone
-                          ? Colors.black87
-                          : Colors.grey.shade400,
-                    ),
-                  ),
+                  Text(step.title,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: step.isDone ? Colors.black87 : Colors.grey.shade400,
+                      )),
                   const SizedBox(height: 2),
                   Text(step.subtitle,
-                      style: TextStyle(
-                          fontSize: 12, color: Colors.grey.shade500)),
+                      style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
                 ],
               ),
             ),

@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:math';
-
 import 'package:dmj_stock_manager/model/bills_model/create_bill_model.dart';
 import 'package:dmj_stock_manager/model/order_models/create_order_response_model.dart';
 import 'package:dmj_stock_manager/model/order_models/order_model.dart';
@@ -93,7 +92,6 @@ class OrderController extends GetxController with BaseController {
   // ──────────────────────────────────────────────────────────────────────────
   // Unchanged methods below — only loadOrderDetail & updateOrderStatus modified
   // ──────────────────────────────────────────────────────────────────────────
-
   void addItemRow() {
     items.add({
       "product": Rx<ProductModel?>(null),
