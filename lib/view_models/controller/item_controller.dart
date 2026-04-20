@@ -59,6 +59,9 @@ class ItemController extends GetxController with BaseController {
   Rx<ProductModel?> selectedProduct = Rx<ProductModel?>(null);
 
   RxInt currentIndex = 0.obs;
+  // selected Mode State
+  final RxBool isSelectedMode = false.obs;
+  final RxSet<int> selectedProductIds = <int>{}.obs;
 
   void updateIndex(int index) {
     currentIndex.value = index;
@@ -87,6 +90,27 @@ class ItemController extends GetxController with BaseController {
     });
   }
 
+  void enterSelectionMode(int productId){
+    isSelectedMode.value = true;
+    selectedProductIds.add(productId);
+  }
+
+  void exitSelectionMode() {
+    isSelectedMode.value = false;
+    selectedProductIds.clear();
+  }
+
+  void toggleSelection(int productId){
+    if(selectedProductIds.contains(productId)){
+      selectedProductIds.remove(productId);
+      if (selectedProductIds.isEmpty) exitSelectionMode();
+    }else{
+      selectedProductIds.add(productId);
+    }
+  }
+
+  List<ProductModel> get shareSelectedProducts =>
+      products.where((p) => selectedProductIds.contains(p.id)).toList();
   // ─────────────────────────────────────────────────────────────────────────
   // ✅ Existing image helpers (edit mode)
   // ─────────────────────────────────────────────────────────────────────────

@@ -80,8 +80,8 @@ void showBarcodeDialog(
                 border: Border.all(color: Colors.grey[200]!),
               ),
               child: Image.network(
-                "https://192.168.1.8:8000/$barcodeImageUrl",
-                // "https://traders.testwebs.in/$barcodeImageUrl",
+                // "https://192.168.1.8:8000/$barcodeImageUrl",
+                "https://traders.testwebs.in/$barcodeImageUrl",
                 height: 80,
                 width: double.infinity,
                 fit: BoxFit.contain,

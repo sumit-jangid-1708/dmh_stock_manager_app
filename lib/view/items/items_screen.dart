@@ -19,6 +19,7 @@ import 'package:printing/printing.dart';
 import '../../model/product_models/product_model.dart';
 import '../../res/components/widgets/edit_item_form_bottom_sheet.dart';
 import '../../utils/app_alerts.dart';
+import '../../view_models/services/other_services/product_share_service.dart';
 
 class ItemsScreen extends StatelessWidget {
   final ItemController itemController = Get.put(ItemController());
@@ -46,311 +47,270 @@ class ItemsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () async {
-            itemController.getProducts();
-          },
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 25,
-                ),
-                child: Row(
-                  children: [
-                    // 🔍 Search Bar
-                    Expanded(
-                      child: TextFormField(
-                        controller: itemController.searchBar,
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.search),
-                          suffixIcon: IconButton(
-                            onPressed: () {
-                              itemController.searchBar.clear();
-                              itemController.filteredProducts.assignAll(
-                                itemController.products,
-                              );
-                            },
-                            icon: const Icon(Icons.close),
-                          ),
-                          filled: true,
-                          fillColor: Colors.grey.withOpacity(0.1),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey.shade200),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF1A1A4F),
-                              width: 1,
-                            ),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          hintText: "Search products...",
-                        ),
-                      ),
-                    ),
+    return Obx(() {
+      final inSelection = itemController.isSelectedMode.value;
 
-                    const SizedBox(width: 10),
-                    // 🖨️ Print Button (Square)
-                    Container(
-                      height: 48,
-                      width: 48,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF1A1A4F), Color(0xFF4A4ABF)],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Color(0xFF1A1A4F).withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: Offset(0, 4),
-                          ),
-                        ],
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: AppGradientButton(
-                        onPressed: () {
-                          showProductSelectionDialog(context);
-                        },
-                        icon: Icons.print,
-                      ),
-                    ),
-                  ],
+      return PopScope(
+        canPop: !inSelection,
+        onPopInvoked: (didPop) {
+          if (!didPop && inSelection) {
+            itemController.exitSelectionMode();
+          }
+        },
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          appBar: inSelection
+              ? AppBar(
+            backgroundColor: const Color(0xFF1A1A4F),
+            leading: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white),
+              onPressed: itemController.exitSelectionMode,
+            ),
+            title: Obx(() => Text(
+              "${itemController.selectedProductIds.length} selected",
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+            )),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.share_outlined, color: Colors.white),
+                onPressed: () => ProductShareService.shareProducts(
+                  context,
+                  itemController.shareSelectedProducts,
+                  itemController.exitSelectionMode,
                 ),
               ),
-
-              /// PRODUCT LIST - ✅ Enhanced Card with Edit & Delete Buttons
-              Expanded(
-                child: Obx(() {
-                  if (itemController.isLoading.value) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (itemController.filteredProducts.isEmpty) {
-                    return const Center(child: Text("No products found"));
-                  }
-
-                  return Scrollbar(
-                    controller: _scrollController,
-                    thumbVisibility: true,
-                    trackVisibility: true,
-                    interactive: true,
-                    thickness: 6,
-                    radius: const Radius.circular(10),
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      itemCount: itemController.filteredProducts.length,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      itemBuilder: (context, index) {
-                        final product = itemController.filteredProducts[index];
-                        final imageList = product.productImageVariants;
-
-                        return InkWell(
-                          onTap: () =>
-                              Get.to(() => ItemDetailScreen(product: product)),
-                          child: Card(
-                            color: Colors.white,
-                            margin: const EdgeInsets.symmetric(
-                              vertical: 8,
-                              horizontal: 12,
-                            ),
-                            elevation: 3,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  // 🖼️ Product Image
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: imageList.isNotEmpty
-                                        ? Image.network(
-                                      _getImageUrl(imageList.first),
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (_, __, ___) =>
-                                          Container(
-                                            width: 80,
-                                            height: 80,
-                                            color: Colors.grey.shade200,
-                                            child: const Icon(
-                                              Icons.image_not_supported,
-                                              color: Colors.grey,
-                                            ),
-                                          ),
-                                    )
-                                        : Container(
-                                      width: 80,
-                                      height: 80,
-                                      color: Colors.grey.shade200,
-                                      alignment: Alignment.center,
-                                      child: const Icon(
-                                        Icons.image_not_supported,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  ),
-
-                                  const SizedBox(width: 14),
-
-                                  // 📝 Product Name & SKU
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          product.name,
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xFF1A1A4F),
-                                          ),
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          "SKU: ${product.baseSku}",
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-
-                                  // ✅ Action Buttons Row
-                                  Row(
-                                    children: [
-                                      // Edit Button
-                                      Container(
-                                        width: 36,
-                                        height: 36,
-                                        decoration: BoxDecoration(
-                                          gradient: const LinearGradient(
-                                            colors: [
-                                              Color(0xFF1A1A4F),
-                                              Color(0xFF4A4ABF),
-                                            ],
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                          ),
-                                          borderRadius: BorderRadius.circular(10),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: const Color(0xFF1A1A4F)
-                                                  .withOpacity(0.3),
-                                              blurRadius: 6,
-                                              offset: const Offset(0, 3),
-                                            ),
-                                          ],
-                                        ),
-                                        child: Material(
-                                          color: Colors.transparent,
-                                          child: InkWell(
-                                            onTap: () {
-                                              Get.bottomSheet(
-                                                EditItemFormBottomSheet(
-                                                  product: product,
-                                                ),
-                                                isScrollControlled: true,
-                                                backgroundColor:
-                                                Colors.transparent,
-                                              );
-                                            },
-                                            borderRadius:
-                                            BorderRadius.circular(10),
-                                            child: const Icon(
-                                              Icons.edit_outlined,
-                                              color: Colors.white,
-                                              size: 18,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-
-                                      const SizedBox(width: 8),
-
-                                      // ✅ Delete Button
-                                      Container(
-                                        width: 36,
-                                        height: 36,
-                                        decoration: BoxDecoration(
-                                          gradient: const LinearGradient(
-                                            colors: [
-                                              Color(0xFFE53935),
-                                              Color(0xFFC62828),
-                                            ],
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                          ),
-                                          borderRadius: BorderRadius.circular(10),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: const Color(0xFFE53935)
-                                                  .withOpacity(0.3),
-                                              blurRadius: 6,
-                                              offset: const Offset(0, 3),
-                                            ),
-                                          ],
-                                        ),
-                                        child: Material(
-                                          color: Colors.transparent,
-                                          child: InkWell(
-                                            onTap: () {
-                                              _showDeleteConfirmationDialog(
-                                                context,
-                                                product,
-                                              );
-                                            },
-                                            borderRadius:
-                                            BorderRadius.circular(10),
-                                            child: const Icon(
-                                              Icons.delete_outline,
-                                              color: Colors.white,
-                                              size: 18,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+            ],
+          )
+              : null, // normal screen mein appBar nahi hai
+          body: SafeArea(
+            child: RefreshIndicator(
+              onRefresh: () async => itemController.getProducts(),
+              child: Column(
+                children: [
+                  // ── Search bar (sirf normal mode mein) ──
+                  if (!inSelection)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: itemController.searchBar,
+                              decoration: InputDecoration(
+                                prefixIcon: const Icon(Icons.search),
+                                suffixIcon: IconButton(
+                                  onPressed: () {
+                                    itemController.searchBar.clear();
+                                    itemController.filteredProducts
+                                        .assignAll(itemController.products);
+                                  },
+                                  icon: const Icon(Icons.close),
+                                ),
+                                filled: true,
+                                fillColor: Colors.grey.withOpacity(0.1),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide.none,
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                                hintText: "Search products...",
                               ),
                             ),
                           ),
-                        );
-                      },
+                          const SizedBox(width: 10),
+                          Container(
+                            height: 48, width: 48,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF1A1A4F), Color(0xFF4A4ABF)],
+                              ),
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: AppGradientButton(
+                              onPressed: () => showProductSelectionDialog(context),
+                              icon: Icons.print,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  );
-                }),
+
+                  // ── Product List ──
+                  Expanded(
+                    child: Obx(() {
+                      if (itemController.isLoading.value) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (itemController.filteredProducts.isEmpty) {
+                        return const Center(child: Text("No products found"));
+                      }
+
+                      return Scrollbar(
+                        controller: _scrollController,
+                        thumbVisibility: true,
+                        thickness: 6,
+                        radius: const Radius.circular(10),
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          itemCount: itemController.filteredProducts.length,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          itemBuilder: (context, index) {
+                            final product = itemController.filteredProducts[index];
+                            return _buildProductCard(context, product);
+                          },
+                        ),
+                      );
+                    }),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
+      );
+    });
+  }
+
+// ── Product Card ──────────────────────────────────────────────────────────
+
+  Widget _buildProductCard(BuildContext context, ProductModel product) {
+    final imageList = product.productImageVariants;
+
+    return Obx(() {
+      final inSelection = itemController.isSelectedMode.value;
+      final isSelected = itemController.selectedProductIds.contains(product.id);
+
+      return GestureDetector(
+        // Long press → selection mode start
+        onLongPress: () => itemController.enterSelectionMode(product.id),
+        onTap: () {
+          if (inSelection) {
+            // Selection mode mein tap = toggle
+            itemController.toggleSelection(product.id);
+          } else {
+            // Normal tap = detail screen
+            Get.to(() => ItemDetailScreen(product: product));
+          }
+        },
+        child: Card(
+          color: Colors.white,
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          elevation: isSelected ? 4 : 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: isSelected
+                ? const BorderSide(color: Color(0xFF1A1A4F), width: 2)
+                : BorderSide.none,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                // ── Selection checkbox (selection mode mein) ──
+                if (inSelection) ...[
+                  Icon(
+                    isSelected
+                        ? Icons.check_circle_rounded
+                        : Icons.radio_button_unchecked,
+                    color: isSelected ? const Color(0xFF1A1A4F) : Colors.grey,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 10),
+                ],
+
+                // ── Product image ──
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: imageList.isNotEmpty
+                      ? Image.network(
+                    _getImageUrl(imageList.first),
+                    width: 70, height: 70, fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _imagePlaceholder(),
+                  )
+                      : _imagePlaceholder(),
+                ),
+                const SizedBox(width: 14),
+
+                // ── Product info ──
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(product.name,
+                          style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1A1A4F)),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 4),
+                      Text("SKU: ${product.baseSku}",
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.grey.shade600)),
+                    ],
+                  ),
+                ),
+
+                // ── Edit/Delete (sirf normal mode mein) ──
+                if (!inSelection)
+                  Row(
+                    children: [
+                      _actionButton(
+                        icon: Icons.edit_outlined,
+                        color: Colors.white,
+                        onTap: () => Get.bottomSheet(
+                          EditItemFormBottomSheet(product: product),
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _actionButton(
+                        icon: Icons.delete_outline,
+                        color: Colors.white,
+                        onTap: () => _showDeleteConfirmationDialog(context, product),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _imagePlaceholder() => Container(
+    width: 70, height: 70,
+    color: Colors.grey.shade200,
+    child: const Icon(Icons.image_not_supported, color: Colors.grey),
+  );
+
+  Widget _actionButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: 34, height: 34,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [
+              Color(0xFF1A1A4F),
+              Color(0xFF4A4ABF),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          // color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          // border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Icon(icon, color: color, size: 17),
       ),
     );
   }
