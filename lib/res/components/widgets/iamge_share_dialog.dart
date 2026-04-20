@@ -61,7 +61,7 @@ class ImageShareDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final images = product.productImageVariants;
-
+    print(images.first);
     return Dialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -124,7 +124,8 @@ class ImageShareDialog extends StatelessWidget {
                   itemCount: images.length,
                   itemBuilder: (context, index) {
                     final imageUrl =
-                        "https://traders.testwebs.in${images[index].toString()}";
+                        images[index].toString();
+                        // "https://traders.testwebs.in${images[index].toString()}";
 
                     return Obx(() {
                       final isSelected = selectedImages.contains(imageUrl);

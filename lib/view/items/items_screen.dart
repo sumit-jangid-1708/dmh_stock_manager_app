@@ -59,6 +59,7 @@ class ItemsScreen extends StatelessWidget {
         },
         child: Scaffold(
           backgroundColor: Colors.white,
+          // ── AppBar — selection mode mein change hota hai ──
           appBar: inSelection
               ? AppBar(
             backgroundColor: const Color(0xFF1A1A4F),
@@ -73,7 +74,7 @@ class ItemsScreen extends StatelessWidget {
             actions: [
               IconButton(
                 icon: const Icon(Icons.share_outlined, color: Colors.white),
-                onPressed: () => ProductShareService.shareProducts(
+                onPressed: () => ProductShareService.shareProductsAsWhatsappCatalogue(
                   context,
                   itemController.shareSelectedProducts,
                   itemController.exitSelectionMode,

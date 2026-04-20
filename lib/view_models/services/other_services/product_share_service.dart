@@ -46,11 +46,11 @@ class ProductShareService {
   }
 
   /// ── Main share method ──
-  static Future<void> shareProducts(
-    BuildContext context,
-    List<ProductModel> products,
-    VoidCallback onDone,
-  ) async {
+  static Future<void> shareProductsAsWhatsappCatalogue(
+      BuildContext context,
+      List<ProductModel> products,
+      VoidCallback onDone,
+      ) async {
     if (products.isEmpty) return;
 
     final overlay = OverlayEntry(
@@ -61,21 +61,46 @@ class ProductShareService {
         ),
       ),
     );
+
     Overlay.of(context).insert(overlay);
 
     try {
       final List<XFile> imageFiles = [];
-      final StringBuffer allText = StringBuffer();
+      final StringBuffer message = StringBuffer();
 
-      for (final product in products) {
-        allText.writeln(_buildProductText(product));
-        if (products.length > 1) allText.writeln("─────────────────");
+      message.writeln("🛍 *PRODUCT CATALOGUE*");
+      message.writeln("────────────────────────\n");
 
-        final imageList = product.productImageVariants;
-        if (imageList.isNotEmpty) {
-          final url = _resolveUrl(imageList.first);
+      for (int i = 0; i < products.length; i++) {
+        final p = products[i];
+
+        message.writeln("📦 *${p.name.toUpperCase()}*");
+
+        if (p.size.isNotEmpty) {
+          message.writeln("📐 Size: ${p.size}");
+        }
+
+        if (p.color.isNotEmpty) {
+          message.writeln("🎨 Color: ${p.color}");
+        }
+
+        if (p.material.isNotEmpty) {
+          message.writeln("🧱 Material: ${p.material}");
+        }
+
+        message.writeln("🔖 SKU: ${p.sku}");
+
+        // ❌ purchase price intentionally excluded
+
+        message.writeln("\n────────────────────────\n");
+
+        // Image download
+        if (p.productImageVariants.isNotEmpty) {
+          final url = _resolveUrl(p.productImageVariants.first);
           final file = await _downloadImage(url);
-          if (file != null) imageFiles.add(XFile(file.path));
+          if (file != null) {
+            imageFiles.add(XFile(file.path));
+          }
         }
       }
 
@@ -84,17 +109,15 @@ class ProductShareService {
       if (imageFiles.isNotEmpty) {
         await Share.shareXFiles(
           imageFiles,
-          text: allText.toString(),
-          subject: products.length == 1
-              ? products.first.name
-              : "${products.length} Products",
+          text: message.toString(),
         );
       } else {
-        await Share.share(allText.toString());
+        await Share.share(message.toString());
       }
+
     } catch (e) {
       overlay.remove();
-      debugPrint("❌ Share failed: $e");
+      debugPrint("WhatsApp share failed: $e");
     } finally {
       onDone();
     }
