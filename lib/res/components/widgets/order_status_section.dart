@@ -351,19 +351,19 @@ class OrderStatusSection extends StatelessWidget {
                     height: 50,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: AppGradientButton(
-                    onPressed: () {
-                      final o = ctrl.orders.firstWhereOrNull(
-                        (o) => o.id == orderId,
-                      );
-                      if (o != null) showCustomerReturnDialog(context, o);
-                    },
-                    text: 'Customer Return',
-                    height: 50,
-                  ),
-                ),
+                // const SizedBox(width: 12),
+                // Expanded(
+                //   child: AppGradientButton(
+                //     onPressed: () {
+                //       final o = ctrl.orders.firstWhereOrNull(
+                //         (o) => o.id == orderId,
+                //       );
+                //       if (o != null) showCustomerReturnDialog(context, o);
+                //     },
+                //     text: 'Customer Return',
+                //     height: 50,
+                //   ),
+                // ),
               ],
             ),
           ],

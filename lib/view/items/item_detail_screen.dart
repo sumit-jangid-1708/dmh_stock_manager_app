@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 import '../../res/components/barcode_dialog.dart';
+import '../../res/components/sku_qr_widget.dart';
 import '../../res/components/widgets/iamge_share_dialog.dart';
 import '../../view_models/services/other_services/product_share_service.dart';
 
@@ -375,47 +376,74 @@ class ItemDetailScreen extends StatelessWidget {
                         _buildSectionHeader("Identification"),
                         const SizedBox(height: 15),
                         GestureDetector(
-                          onTap: () => showBarcodeDialog(
-                            context,
-                            product.id,
-                            product.barcode,
-                            product.barcodeImage,
-                          ),
+                          onTap: () => showBarcodeDialog(context, product.id, product.sku, product.barcodeImage),
                           child: Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: const Color(0xFF1A1A4F).withOpacity(0.1),
-                              ),
+                              border: Border.all(color: const Color(0xFF1A1A4F).withOpacity(0.1)),
                             ),
                             child: Column(
                               children: [
-                                Image.network(
-                                  product.barcodeImage.startsWith('http')
-                                      ? product.barcodeImage
-                                      : '$_baseUrl${product.barcodeImage}',
-                                  height: 60,
-                                  errorBuilder: (_, __, ___) => const Icon(
-                                    Icons.barcode_reader,
-                                    size: 40,
-                                    color: Colors.grey,
-                                  ),
+                                // ✅ QR from SKU — crisp, no network
+                                SkuQrWidget(
+                                  sku: product.sku,
+                                  size: 130,
+                                  showLabel: false,
                                 ),
                                 const SizedBox(height: 10),
                                 const Text(
-                                  "Tap to view or print barcode",
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 12,
-                                  ),
+                                  "Tap to view or print",
+                                  style: TextStyle(color: Colors.grey, fontSize: 12),
                                 ),
                               ],
                             ),
                           ),
                         ),
+                        // GestureDetector(
+                        //   onTap: () => showBarcodeDialog(
+                        //     context,
+                        //     product.id,
+                        //     product.barcode,
+                        //     product.barcodeImage,
+                        //   ),
+                        //   child: Container(
+                        //     width: double.infinity,
+                        //     padding: const EdgeInsets.all(20),
+                        //     decoration: BoxDecoration(
+                        //       color: Colors.white,
+                        //       borderRadius: BorderRadius.circular(20),
+                        //       border: Border.all(
+                        //         color: const Color(0xFF1A1A4F).withOpacity(0.1),
+                        //       ),
+                        //     ),
+                        //     child: Column(
+                        //       children: [
+                        //         Image.network(
+                        //           product.barcodeImage.startsWith('http')
+                        //               ? product.barcodeImage
+                        //               : '$_baseUrl${product.barcodeImage}',
+                        //           height: 60,
+                        //           errorBuilder: (_, __, ___) => const Icon(
+                        //             Icons.barcode_reader,
+                        //             size: 40,
+                        //             color: Colors.grey,
+                        //           ),
+                        //         ),
+                        //         const SizedBox(height: 10),
+                        //         const Text(
+                        //           "Tap to view or print barcode",
+                        //           style: TextStyle(
+                        //             color: Colors.grey,
+                        //             fontSize: 12,
+                        //           ),
+                        //         ),
+                        //       ],
+                        //     ),
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),

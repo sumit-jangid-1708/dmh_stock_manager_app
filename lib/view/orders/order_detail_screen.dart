@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../model/order_models/order_detail_model.dart';
+import '../../res/components/sku_qr_widget.dart';
 import '../../res/components/widgets/courier_return_bottom_sheet.dart';
 import '../../res/components/widgets/create_bill_dialog_widget.dart';
 import '../../res/components/widgets/custom_text_field.dart';
@@ -334,8 +335,33 @@ class OrderDetailScreen extends StatelessWidget {
                   const SizedBox(height: 12),
 
                   // ── Cancel Button ─────────────────────────────────────────
-                  Obx(
-                    () => SizedBox(
+                  Obx(() {
+                    if (orderController.orders.isEmpty) {
+                      return const SizedBox();
+                    }
+
+                    final order = orderController.orders.firstWhereOrNull(
+                      (e) => e.id == orderId,
+                    );
+
+                    if (order == null) {
+                      return const SizedBox();
+                    }
+
+                    final status =
+                        int.tryParse(
+                          order.latestStatus?.status?.toString() ?? '0',
+                        ) ??
+                        0;
+
+                    print("Current Status: $status");
+
+                    // hide after 3
+                    if (status >= 3) {
+                      return const SizedBox();
+                    }
+
+                    return SizedBox(
                       width: double.infinity,
                       height: 50,
                       child: OutlinedButton.icon(
@@ -377,8 +403,8 @@ class OrderDetailScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  }),
 
                   const SizedBox(height: 20),
                 ],
@@ -838,27 +864,23 @@ class _OrderItemCard extends StatelessWidget {
 
             if (item.productBarcode.isNotEmpty) ...[
               const SizedBox(height: 12),
-              _InfoBox(
-                icon: Icons.qr_code,
-                title: 'Product Barcode',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.productBarcode,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        fontFamily: 'monospace',
-                        color: Color(0xFF1A1A4F),
-                      ),
+              GestureDetector(
+                onTap: () => _showBarcodeDialog(
+                  context,
+                  item.productBarcode,
+                ),
+                child: _InfoBox(
+                  icon: Icons.qr_code,
+                  title: 'Product Barcode',
+                  child: Text(
+                    item.productBarcode,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'monospace',
+                      color: Color(0xFF1A1A4F),
                     ),
-                    if (item.productBarcodeImage != null &&
-                        item.productBarcodeImage!.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      buildBarcodeImage(item.productBarcodeImage!),
-                    ],
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -882,9 +904,50 @@ class _OrderItemCard extends StatelessWidget {
   }
 }
 
+void _showBarcodeDialog(BuildContext context, String sku) {
+  showDialog(
+    context: context,
+    builder: (_) => Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Product QR Code",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            /// 🔥 Big QR for print
+            SkuQrWidget(
+              sku: sku,
+              size: 250,
+              showLabel: true,
+            ),
+
+            const SizedBox(height: 20),
+
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Close"),
+            )
+          ],
+        ),
+      ),
+    ),
+  );
+}
+// ── _SerialItem — backend image hatao, QR widget lagao ──
 class _SerialItem extends StatelessWidget {
   const _SerialItem({required this.serial});
-
   final SerialModel serial;
 
   @override
@@ -895,36 +958,80 @@ class _SerialItem extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.blue.shade200),
+        border: Border.all(color: Colors.blue.shade100),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          // ✅ QR — frontend generated, no backend call
+          SkuQrWidget(sku: serial.serialNumber, size: 100, showLabel: false),
+          const SizedBox(height: 6),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
               serial.serialNumber,
+              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: FontWeight.w600,
                 fontFamily: 'monospace',
                 color: Colors.blue.shade700,
               ),
             ),
           ),
-          if (serial.barcodeImage.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            _OrderItemCard.buildBarcodeImage(serial.barcodeImage),
-          ],
         ],
       ),
     );
   }
 }
+
+// class _SerialItem extends StatelessWidget {
+//   const _SerialItem({required this.serial});
+//
+//   final SerialModel serial;
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       margin: const EdgeInsets.only(bottom: 10),
+//       padding: const EdgeInsets.all(10),
+//       decoration: BoxDecoration(
+//         color: Colors.white,
+//         borderRadius: BorderRadius.circular(8),
+//         border: Border.all(color: Colors.blue.shade200),
+//       ),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           Container(
+//             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+//             decoration: BoxDecoration(
+//               color: Colors.blue.shade50,
+//               borderRadius: BorderRadius.circular(4),
+//             ),
+//             child: Text(
+//               serial.serialNumber,
+//               style: TextStyle(
+//                 fontSize: 11,
+//                 fontWeight: FontWeight.w600,
+//                 fontFamily: 'monospace',
+//                 color: Colors.blue.shade700,
+//               ),
+//             ),
+//           ),
+//           if (serial.barcodeImage.isNotEmpty) ...[
+//             const SizedBox(height: 8),
+//             _OrderItemCard.buildBarcodeImage(serial.barcodeImage),
+//           ],
+//         ],
+//       ),
+//     );
+//   }
+// }
 
 class _InfoBox extends StatelessWidget {
   const _InfoBox({

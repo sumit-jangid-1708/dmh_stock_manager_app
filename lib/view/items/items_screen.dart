@@ -17,6 +17,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../../model/product_models/product_model.dart';
+import '../../res/components/sku_qr_widget.dart';
 import '../../res/components/widgets/edit_item_form_bottom_sheet.dart';
 import '../../utils/app_alerts.dart';
 import '../../view_models/services/other_services/product_share_service.dart';
@@ -26,7 +27,6 @@ class ItemsScreen extends StatelessWidget {
   final StockController stockController = Get.find<StockController>();
   final ScrollController _scrollController = ScrollController();
   ItemsScreen({super.key});
-
 
   static const String _baseUrl = "https://traders.testwebs.in";
 
@@ -41,8 +41,8 @@ class ItemsScreen extends StatelessWidget {
     }
 
     if (raw.isEmpty) return "https://via.placeholder.com/150";
-    if (raw.startsWith('http')) return raw;   // already full URL
-    return '$_baseUrl$raw';                    // relative → full
+    if (raw.startsWith('http')) return raw; // already full URL
+    return '$_baseUrl$raw'; // relative → full
   }
 
   @override
@@ -62,26 +62,32 @@ class ItemsScreen extends StatelessWidget {
           // ── AppBar — selection mode mein change hota hai ──
           appBar: inSelection
               ? AppBar(
-            backgroundColor: const Color(0xFF1A1A4F),
-            leading: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white),
-              onPressed: itemController.exitSelectionMode,
-            ),
-            title: Obx(() => Text(
-              "${itemController.selectedProductIds.length} selected",
-              style: const TextStyle(color: Colors.white, fontSize: 16),
-            )),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.share_outlined, color: Colors.white),
-                onPressed: () => ProductShareService.shareProductsAsWhatsappCatalogue(
-                  context,
-                  itemController.shareSelectedProducts,
-                  itemController.exitSelectionMode,
-                ),
-              ),
-            ],
-          )
+                  backgroundColor: const Color(0xFF1A1A4F),
+                  leading: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: itemController.exitSelectionMode,
+                  ),
+                  title: Obx(
+                    () => Text(
+                      "${itemController.selectedProductIds.length} selected",
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                  ),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.share_outlined,
+                        color: Colors.white,
+                      ),
+                      onPressed: () =>
+                          ProductShareService.shareProductsAsWhatsappCatalogue(
+                            context,
+                            itemController.shareSelectedProducts,
+                            itemController.exitSelectionMode,
+                          ),
+                    ),
+                  ],
+                )
               : null, // normal screen mein appBar nahi hai
           body: SafeArea(
             child: RefreshIndicator(
@@ -91,7 +97,10 @@ class ItemsScreen extends StatelessWidget {
                   // ── Search bar (sirf normal mode mein) ──
                   if (!inSelection)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 25,
+                      ),
                       child: Row(
                         children: [
                           Expanded(
@@ -102,8 +111,9 @@ class ItemsScreen extends StatelessWidget {
                                 suffixIcon: IconButton(
                                   onPressed: () {
                                     itemController.searchBar.clear();
-                                    itemController.filteredProducts
-                                        .assignAll(itemController.products);
+                                    itemController.filteredProducts.assignAll(
+                                      itemController.products,
+                                    );
                                   },
                                   icon: const Icon(Icons.close),
                                 ),
@@ -114,14 +124,17 @@ class ItemsScreen extends StatelessWidget {
                                   borderSide: BorderSide.none,
                                 ),
                                 contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 12),
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
                                 hintText: "Search products...",
                               ),
                             ),
                           ),
                           const SizedBox(width: 10),
                           Container(
-                            height: 48, width: 48,
+                            height: 48,
+                            width: 48,
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 colors: [Color(0xFF1A1A4F), Color(0xFF4A4ABF)],
@@ -129,7 +142,8 @@ class ItemsScreen extends StatelessWidget {
                               borderRadius: BorderRadius.circular(15),
                             ),
                             child: AppGradientButton(
-                              onPressed: () => showProductSelectionDialog(context),
+                              onPressed: () =>
+                                  showProductSelectionDialog(context),
                               icon: Icons.print,
                             ),
                           ),
@@ -157,7 +171,8 @@ class ItemsScreen extends StatelessWidget {
                           itemCount: itemController.filteredProducts.length,
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           itemBuilder: (context, index) {
-                            final product = itemController.filteredProducts[index];
+                            final product =
+                                itemController.filteredProducts[index];
                             return _buildProductCard(context, product);
                           },
                         ),
@@ -173,7 +188,7 @@ class ItemsScreen extends StatelessWidget {
     });
   }
 
-// ── Product Card ──────────────────────────────────────────────────────────
+  // ── Product Card ──────────────────────────────────────────────────────────
 
   Widget _buildProductCard(BuildContext context, ProductModel product) {
     final imageList = product.productImageVariants;
@@ -225,10 +240,12 @@ class ItemsScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   child: imageList.isNotEmpty
                       ? Image.network(
-                    _getImageUrl(imageList.first),
-                    width: 70, height: 70, fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _imagePlaceholder(),
-                  )
+                          _getImageUrl(imageList.first),
+                          width: 70,
+                          height: 70,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _imagePlaceholder(),
+                        )
                       : _imagePlaceholder(),
                 ),
                 const SizedBox(width: 14),
@@ -238,17 +255,24 @@ class ItemsScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(product.name,
-                          style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1A1A4F)),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis),
+                      Text(
+                        product.name,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A1A4F),
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       const SizedBox(height: 4),
-                      Text("SKU: ${product.baseSku}",
-                          style: TextStyle(
-                              fontSize: 12, color: Colors.grey.shade600)),
+                      Text(
+                        "SKU: ${product.baseSku}",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -270,7 +294,8 @@ class ItemsScreen extends StatelessWidget {
                       _actionButton(
                         icon: Icons.delete_outline,
                         color: Colors.white,
-                        onTap: () => _showDeleteConfirmationDialog(context, product),
+                        onTap: () =>
+                            _showDeleteConfirmationDialog(context, product),
                       ),
                     ],
                   ),
@@ -283,7 +308,8 @@ class ItemsScreen extends StatelessWidget {
   }
 
   Widget _imagePlaceholder() => Container(
-    width: 70, height: 70,
+    width: 70,
+    height: 70,
     color: Colors.grey.shade200,
     child: const Icon(Icons.image_not_supported, color: Colors.grey),
   );
@@ -297,13 +323,11 @@ class ItemsScreen extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        width: 34, height: 34,
+        width: 34,
+        height: 34,
         decoration: BoxDecoration(
           gradient: const LinearGradient(
-            colors: [
-              Color(0xFF1A1A4F),
-              Color(0xFF4A4ABF),
-            ],
+            colors: [Color(0xFF1A1A4F), Color(0xFF4A4ABF)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -330,14 +354,12 @@ class ItemsScreen extends StatelessWidget {
 
   /// ✅ Delete Confirmation Dialog
   void _showDeleteConfirmationDialog(
-      BuildContext context,
-      ProductModel product,
-      ) {
+    BuildContext context,
+    ProductModel product,
+  ) {
     Get.dialog(
       Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -376,10 +398,7 @@ class ItemsScreen extends StatelessWidget {
               Text(
                 "Are you sure you want to delete '${product.name}'?",
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
               ),
 
               const SizedBox(height: 10),
@@ -415,14 +434,11 @@ class ItemsScreen extends StatelessWidget {
                   // Delete Button
                   Expanded(
                     child: Obx(
-                          () => Container(
+                      () => Container(
                         height: 45,
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFFE53935),
-                              Color(0xFFC62828),
-                            ],
+                            colors: [Color(0xFFE53935), Color(0xFFC62828)],
                           ),
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -488,7 +504,7 @@ Future<void> showProductSelectionDialog(BuildContext context) async {
                   ),
                 ),
                 Obx(
-                      () => TextButton(
+                  () => TextButton(
                     onPressed: () {
                       if (selectedIds.length ==
                           itemController.filteredProducts.length) {
@@ -501,7 +517,7 @@ Future<void> showProductSelectionDialog(BuildContext context) async {
                     },
                     child: Text(
                       selectedIds.length ==
-                          itemController.filteredProducts.length
+                              itemController.filteredProducts.length
                           ? "Clear All"
                           : "Select All",
                     ),
@@ -555,18 +571,18 @@ Future<void> showProductSelectionDialog(BuildContext context) async {
             const SizedBox(height: 15),
 
             Obx(
-                  () => AppGradientButton(
+              () => AppGradientButton(
                 width: double.infinity,
                 height: 50,
                 onPressed: selectedIds.isEmpty
                     ? null
                     : () async {
-                  final selectedList = itemController.filteredProducts
-                      .where((p) => selectedIds.contains(p.id))
-                      .toList();
-                  Get.back();
-                  await _printSelectedProducts(context, selectedList);
-                },
+                        final selectedList = itemController.filteredProducts
+                            .where((p) => selectedIds.contains(p.id))
+                            .toList();
+                        Get.back();
+                        await _printSelectedProducts(context, selectedList);
+                      },
                 text: "Print ${selectedIds.length} Barcodes",
               ),
             ),
@@ -580,11 +596,9 @@ Future<void> showProductSelectionDialog(BuildContext context) async {
 }
 
 Future<void> _printSelectedProducts(
-    BuildContext context,
-    List<ProductModel> products,
-    ) async {
-  const baseUrl = "https://traders.testwebs.in";
-
+  BuildContext context,
+  List<ProductModel> products,
+) async {
   showDialog(
     context: context,
     barrierDismissible: false,
@@ -592,57 +606,63 @@ Future<void> _printSelectedProducts(
   );
 
   try {
-    final Map<int, Uint8List> imageBytes = {};
-    for (final p in products) {
-      try {
-        final imagePath = p.barcodeImage ?? "";
-        if (imagePath.isEmpty) continue;
-        final url = Uri.parse(baseUrl + imagePath);
-        final resp = await http.get(url);
-        if (resp.statusCode == 200) {
-          imageBytes[p.id] = Uint8List.fromList(resp.bodyBytes);
-        }
-      } catch (_) {}
-    }
+    // ✅ Backend se image fetch nahi — SKU se QR generate karo
+    final List<Uint8List> qrImages = await Future.wait(
+      products.map((p) => SkuQrWidget.toImageBytes(p.sku, size: 300)),
+    );
 
     final doc = pw.Document();
 
-    final List<pw.Widget> itemWidgets = [];
-    for (final p in products) {
-      final bytes = imageBytes[p.id];
-      if (bytes == null) continue;
+    final List<pw.Widget> itemWidgets = List.generate(products.length, (i) {
+      final p = products[i];
+      final qrBytes = qrImages[i];
 
-      final pwWidget = pw.Container(
-        width: 150,
-        height: 80,
-        padding: const pw.EdgeInsets.all(4),
-        child: pw.Image(pw.MemoryImage(bytes), fit: pw.BoxFit.contain),
+      return pw.Container(
+        width: 120,
+        padding: const pw.EdgeInsets.all(6),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.center,
+          children: [
+            pw.Image(
+              pw.MemoryImage(qrBytes),
+              width: 100,
+              height: 100,
+              fit: pw.BoxFit.contain,
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text(
+              p.sku,
+              textAlign: pw.TextAlign.center,
+              style: pw.TextStyle(fontSize: 5, fontWeight: pw.FontWeight.bold),
+            ),
+          ],
+        ),
       );
-      itemWidgets.add(pwWidget);
-    }
+    });
 
     doc.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(20),
-        build: (context) => [
+        build: (_) => [
           pw.Wrap(spacing: 10, runSpacing: 10, children: itemWidgets),
         ],
       ),
     );
 
     final pdfBytes = await doc.save();
+    Get.back(); // loading dialog close
 
     await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => pdfBytes,
+      onLayout: (_) async => pdfBytes,
+      name: "QR_Barcodes",
     );
   } catch (e) {
-    debugPrint("Error building/printing barcode PDF: $e");
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Printing failed: $e")),
-    );
-  } finally {
     Get.back();
+    debugPrint("❌ Print error: $e");
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text("Printing failed: $e")));
   }
 }
 
@@ -849,7 +869,7 @@ void showAdjustInventoryDialog(String sku) {
 void handleInventoryAction(ProductModel product) {
   final stockController = Get.find<StockController>();
   final bool isInInventory = stockController.inventoryList.any(
-        (item) => item.product == product.id,
+    (item) => item.product == product.id,
   );
 
   if (isInInventory) {

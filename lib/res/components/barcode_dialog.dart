@@ -1,6 +1,7 @@
 // lib/res/components/widgets/barcode_dialog.dart (ya jahan bhi ye file hai)
 
 import 'dart:typed_data';
+import 'package:dmj_stock_manager/res/components/sku_qr_widget.dart';
 import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
 import 'package:flutter/material.dart';
@@ -79,18 +80,23 @@ void showBarcodeDialog(
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.grey[200]!),
               ),
-              child: Image.network(
-                // "https://192.168.1.8:8000/$barcodeImageUrl",
-                "https://traders.testwebs.in/$barcodeImageUrl",
-                height: 80,
-                width: double.infinity,
-                fit: BoxFit.contain,
-                errorBuilder: (c, e, s) => const Icon(
-                  Icons.barcode_reader,
-                  size: 50,
-                  color: Colors.grey,
-                ),
+              child: SkuQrWidget(
+                sku: sku,
+                size: 140,
+                showLabel: false,
               ),
+              // child: Image.network(
+              //   // "https://192.168.1.8:8000/$barcodeImageUrl",
+              //   "https://traders.testwebs.in/$barcodeImageUrl",
+              //   height: 80,
+              //   width: double.infinity,
+              //   fit: BoxFit.contain,
+              //   errorBuilder: (c, e, s) => const Icon(
+              //     Icons.barcode_reader,
+              //     size: 50,
+              //     color: Colors.grey,
+              //   ),
+              // ),
             ),
             const SizedBox(height: 16),
 
