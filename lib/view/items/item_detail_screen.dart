@@ -376,14 +376,16 @@ class ItemDetailScreen extends StatelessWidget {
                         _buildSectionHeader("Identification"),
                         const SizedBox(height: 15),
                         GestureDetector(
-                          onTap: () => showBarcodeDialog(context, product.id, product.sku, product.barcodeImage),
+                          onTap: () => showBarcodeDialog(context, product.sku),
                           child: Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: const Color(0xFF1A1A4F).withOpacity(0.1)),
+                              border: Border.all(
+                                color: const Color(0xFF1A1A4F).withOpacity(0.1),
+                              ),
                             ),
                             child: Column(
                               children: [
@@ -396,7 +398,10 @@ class ItemDetailScreen extends StatelessWidget {
                                 const SizedBox(height: 10),
                                 const Text(
                                   "Tap to view or print",
-                                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ],
                             ),

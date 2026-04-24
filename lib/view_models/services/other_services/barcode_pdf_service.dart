@@ -9,7 +9,6 @@ import '../../../model/order_models/order_detail_model.dart';
 import '../../../res/components/sku_qr_widget.dart';
 
 class BarcodePdfService {
-
   // ✅ 50x25mm — standard thermal label size
   static const PdfPageFormat _pageFormat = PdfPageFormat(
     58 * PdfPageFormat.mm,
@@ -19,7 +18,6 @@ class BarcodePdfService {
 
   static Future<Uint8List> generateSerialBarcodePdf(OrderDetailsModel order) async {
     final pdf = pw.Document();
-
     // ── Collect all serials ──
     final List<_SerialEntry> allSerials = [];
     for (final item in order.items) {

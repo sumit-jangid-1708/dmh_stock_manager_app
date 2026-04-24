@@ -596,9 +596,16 @@ Future<void> showProductSelectionDialog(BuildContext context) async {
 }
 
 Future<void> _printSelectedProducts(
-  BuildContext context,
-  List<ProductModel> products,
-) async {
+    BuildContext context,
+    List<ProductModel> products,
+    ) async {
+  // ✅ Same page format as BarcodePdfService
+  const PdfPageFormat pageFormat = PdfPageFormat(
+    58 * PdfPageFormat.mm,
+    210 * PdfPageFormat.mm,
+    marginAll: 3 * PdfPageFormat.mm,
+  );
+
   showDialog(
     context: context,
     barrierDismissible: false,
@@ -606,63 +613,69 @@ Future<void> _printSelectedProducts(
   );
 
   try {
-    // ✅ Backend se image fetch nahi — SKU se QR generate karo
+    // ✅ QR generate — no backend call
     final List<Uint8List> qrImages = await Future.wait(
       products.map((p) => SkuQrWidget.toImageBytes(p.sku, size: 300)),
     );
 
     final doc = pw.Document();
 
-    final List<pw.Widget> itemWidgets = List.generate(products.length, (i) {
-      final p = products[i];
-      final qrBytes = qrImages[i];
-
-      return pw.Container(
-        width: 120,
-        padding: const pw.EdgeInsets.all(6),
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.center,
-          children: [
-            pw.Image(
-              pw.MemoryImage(qrBytes),
-              width: 100,
-              height: 100,
-              fit: pw.BoxFit.contain,
-            ),
-            pw.SizedBox(height: 4),
-            pw.Text(
-              p.sku,
-              textAlign: pw.TextAlign.center,
-              style: pw.TextStyle(fontSize: 5, fontWeight: pw.FontWeight.bold),
-            ),
-          ],
-        ),
-      );
-    });
-
     doc.addPage(
       pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(20),
-        build: (_) => [
-          pw.Wrap(spacing: 10, runSpacing: 10, children: itemWidgets),
-        ],
+        pageFormat: pageFormat,
+        margin: const pw.EdgeInsets.all(3 * PdfPageFormat.mm),
+        build: (_) {
+          return List.generate(products.length, (i) {
+            final p = products[i];
+            final qrBytes = qrImages[i];
+
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              children: [
+                pw.Center(
+                  child: pw.Image(
+                    pw.MemoryImage(qrBytes),
+                    width: 40 * PdfPageFormat.mm,
+                    height: 40 * PdfPageFormat.mm,
+                    fit: pw.BoxFit.contain,
+                  ),
+                ),
+                pw.SizedBox(height: 1.5 * PdfPageFormat.mm),
+                pw.Text(
+                  p.sku,
+                  textAlign: pw.TextAlign.center,
+                  style: pw.TextStyle(
+                    fontSize: 5.5,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.black,
+                  ),
+                ),
+                if (i < products.length - 1) ...[
+                  pw.SizedBox(height: 2 * PdfPageFormat.mm),
+                  pw.Divider(color: PdfColors.grey300, thickness: 0.5),
+                  pw.SizedBox(height: 2 * PdfPageFormat.mm),
+                ],
+              ],
+            );
+          });
+        },
       ),
     );
 
     final pdfBytes = await doc.save();
-    Get.back(); // loading dialog close
+    Get.back();
 
     await Printing.layoutPdf(
       onLayout: (_) async => pdfBytes,
-      name: "QR_Barcodes",
+      name: "QR_Products",
+      format: pageFormat, // ✅ printer ko correct size bhejo
     );
   } catch (e) {
     Get.back();
     debugPrint("❌ Print error: $e");
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text("Printing failed: $e")));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Printing failed: $e"), backgroundColor: Colors.red),
+    );
   }
 }
 

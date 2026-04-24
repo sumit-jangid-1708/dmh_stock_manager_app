@@ -422,30 +422,55 @@ class ItemController extends GetxController with BaseController {
 
   Future<void> printMultipleBarcodes(List<Uint8List> barcodeImages) async {
     if (barcodeImages.isEmpty) {
-      Get.snackbar("Error", "No barcodes to print", backgroundColor: Colors.red, colorText: Colors.white);
+      Get.snackbar(
+        "Error",
+        "No barcodes to print",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
       return;
     }
+
     try {
       final pdf = pw.Document();
-      final images = barcodeImages.map((bytes) => pw.MemoryImage(bytes)).toList();
-      pdf.addPage(
-        pw.MultiPage(
-          pageFormat: PdfPageFormat.a4,
-          build: (pw.Context context) => [
-            pw.Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: images.map((image) => pw.Container(
-                width: 180, height: 100,
-                alignment: pw.Alignment.center,
-                child: pw.Image(image, width: 150, height: 60),
-              )).toList(),
-            ),
-          ],
-        ),
+
+      // ✅ SAME STYLE as BarcodePdfService
+      final PdfPageFormat labelFormat = PdfPageFormat(
+        58 * PdfPageFormat.mm,
+        25 * PdfPageFormat.mm,
+        marginAll: 2 * PdfPageFormat.mm, // 🔥 IMPORTANT
       );
-      await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
-      debugPrint("✅ Printed ${barcodeImages.length} barcodes successfully");
+
+      for (final bytes in barcodeImages) {
+        final image = pw.MemoryImage(bytes);
+
+        pdf.addPage(
+          pw.Page(
+            pageFormat: labelFormat,
+            build: (pw.Context context) {
+              return pw.Center(
+                child: pw.Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  alignment: pw.Alignment.center,
+                  child: pw.Image(
+                    image,
+                    width: 22 * PdfPageFormat.mm, // 🔥 controlled size
+                    height: 22 * PdfPageFormat.mm,
+                    fit: pw.BoxFit.contain,
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      }
+
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdf.save(),
+      );
+
+      debugPrint("✅ Printed ${barcodeImages.length} labels (58x25mm)");
     } catch (e) {
       debugPrint("❌ Error printing barcodes: $e");
       rethrow;
