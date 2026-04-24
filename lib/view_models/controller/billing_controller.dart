@@ -1,16 +1,19 @@
+// lib/view_models/controller/billing_controller.dart
+
 import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
 import 'package:dmj_stock_manager/view_models/services/billing_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../data/app_exceptions.dart';
 import '../../model/bills_model/bill_response_model.dart';
+import '../../model/bills_model/company_details_model.dart';
+import '../../view/billings/pdf_invoice_helper.dart';
 
-class BillingController extends GetxController with BaseController{
+class BillingController extends GetxController with BaseController {
   final BillingService billingService = BillingService();
 
-  // ✅ Bill list and pagination state
+  // ── Bill list & pagination ───────────────────────────────────────────────
   final bills = <BillModel>[].obs;
   var isLoading = false.obs;
   var isLoadingMore = false.obs;
@@ -18,19 +21,31 @@ class BillingController extends GetxController with BaseController{
   var currentPage = 1.obs;
   var totalCount = 0.obs;
 
-  // ✅ Search and filter
+  // ── Search / filter ──────────────────────────────────────────────────────
   var searchQuery = ''.obs;
   final searchController = TextEditingController();
 
-  // ✅ Scroll controller for pagination
+  // ── Scroll controller for pagination ────────────────────────────────────
   final ScrollController scrollController = ScrollController();
+
+  // ── PDF generation state ─────────────────────────────────────────────────
+  /// Tracks whether a PDF is currently being generated (share or download).
+  var isGeneratingPdf = false.obs;
+
+  /// Session-level cache of the last entered company details.
+  /// Pre-fills the form the next time the sheet is opened in the same session.
+  CompanyDetails? _lastCompanyDetails;
+
+  /// Expose last-used details so the UI can pre-fill the form.
+  CompanyDetails? get lastCompanyDetails => _lastCompanyDetails;
+
+  // ── Lifecycle ────────────────────────────────────────────────────────────
 
   @override
   void onInit() {
     super.onInit();
     getBillDetails();
 
-    // ✅ Setup scroll listener for pagination
     scrollController.addListener(() {
       if (scrollController.position.pixels >=
           scrollController.position.maxScrollExtent - 200) {
@@ -48,7 +63,8 @@ class BillingController extends GetxController with BaseController{
     super.onClose();
   }
 
-  // ✅ Initial load
+  // ── Load bills ───────────────────────────────────────────────────────────
+
   Future<void> getBillDetails({bool refresh = false}) async {
     try {
       if (refresh) {
@@ -57,69 +73,37 @@ class BillingController extends GetxController with BaseController{
         hasMore.value = true;
       }
       isLoading.value = true;
-      final response = await billingService.getBills(page: currentPage.value);
-      BillsResponseModel billResponse = BillsResponseModel.fromJson(response);
+
+      final response =
+      await billingService.getBills(page: currentPage.value);
+      final BillsResponseModel billResponse =
+      BillsResponseModel.fromJson(response);
+
       totalCount.value = billResponse.count;
+
       if (refresh) {
         bills.value = billResponse.results;
       } else {
         bills.addAll(billResponse.results);
       }
+
       hasMore.value = billResponse.next != null;
 
       if (kDebugMode) {
-        print("✅ Loaded ${billResponse.results.length} bills");
-        print("✅ Total: ${billResponse.count}, Has more: ${hasMore.value}");
+        print('✅ Loaded ${billResponse.results.length} bills');
+        print(
+            '✅ Total: ${billResponse.count}, Has more: ${hasMore.value}');
       }
-
-    // } on AppExceptions catch (e) {
-    //   if (kDebugMode) {
-    //     print("❌ Exception Details: $e");
-    //   }
-    //
-    //   // ✅ Check if token expired
-    //   if (e.toString().contains('Unauthorized') ||
-    //       e.toString().contains('token_not_valid')) {
-    //     Get.snackbar(
-    //       "Session Expired",
-    //       "Please login again",
-    //       duration: const Duration(seconds: 2),
-    //       snackPosition: SnackPosition.TOP,
-    //       backgroundColor: Colors.orange,
-    //       colorText: Colors.white,
-    //     );
-    //
-    //     // ✅ Clear stored data and redirect to login
-    //     await Future.delayed(const Duration(seconds: 2));
-    //     // Get.offAllNamed('/login'); // Uncomment if you have login route
-    //     return;
-    //   }
-    //
-    //   Get.snackbar(
-    //     "Error",
-    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-    //     duration: const Duration(seconds: 2),
-    //     snackPosition: SnackPosition.TOP,
-    //     backgroundColor: Colors.red,
-    //     colorText: Colors.white,
-    //   );
     } catch (e) {
-      handleError(e, onRetry: ()=> getBillDetails(refresh: refresh));
-      if (kDebugMode) print("🚩 Bill Error $e");
-      // Get.snackbar(
-      //   'Error',
-      //   'Failed to load Bills List: $e',
-      //   duration: const Duration(seconds: 2),
-      //   snackPosition: SnackPosition.TOP,
-      //   backgroundColor: Colors.red,
-      //   colorText: Colors.white,
-      // );
+      handleError(e, onRetry: () => getBillDetails(refresh: refresh));
+      if (kDebugMode) print('🚩 Bill Error $e');
     } finally {
       isLoading.value = false;
     }
   }
 
-  // ✅ Load more for pagination
+  // ── Load more (pagination) ───────────────────────────────────────────────
+
   Future<void> loadMoreBills() async {
     if (isLoadingMore.value || !hasMore.value) return;
 
@@ -127,47 +111,87 @@ class BillingController extends GetxController with BaseController{
       isLoadingMore.value = true;
       currentPage.value++;
 
-      final response = await billingService.getBills(page: currentPage.value);
-      BillsResponseModel billResponse = BillsResponseModel.fromJson(response);
+      final response =
+      await billingService.getBills(page: currentPage.value);
+      final BillsResponseModel billResponse =
+      BillsResponseModel.fromJson(response);
 
       bills.addAll(billResponse.results);
       hasMore.value = billResponse.next != null;
 
       if (kDebugMode) {
-        print("✅ Loaded more: ${billResponse.results.length} bills");
+        print('✅ Loaded more: ${billResponse.results.length} bills');
       }
-
     } catch (e) {
-      if (kDebugMode) print("❌ Load more error: $e");
-      currentPage.value--; // Rollback page number
+      if (kDebugMode) print('❌ Load more error: $e');
+      currentPage.value--; // Rollback on failure
       handleError(e);
     } finally {
       isLoadingMore.value = false;
     }
   }
 
-  // ✅ Search bills
+  // ── Search / filter ──────────────────────────────────────────────────────
+
   void searchBills(String query) {
     searchQuery.value = query;
-    // TODO: Implement search API call if backend supports it
-    // For now, local filtering
   }
 
-  // ✅ Get filtered bills
   List<BillModel> get filteredBills {
-    if (searchQuery.value.isEmpty) {
-      return bills;
-    }
-
+    if (searchQuery.value.isEmpty) return bills;
     return bills.where((bill) {
-      return bill.customerName.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
-          bill.mobile.contains(searchQuery.value) ||
-          bill.id.toString().contains(searchQuery.value);
+      final q = searchQuery.value.toLowerCase();
+      return bill.customerName.toLowerCase().contains(q) ||
+          bill.mobile.contains(q) ||
+          bill.id.toString().contains(q);
     }).toList();
   }
 
-  // ✅ Refresh bills
   Future<void> refreshBills() async {
     await getBillDetails(refresh: true);
+  }
+
+  // ── PDF generation (new — no Settings dependency) ───────────────────────
+
+  /// Generates a PDF using explicitly-provided [CompanyDetails] and
+  /// triggers the OS share sheet.
+  ///
+  /// Pass [action] as either `'share'` or `'download'`.
+  Future<void> generateInvoiceWithCompanyDetails({
+    required BillModel bill,
+    required CompanyDetails company,
+    required String action, // 'share' | 'download'
+  }) async {
+    assert(
+    action == 'share' || action == 'download',
+    'action must be "share" or "download"',
+    );
+
+    if (isGeneratingPdf.value) return; // Prevent double-tap
+
+    try {
+      isGeneratingPdf.value = true;
+
+      // Cache for pre-filling the form next time in this session.
+      _lastCompanyDetails = company;
+
+      if (action == 'share') {
+        await PdfInvoiceHelper.generateAndShare(bill, company);
+      } else {
+        await PdfInvoiceHelper.generateAndDownload(bill, company);
+      }
+
+      if (kDebugMode) {
+        print('✅ PDF generated ($action) for bill #${bill.id}');
+      }
+    } catch (e, s) {
+      if (kDebugMode) {
+        print('❌ PDF generation error: $e');
+        print('📍 $s');
+      }
+      handleError(e);
+    } finally {
+      isGeneratingPdf.value = false;
+    }
   }
 }

@@ -61,57 +61,6 @@ class SettingsScreen extends StatelessWidget {
                             child: Text("System Settings will be available soon..."),
                           ),
                         )
-
-                        // _buildSettingTile(
-                        //   icon: Icons.notifications_active_rounded,
-                        //   title: "Notifications",
-                        //   subtitle: "Manage alerts and reminders",
-                        //   gradient: const LinearGradient(
-                        //     colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
-                        //   ),
-                        //   onTap: () {
-                        //     Get.snackbar(
-                        //       "Coming Soon",
-                        //       "Notification settings will be available soon",
-                        //       backgroundColor: Colors.orange,
-                        //       colorText: Colors.white,
-                        //     );
-                        //   },
-                        // ),
-
-                        // _buildSettingTile(
-                        //   icon: Icons.security_rounded,
-                        //   title: "Security & Privacy",
-                        //   subtitle: "Password and permissions",
-                        //   gradient: const LinearGradient(
-                        //     colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                        //   ),
-                        //   onTap: () {
-                        //     Get.snackbar(
-                        //       "Coming Soon",
-                        //       "Security settings will be available soon",
-                        //       backgroundColor: Colors.purple,
-                        //       colorText: Colors.white,
-                        //     );
-                        //   },
-                        // ),
-
-                        // _buildSettingTile(
-                        //   icon: Icons.backup_rounded,
-                        //   title: "Backup & Restore",
-                        //   subtitle: "Secure your business data",
-                        //   gradient: const LinearGradient(
-                        //     colors: [Color(0xFF11998E), Color(0xFF38EF7D)],
-                        //   ),
-                        //   onTap: () {
-                        //     Get.snackbar(
-                        //       "Coming Soon",
-                        //       "Backup feature will be available soon",
-                        //       backgroundColor: Colors.green,
-                        //       colorText: Colors.white,
-                        //     );
-                        //   },
-                        // ),
                       ],
                     ),
                   ),
@@ -156,19 +105,6 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          // Container(
-          //   padding: const EdgeInsets.all(12),
-          //   decoration: BoxDecoration(
-          //     color: Colors.white.withOpacity(0.2),
-          //     shape: BoxShape.circle,
-          //     border: Border.all(color: Colors.white.withOpacity(0.3)),
-          //   ),
-          //   child: const Icon(
-          //     Icons.tune_rounded,
-          //     color: Colors.white,
-          //     size: 24,
-          //   ),
-          // ),
         ],
       ),
     );
@@ -436,60 +372,6 @@ class SettingsScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-
-            // Header
-            // Container(
-            //   padding: const EdgeInsets.all(24),
-            //   decoration: BoxDecoration(
-            //     gradient: const LinearGradient(
-            //       colors: [Color(0xFF1A1A4F), Color(0xFF4A4ABF)],
-            //     ),
-            //     borderRadius: const BorderRadius.vertical(
-            //       top: Radius.circular(30),
-            //     ),
-            //   ),
-            //   child: Row(
-            //     children: [
-            //       Container(
-            //         padding: const EdgeInsets.all(12),
-            //         decoration: BoxDecoration(
-            //           color: Colors.white.withOpacity(0.2),
-            //           borderRadius: BorderRadius.circular(12),
-            //         ),
-            //         child: const Icon(
-            //           Icons.business_center,
-            //           color: Colors.white,
-            //           size: 24,
-            //         ),
-            //       ),
-            //       const SizedBox(width: 16),
-            //       const Expanded(
-            //         child: Column(
-            //           crossAxisAlignment: CrossAxisAlignment.start,
-            //           children: [
-            //             Text(
-            //               "Business Profile",
-            //               style: TextStyle(
-            //                 fontSize: 22,
-            //                 fontWeight: FontWeight.bold,
-            //                 color: Colors.white,
-            //               ),
-            //             ),
-            //             SizedBox(height: 4),
-            //             Text(
-            //               "Update your business information",
-            //               style: TextStyle(
-            //                 fontSize: 14,
-            //                 color: Colors.white70,
-            //               ),
-            //             ),
-            //           ],
-            //         ),
-            //       ),
-            //     ],
-            //   ),
-            // ),
-
             // Form Fields
             Expanded(
               child: SingleChildScrollView(
