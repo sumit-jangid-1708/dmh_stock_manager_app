@@ -31,7 +31,8 @@ class OrderController extends GetxController with BaseController {
   final OrderService orderService = OrderService();
   final ItemService itemService = ItemService();
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-  late final BillingController billingController = Get.find<BillingController>();
+  late final BillingController billingController =
+      Get.find<BillingController>();
   final StockController stockController = Get.find<StockController>();
 
   var orders = <OrderDetailModel>[].obs;
@@ -46,7 +47,9 @@ class OrderController extends GetxController with BaseController {
   final TextEditingController channelOrderId = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController remarkController = TextEditingController();
-  final TextEditingController packageExpenseController = TextEditingController();
+  final TextEditingController packageExpenseController =
+      TextEditingController();
+  final TextEditingController buyerShippingCharges = TextEditingController();
   final RxList<Map<String, dynamic>> items = <Map<String, dynamic>>[].obs;
 
   final RxList<CourierPartnerDetailModel> courierPartners =
@@ -160,7 +163,6 @@ class OrderController extends GetxController with BaseController {
     filteredOrders.assignAll(orders);
   }
 
-
   @override
   void onReady() {
     super.onReady();
@@ -202,8 +204,9 @@ class OrderController extends GetxController with BaseController {
       isLoading.value = true;
       final response = await orderService.getOrderDetailApi();
       final List<dynamic> data = response;
-      final allOrders =
-      data.map((item) => OrderDetailModel.fromJson(item)).toList();
+      final allOrders = data
+          .map((item) => OrderDetailModel.fromJson(item))
+          .toList();
       orders.value = allOrders.where((o) => !o.isDeleted).toList();
       // filteredOrders.assignAll(orders);
       applyFilters();
@@ -226,10 +229,9 @@ class OrderController extends GetxController with BaseController {
       ordersWithShipments.value = response
           .map(
             (e) => OrderWithShipmentModel.fromJson(e as Map<String, dynamic>),
-      )
+          )
           .toList();
-      debugPrint(
-          "✅ ordersWithShipments loaded: ${ordersWithShipments.length}");
+      debugPrint("✅ ordersWithShipments loaded: ${ordersWithShipments.length}");
     } catch (e, s) {
       debugPrint("❌ getOrdersWithShipments error: $e\n$s");
       handleError(e, onRetry: getOrdersWithShipments);
@@ -294,7 +296,9 @@ class OrderController extends GetxController with BaseController {
         "country_code": countryCode.value,
         "mobile": phoneNumber.value,
         "package_expence":
-        double.tryParse(packageExpenseController.text.trim()) ?? 0.0,
+            double.tryParse(packageExpenseController.text.trim()) ?? 0.0,
+        "buyer_shipment_charger":
+            double.tryParse(buyerShippingCharges.text.trim()) ?? 0.0,
       };
 
       final response = await orderService.createOrderApi(data);
@@ -305,7 +309,8 @@ class OrderController extends GetxController with BaseController {
         return;
       }
 
-      final bool isSuccess = response.containsKey('order_id') ||
+      final bool isSuccess =
+          response.containsKey('order_id') ||
           response.containsKey('id') ||
           response.containsKey('order');
       if (!isSuccess) {
@@ -378,8 +383,9 @@ class OrderController extends GetxController with BaseController {
 
   void setScannedSku(String sku) {
     final itemController = Get.find<ItemController>();
-    final product =
-    itemController.products.firstWhereOrNull((p) => p.sku == sku);
+    final product = itemController.products.firstWhereOrNull(
+      (p) => p.sku == sku,
+    );
     if (product != null) {
       final existingIndex = items.indexWhere((item) {
         final p = (item["product"] as Rx<ProductModel?>?)?.value;
@@ -387,7 +393,7 @@ class OrderController extends GetxController with BaseController {
       });
       if (existingIndex != -1) {
         final qtyController =
-        items[existingIndex]["quantity"] as TextEditingController;
+            items[existingIndex]["quantity"] as TextEditingController;
         int currentQty = int.tryParse(qtyController.text) ?? 0;
         qtyController.text = (currentQty + 1).toString();
       } else {
@@ -434,8 +440,7 @@ class OrderController extends GetxController with BaseController {
       }
     }
 
-    String formattedDate =
-    DateFormat('yyyy-MM-dd').format(paymentDate.value);
+    String formattedDate = DateFormat('yyyy-MM-dd').format(paymentDate.value);
     Map<String, dynamic> data = {
       "payment_method": selectedMethod.value,
       "payment_date": formattedDate,
@@ -494,7 +499,8 @@ class OrderController extends GetxController with BaseController {
         );
         courierPartners.add(newCourier);
         AppAlerts.success(
-            response["message"] ?? "Courier created successfully ✅");
+          response["message"] ?? "Courier created successfully ✅",
+        );
         onSuccess?.call();
       } else {
         AppAlerts.success("Courier created successfully ✅");
@@ -539,13 +545,10 @@ class OrderController extends GetxController with BaseController {
       final response = await orderService.createShipment(data, orderId);
       if (response != null) {
         AppAlerts.success(
-            response["message"] ?? "Shipment created successfully ✅");
-        onSuccess?.call();
-        await updateOrderStatus(
-          orderId: orderId,
-          status: 3,
-          note: "Shipped",
+          response["message"] ?? "Shipment created successfully ✅",
         );
+        onSuccess?.call();
+        await updateOrderStatus(orderId: orderId, status: 3, note: "Shipped");
         await getOrdersWithShipments();
       } else {
         AppAlerts.error("Failed to create shipment");
@@ -569,9 +572,11 @@ class OrderController extends GetxController with BaseController {
         final name = order.customerName.toLowerCase();
         final id = order.id.toString();
         final searchLower = query.toLowerCase();
-        final matchesSearch = name.contains(searchLower) || id.contains(searchLower);
-        final bool statusMatch = statusFilter == -1 || order.effectiveStatus == statusFilter;
-        return matchesSearch && statusMatch ;
+        final matchesSearch =
+            name.contains(searchLower) || id.contains(searchLower);
+        final bool statusMatch =
+            statusFilter == -1 || order.effectiveStatus == statusFilter;
+        return matchesSearch && statusMatch;
       }).toList(),
     );
   }
@@ -593,7 +598,7 @@ class OrderController extends GetxController with BaseController {
     });
     if (existingIndex != -1) {
       final qtyController =
-      items[existingIndex]["quantity"] as TextEditingController;
+          items[existingIndex]["quantity"] as TextEditingController;
       int currentQty = int.tryParse(qtyController.text) ?? 0;
       qtyController.text = (currentQty + 1).toString();
       Get.snackbar(
@@ -627,8 +632,9 @@ class OrderController extends GetxController with BaseController {
 
   void addScannedProductFromScan(ScanProductModel scanProduct) {
     final itemController = Get.find<ItemController>();
-    final product = itemController.products
-        .firstWhereOrNull((p) => p.sku == scanProduct.sku);
+    final product = itemController.products.firstWhereOrNull(
+      (p) => p.sku == scanProduct.sku,
+    );
     if (product == null) {
       Get.snackbar(
         "Not Found",
@@ -693,15 +699,10 @@ class OrderController extends GetxController with BaseController {
       };
       if (extraData != null) jsonPayload.addAll(extraData);
 
-      final data = {
-        "order_id": orderId,
-        "status": status,
-        "json": jsonPayload,
-      };
+      final data = {"order_id": orderId, "status": status, "json": jsonPayload};
 
       await orderService.updateOrderStatus(data);
-      debugPrint(
-          "✅ order status updated: orderId=$orderId, status=$status");
+      debugPrint("✅ order status updated: orderId=$orderId, status=$status");
 
       // Refresh detail + logs
       await loadOrderDetail(orderId);
@@ -712,4 +713,26 @@ class OrderController extends GetxController with BaseController {
       handleError("Something went wrong");
     }
   }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+// PASTE THIS METHOD inside OrderController class
+// (after the existing _calculateTotal helper or near the end of the class)
+// ─────────────────────────────────────────────────────────────────────────────
+
+  /// Items subtotal — sum of each item's totalPrice (null-safe)
+  double calculateItemsTotal(OrderDetailsModel order) {
+    return order.items.fold(0.0, (sum, item) => sum + (item.totalPrice));
+  }
+
+  /// Grand total = items + all charges (null-safe, no crash)
+  double calculateGrandTotal(OrderDetailsModel order) {
+    final itemsTotal          = calculateItemsTotal(order);
+    final packageExpense      = order.total.packageExpense;
+    final buyerShipping       = order.total.buyerShipmentCharges;
+    final shippingExpense     = order.total.shipment.shippingExpense;
+    final otherExpense        = order.total.shipment.otherExpense;
+
+    return itemsTotal + packageExpense + buyerShipping + shippingExpense + otherExpense;
+  }
+
 }

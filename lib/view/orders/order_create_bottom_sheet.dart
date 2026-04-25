@@ -157,6 +157,13 @@ class OrderCreateBottomSheet extends StatelessWidget {
                       prefixIcon: Icons.inventory_2_outlined,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     ),
+                    const SizedBox(height: 12),
+                    AppTextField(
+                      controller: orderController.buyerShippingCharges,
+                      hintText: "Buyer Shipping Expense (₹)",
+                      prefixIcon: Icons.local_shipping_outlined,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    ),
 
                     const SizedBox(height: 32),
 

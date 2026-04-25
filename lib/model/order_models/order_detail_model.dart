@@ -1,7 +1,5 @@
 // lib/model/order_models/order_details_model.dart
-
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 class OrderDetailsModel {
@@ -15,7 +13,6 @@ class OrderDetailsModel {
   final int orderStatus;
   // ✅ Changed: String -> List<dynamic>
   final List<OrderRemark> remarks;
-
   final DateTime createdAt;
   final String paidStatus;
   final String? paymentMethod;
@@ -23,6 +20,7 @@ class OrderDetailsModel {
   final String? transactionId;
   final int totalItems;
   final List<OrderItemModel> items;
+  final OrderTotalModel total;
 
   const OrderDetailsModel({
     required this.orderId,
@@ -41,6 +39,7 @@ class OrderDetailsModel {
     this.transactionId,
     required this.totalItems,
     required this.items,
+    required this.total,
   });
 
   factory OrderDetailsModel.fromJson(Map<String, dynamic> json) {
@@ -48,44 +47,36 @@ class OrderDetailsModel {
       orderId: json['order_id'] is int
           ? json['order_id']
           : int.tryParse('${json['order_id']}') ?? 0,
-
       channel: json['channel'] ?? '',
       channelOrderId: json['channel_order_id'] ?? '',
       customerName: json['customer_name'] ?? '',
       customerEmail: json['customer_email'] ?? '',
       orderStatus: json['order_status'] ?? 0, // ✅ NEW
-
       mobile: json['mobile'] ?? '',
       countryCode: json['country_code'] ?? '',
-
-      // ✅ FIXED HERE
       remarks: (json['remarks'] as List? ?? [])
           .map((e) => OrderRemark.fromJson(e))
           .toList(),
-
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at']) ?? DateTime.now()
           : DateTime.now(),
-
       paidStatus: json['paid_status'] ?? '',
       paymentMethod: json['payment_method'],
       paymentDate: json['payment_date'] != null
           ? DateTime.tryParse(json['payment_date'])
           : null,
       transactionId: json['transaction_id'],
-
       totalItems: json['total_items'] is int
           ? json['total_items']
           : int.tryParse('${json['total_items']}') ?? 0,
-
       items: json['items'] is List
           ? List<OrderItemModel>.from(
               json['items'].map((x) => OrderItemModel.fromJson(x)),
             )
           : [],
+      total: OrderTotalModel.fromJson(json['total'] ?? {}),
     );
   }
-
 
   String get orderStatusText {
     switch (orderStatus) {
@@ -165,34 +156,26 @@ class OrderItemModel {
       productId: json['product_id'] is int
           ? json['product_id']
           : int.tryParse('${json['product_id']}') ?? 0,
-
       productName: json['product_name'] ?? '',
       productSku: json['product_sku'] ?? '',
       productBarcode: json['product_barcode'] ?? '',
       productBarcodeImage: json['product_barcode_image'],
       productImage: json['product_image'],
-
       productImageVariants: json['product_image_variants'] is List
           ? List<String>.from(json['product_image_variants'])
           : [],
-
       vendorId: json['vendor_id'] is int
           ? json['vendor_id']
           : int.tryParse('${json['vendor_id']}') ?? 0,
-
       vendorName: json['vendor_name'] ?? '',
-
       orderedQuantity: json['ordered_quantity'] is int
           ? json['ordered_quantity']
           : int.tryParse('${json['ordered_quantity']}') ?? 0,
-
       unitPrice: _parseDouble(json['unit_price']),
       totalPrice: _parseDouble(json['total_price']),
-
       stockLeft: json['stock_left'] is int
           ? json['stock_left']
           : int.tryParse('${json['stock_left']}') ?? 0,
-
       serials: json['serials'] is List
           ? List<SerialModel>.from(
               json['serials'].map((x) => SerialModel.fromJson(x)),
@@ -245,3 +228,74 @@ class OrderRemark {
   }
 }
 
+class OrderTotalModel {
+  final double packageExpense;
+  final double buyerShipmentCharges;
+  final ShipmentAmountModel shipment;
+
+  const OrderTotalModel({
+    required this.packageExpense,
+    required this.buyerShipmentCharges,
+    required this.shipment,
+  });
+
+  factory OrderTotalModel.fromJson(Map<String, dynamic> json) {
+    final shipmentData = json['shipment'];
+
+    ShipmentAmountModel shipmentParsed;
+
+    if (shipmentData is Map<String, dynamic>) {
+      // ✅ Case 1: direct object
+      shipmentParsed = ShipmentAmountModel.fromJson(shipmentData);
+    } else if (shipmentData is List && shipmentData.isNotEmpty) {
+      // ✅ Case 2: list → take first element
+      shipmentParsed = ShipmentAmountModel.fromJson(
+        shipmentData.first is Map<String, dynamic> ? shipmentData.first : {},
+      );
+    } else {
+      // ✅ Case 3: null / empty / invalid
+      shipmentParsed = ShipmentAmountModel.empty();
+    }
+
+    return OrderTotalModel(
+      packageExpense: _toDouble(json['package_expense']),
+      buyerShipmentCharges: _toDouble(json['buyer_shipment_charges']),
+      shipment: shipmentParsed,
+    );
+  }
+
+  static double _toDouble(dynamic val) {
+    if (val == null) return 0.0;
+    if (val is double) return val;
+    if (val is int) return val.toDouble();
+    return double.tryParse(val.toString()) ?? 0.0;
+  }
+}
+
+class ShipmentAmountModel {
+  final double shippingExpense;
+  final double otherExpense;
+
+  const ShipmentAmountModel({
+    required this.shippingExpense,
+    required this.otherExpense,
+  });
+
+  factory ShipmentAmountModel.empty() {
+    return const ShipmentAmountModel(shippingExpense: 0.0, otherExpense: 0.0);
+  }
+
+  factory ShipmentAmountModel.fromJson(Map<String, dynamic> json) {
+    return ShipmentAmountModel(
+      shippingExpense: _toDouble(json['shipping_expense']),
+      otherExpense: _toDouble(json['other_expense']),
+    );
+  }
+
+  static double _toDouble(dynamic val) {
+    if (val == null) return 0.0;
+    if (val is double) return val;
+    if (val is int) return val.toDouble();
+    return double.tryParse(val.toString()) ?? 0.0;
+  }
+}

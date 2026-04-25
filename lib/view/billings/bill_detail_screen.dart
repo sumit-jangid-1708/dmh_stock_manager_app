@@ -30,7 +30,7 @@ class BillDetailScreen extends StatelessWidget {
     // Open bottom sheet — pre-fill with last used details from this session.
     final details = await CompanyDetailsFormSheet.show(
       context,
-      prefill: billingController.lastCompanyDetails,
+      // prefill: billingController.lastCompanyDetails,
     );
 
     // User dismissed the sheet without submitting.

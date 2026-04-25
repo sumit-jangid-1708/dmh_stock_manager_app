@@ -67,7 +67,7 @@ class Sidebar extends StatelessWidget {
                     ),
                     _buildMenuItem(
                       icon: Icons.receipt_long_outlined,
-                      title: "Billings",
+                      title: "Order Billings",
                       onTap: () => Get.to( BillingScreen()),
                     ),
                     _buildMenuItem(

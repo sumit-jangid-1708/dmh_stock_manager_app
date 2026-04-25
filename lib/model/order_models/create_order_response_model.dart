@@ -1,18 +1,42 @@
 class CreateOrderResponseModel {
-  final OrderModel order;
-  final List<AllocatedSerialModel> allocatedSerials;
   final String message;
+  final int orderId;
+  final String totalAmount;
+  final String paidAmount;
+  final String remainingAmount;
+  final String paymentStatus;
+
+  final OrderModel order;
+  final List<RemarkModel> remarks;
+  final List<AllocatedSerialModel> allocatedSerials;
 
   CreateOrderResponseModel({
-    required this.order,
-    required this.allocatedSerials,
     required this.message,
+    required this.orderId,
+    required this.totalAmount,
+    required this.paidAmount,
+    required this.remainingAmount,
+    required this.paymentStatus,
+    required this.order,
+    required this.remarks,
+    required this.allocatedSerials,
   });
 
   factory CreateOrderResponseModel.fromJson(Map<String, dynamic> json) {
     return CreateOrderResponseModel(
       message: json['message'] ?? '',
-      order: OrderModel.fromJson(json['order']),
+      orderId: json['order_id'] ?? 0,
+      totalAmount: json['total_amount']?.toString() ?? '0.00',
+      paidAmount: json['paid_amount']?.toString() ?? '0.00',
+      remainingAmount: json['remaining_amount']?.toString() ?? '0.00',
+      paymentStatus: json['payment_status'] ?? '',
+
+      order: OrderModel.fromJson(json['order'] ?? {}),
+
+      remarks: (json['remarks'] as List? ?? [])
+          .map((e) => RemarkModel.fromJson(e))
+          .toList(),
+
       allocatedSerials: (json['allocated_serials'] as List? ?? [])
           .map((e) => AllocatedSerialModel.fromJson(e))
           .toList(),
@@ -20,78 +44,50 @@ class CreateOrderResponseModel {
   }
 }
 
-// ✅ allocated_barcodes → allocated_serials (API response change)
-class AllocatedSerialModel {
-  final int productId;
-  final String productName;
-  final int quantity;
-  final List<String> serials;
-
-  AllocatedSerialModel({
-    required this.productId,
-    required this.productName,
-    required this.quantity,
-    required this.serials,
-  });
-
-  factory AllocatedSerialModel.fromJson(Map<String, dynamic> json) {
-    return AllocatedSerialModel(
-      productId: json['product_id'] ?? 0,
-      productName: json['product_name'] ?? '',
-      quantity: json['quantity'] ?? 0,
-      serials: (json['serials'] as List?)?.cast<String>() ?? [],
-    );
-  }
-}
-
 class OrderModel {
   final int id;
-  final List<OrderItemSimple> items;
-  final List<AllocatedSerialModel> allocatedSerials;
-  final String customerName;
-  final DateTime createdAt;
+  final List<OrderItemModel> items;
+  final List<RemarkModel> remarks;
+  final LatestStatusModel? latestStatus;
+
   final String status;
   final int orderStatus;
   final String packageExpence;
   final String totalAmount;
   final String paidAmount;
+
+  final String customerName;
   final String? customerEmail;
   final String countryCode;
   final String mobile;
+
+  final DateTime createdAt;
+
   final String? channelOrderId;
   final String? paymentMethod;
+  final String? buyerShipmentCharger;
+
   final DateTime? paymentDate;
   final String paidStatus;
+
   final bool isDeleted;
   final String? transactionId;
   final int channel;
 
-  // ✅ Status helpers — same as OrderDetailModel
-  String get orderStatusText {
-    switch (orderStatus) {
-      case 1: return "In Process";
-      case 2: return "Packed";
-      case 3: return "In Transit";
-      case 4: return "Delivered";
-      case 5: return "Courier Return";
-      case 6: return "Customer Return";
-      default: return "Unknown";
-    }
-  }
-
   OrderModel({
     required this.id,
     required this.items,
-    required this.allocatedSerials,
-    required this.customerName,
-    required this.createdAt,
+    required this.remarks,
+    required this.latestStatus,
     required this.status,
     required this.orderStatus,
     required this.packageExpence,
     required this.totalAmount,
     required this.paidAmount,
+    required this.customerName,
     required this.countryCode,
     required this.mobile,
+    required this.createdAt,
     required this.paidStatus,
     required this.isDeleted,
     required this.channel,
@@ -100,33 +96,47 @@ class OrderModel {
     this.paymentMethod,
     this.paymentDate,
     this.transactionId,
+    this.buyerShipmentCharger,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
     return OrderModel(
       id: json['id'] ?? 0,
+
       items: (json['items'] as List? ?? [])
-          .map((e) => OrderItemSimple.fromJson(e))
+          .map((e) => OrderItemModel.fromJson(e))
           .toList(),
-      allocatedSerials: (json['allocated_serials'] as List? ?? [])
-          .map((e) => AllocatedSerialModel.fromJson(e))
+
+      remarks: (json['remarks'] as List? ?? [])
+          .map((e) => RemarkModel.fromJson(e))
           .toList(),
-      customerName: json['customer_name'] ?? '',
-      createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+
+      latestStatus: json['latest_status'] != null
+          ? LatestStatusModel.fromJson(json['latest_status'])
+          : null,
+
       status: json['status'] ?? 'ACTIVE',
       orderStatus: json['order_status'] ?? 0,
       packageExpence: json['package_expence']?.toString() ?? '0.00',
       totalAmount: json['total_amount']?.toString() ?? '0.00',
       paidAmount: json['paid_amount']?.toString() ?? '0.00',
+
+      customerName: json['customer_name'] ?? '',
       customerEmail: json['customer_email'],
       countryCode: json['country_code'] ?? '',
       mobile: json['mobile'] ?? '',
+
+      createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+
       channelOrderId: json['channel_order_id'],
       paymentMethod: json['payment_method'],
+      buyerShipmentCharger: json['buyer_shipment_charger']?.toString(),
+
       paymentDate: json['payment_date'] != null
           ? DateTime.tryParse(json['payment_date'])
           : null,
-      paidStatus: json['paid_status'] ?? 'UNPAID',
+
+      paidStatus: json['paid_status'] ?? 'PENDING',
       isDeleted: json['is_deleted'] ?? false,
       transactionId: json['transaction_id'],
       channel: json['channel'] ?? 0,
@@ -134,218 +144,280 @@ class OrderModel {
   }
 }
 
-// ✅ API mein items sirf product_id, product_name, quantity, unit_price return karta hai
-// OrderItem (detail wala) se alag hai — isliye alag class
-class OrderItemSimple {
-  final int productId;
-  final String productName;
+class OrderItemModel {
+  final int id;
+  final ProductsModel product;
   final int quantity;
   final String unitPrice;
 
-  OrderItemSimple({
-    required this.productId,
-    required this.productName,
+  OrderItemModel({
+    required this.id,
+    required this.product,
     required this.quantity,
     required this.unitPrice,
   });
 
-  factory OrderItemSimple.fromJson(Map<String, dynamic> json) {
-    return OrderItemSimple(
-      productId: json['product_id'] ?? 0,
-      productName: json['product_name'] ?? '',
+  factory OrderItemModel.fromJson(Map<String, dynamic> json) {
+    return OrderItemModel(
+      id: json['id'] ?? 0,
+      product: ProductsModel.fromJson(json['product'] ?? {}),
       quantity: json['quantity'] ?? 0,
       unitPrice: json['unit_price']?.toString() ?? '0.00',
     );
   }
 }
 
+class ProductsModel {
+  final int id;
+  final String name;
+  final String sku;
+  final String? image;
 
-// import 'package:dmj_stock_manager/model/order_models/order_detail_model.dart';
-//
+  ProductsModel({
+    required this.id,
+    required this.name,
+    required this.sku,
+    this.image,
+  });
+
+  factory ProductsModel.fromJson(Map<String, dynamic> json) {
+    return ProductsModel(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+      sku: json['sku'] ?? '',
+      image: (json['product_image_variants'] as List?)?.isNotEmpty == true
+          ? json['product_image_variants'][0]
+          : null,
+    );
+  }
+}
+
+class RemarkModel {
+  final int id;
+  final String remark;
+  final DateTime createdAt;
+
+  RemarkModel({
+    required this.id,
+    required this.remark,
+    required this.createdAt,
+  });
+
+  factory RemarkModel.fromJson(Map<String, dynamic> json) {
+    return RemarkModel(
+      id: json['id'] ?? 0,
+      remark: json['remark'] ?? '',
+      createdAt:
+      DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+    );
+  }
+}
+
+class LatestStatusModel {
+  final int status;
+  final String note;
+  final DateTime createdAt;
+
+  LatestStatusModel({
+    required this.status,
+    required this.note,
+    required this.createdAt,
+  });
+
+  factory LatestStatusModel.fromJson(Map<String, dynamic> json) {
+    return LatestStatusModel(
+      status: json['status'] ?? 0,
+      note: json['note'] ?? '',
+      createdAt:
+      DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
+    );
+  }
+}
+
+class AllocatedSerialModel {
+  final int productId;
+  final String productName;
+  final int quantity;
+  final String unitPrice;
+  final List<String> serials;
+
+  AllocatedSerialModel({
+    required this.productId,
+    required this.productName,
+    required this.quantity,
+    required this.unitPrice,
+    required this.serials,
+  });
+
+  factory AllocatedSerialModel.fromJson(Map<String, dynamic> json) {
+    return AllocatedSerialModel(
+      productId: json['product_id'] ?? 0,
+      productName: json['product_name'] ?? '',
+      quantity: json['quantity'] ?? 0,
+      unitPrice: json['unit_price']?.toString() ?? '0.00',
+      serials: (json['serials'] as List?)?.cast<String>() ?? [],
+    );
+  }
+}
+
+
 // class CreateOrderResponseModel {
 //   final OrderModel order;
-//   final List<AllocatedBarcodeModel> allocatedBarcodes;
+//   final List<AllocatedSerialModel> allocatedSerials;
+//   final String message;
 //
 //   CreateOrderResponseModel({
 //     required this.order,
-//     required this.allocatedBarcodes,
+//     required this.allocatedSerials,
+//     required this.message,
 //   });
 //
 //   factory CreateOrderResponseModel.fromJson(Map<String, dynamic> json) {
 //     return CreateOrderResponseModel(
+//       message: json['message'] ?? '',
 //       order: OrderModel.fromJson(json['order']),
-//       allocatedBarcodes: (json['allocated_barcodes'] as List? ?? [])
-//           .map((e) => AllocatedBarcodeModel.fromJson(e))
+//       allocatedSerials: (json['allocated_serials'] as List? ?? [])
+//           .map((e) => AllocatedSerialModel.fromJson(e))
 //           .toList(),
 //     );
 //   }
 // }
 //
-// class AllocatedBarcodeModel {
+// // ✅ allocated_barcodes → allocated_serials (API response change)
+// class AllocatedSerialModel {
 //   final int productId;
-//   final int qty;
-//   final List<String> barcodes;
+//   final String productName;
+//   final int quantity;
+//   final List<String> serials;
 //
-//   AllocatedBarcodeModel({
+//   AllocatedSerialModel({
 //     required this.productId,
-//     required this.qty,
-//     required this.barcodes,
+//     required this.productName,
+//     required this.quantity,
+//     required this.serials,
 //   });
 //
-//   factory AllocatedBarcodeModel.fromJson(Map<String, dynamic> json) {
-//     return AllocatedBarcodeModel(
+//   factory AllocatedSerialModel.fromJson(Map<String, dynamic> json) {
+//     return AllocatedSerialModel(
 //       productId: json['product_id'] ?? 0,
-//       qty: json['qty'] ?? 0,
-//       barcodes: (json['barcodes'] as List?)?.cast<String>() ?? [],
+//       productName: json['product_name'] ?? '',
+//       quantity: json['quantity'] ?? 0,
+//       serials: (json['serials'] as List?)?.cast<String>() ?? [],
 //     );
 //   }
 // }
 //
 // class OrderModel {
 //   final int id;
-//   final List<OrderItem> items;
+//   final List<OrderItemSimple> items;
+//   final List<AllocatedSerialModel> allocatedSerials;
 //   final String customerName;
 //   final DateTime createdAt;
-//
-//   // ✅ FIXED: was String?, now List<OrderRemark>
-//   final List<OrderRemark> remarks;
-//
-//   final int channel;
+//   final String status;
+//   final int orderStatus;
+//   final String packageExpence;
+//   final String totalAmount;
+//   final String paidAmount;
+//   final String? customerEmail;
 //   final String countryCode;
 //   final String mobile;
-//
 //   final String? channelOrderId;
-//   final String? customerEmail;
 //   final String? paymentMethod;
 //   final DateTime? paymentDate;
 //   final String paidStatus;
+//   final bool isDeleted;
 //   final String? transactionId;
-//   final String packageExpence;
+//   final int channel;
+//
+//   // ✅ Status helpers — same as OrderDetailModel
+//   String get orderStatusText {
+//     switch (orderStatus) {
+//       case 1: return "In Process";
+//       case 2: return "Packed";
+//       case 3: return "In Transit";
+//       case 4: return "Delivered";
+//       case 5: return "Courier Return";
+//       case 6: return "Customer Return";
+//       default: return "Unknown";
+//     }
+//   }
 //
 //   OrderModel({
 //     required this.id,
 //     required this.items,
+//     required this.allocatedSerials,
 //     required this.customerName,
 //     required this.createdAt,
-//     required this.channel,
+//     required this.status,
+//     required this.orderStatus,
+//     required this.packageExpence,
+//     required this.totalAmount,
+//     required this.paidAmount,
 //     required this.countryCode,
 //     required this.mobile,
 //     required this.paidStatus,
-//     required this.remarks,
+//     required this.isDeleted,
+//     required this.channel,
 //     this.customerEmail,
 //     this.channelOrderId,
 //     this.paymentMethod,
 //     this.paymentDate,
 //     this.transactionId,
-//     required this.packageExpence,
 //   });
 //
 //   factory OrderModel.fromJson(Map<String, dynamic> json) {
 //     return OrderModel(
 //       id: json['id'] ?? 0,
 //       items: (json['items'] as List? ?? [])
-//           .map((e) => OrderItem.fromJson(e))
+//           .map((e) => OrderItemSimple.fromJson(e))
+//           .toList(),
+//       allocatedSerials: (json['allocated_serials'] as List? ?? [])
+//           .map((e) => AllocatedSerialModel.fromJson(e))
 //           .toList(),
 //       customerName: json['customer_name'] ?? '',
 //       createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
-//
-//       // ✅ FIXED: parse remarks as List<OrderRemark>
-//       remarks: (json['remarks'] as List? ?? [])
-//           .map((e) => OrderRemark.fromJson(e as Map<String, dynamic>))
-//           .toList(),
-//
-//       channel: json['channel'] ?? 0,
+//       status: json['status'] ?? 'ACTIVE',
+//       orderStatus: json['order_status'] ?? 0,
+//       packageExpence: json['package_expence']?.toString() ?? '0.00',
+//       totalAmount: json['total_amount']?.toString() ?? '0.00',
+//       paidAmount: json['paid_amount']?.toString() ?? '0.00',
+//       customerEmail: json['customer_email'],
 //       countryCode: json['country_code'] ?? '',
 //       mobile: json['mobile'] ?? '',
-//       customerEmail: json['customer_email'],
 //       channelOrderId: json['channel_order_id'],
 //       paymentMethod: json['payment_method'],
 //       paymentDate: json['payment_date'] != null
 //           ? DateTime.tryParse(json['payment_date'])
 //           : null,
 //       paidStatus: json['paid_status'] ?? 'UNPAID',
+//       isDeleted: json['is_deleted'] ?? false,
 //       transactionId: json['transaction_id'],
-//       packageExpence: json['package_expence'] ?? "0.00",
+//       channel: json['channel'] ?? 0,
 //     );
 //   }
 // }
 //
-// class OrderItem {
-//   final int id;
-//   final Product product;
+// // ✅ API mein items sirf product_id, product_name, quantity, unit_price return karta hai
+// // OrderItem (detail wala) se alag hai — isliye alag class
+// class OrderItemSimple {
+//   final int productId;
+//   final String productName;
 //   final int quantity;
 //   final String unitPrice;
-//   final int order;
 //
-//   OrderItem({
-//     required this.id,
-//     required this.product,
+//   OrderItemSimple({
+//     required this.productId,
+//     required this.productName,
 //     required this.quantity,
 //     required this.unitPrice,
-//     required this.order,
 //   });
 //
-//   factory OrderItem.fromJson(Map<String, dynamic> json) {
-//     return OrderItem(
-//       id: json['id'] ?? 0,
-//       product: Product.fromJson(json['product']),
+//   factory OrderItemSimple.fromJson(Map<String, dynamic> json) {
+//     return OrderItemSimple(
+//       productId: json['product_id'] ?? 0,
+//       productName: json['product_name'] ?? '',
 //       quantity: json['quantity'] ?? 0,
-//       unitPrice: json['unit_price']?.toString() ?? '0',
-//       order: json['order'] ?? 0,
-//     );
-//   }
-// }
-//
-// class Product {
-//   final int id;
-//   final int vendor;
-//   final String prefixCode;
-//   final String name;
-//   final String size;
-//   final String color;
-//   final String material;
-//   final int serial;
-//   final String sku;
-//   final String barcode;
-//   final String barcodeImage;
-//   final List<String> productImageVariants;
-//   final String unitPurchasePrice;
-//   final int? hsn;
-//
-//   Product({
-//     required this.id,
-//     required this.vendor,
-//     required this.prefixCode,
-//     required this.name,
-//     required this.size,
-//     required this.color,
-//     required this.material,
-//     required this.serial,
-//     required this.sku,
-//     required this.barcode,
-//     required this.barcodeImage,
-//     required this.productImageVariants,
-//     required this.unitPurchasePrice,
-//     this.hsn,
-//   });
-//
-//   factory Product.fromJson(Map<String, dynamic> json) {
-//     return Product(
-//       id: json['id'] ?? 0,
-//       vendor: json['vendor'] ?? 0,
-//       prefixCode: json['prefix_code'] ?? '',
-//       name: json['name'] ?? '',
-//       size: json['size'] ?? '',
-//       color: json['color'] ?? '',
-//       material: json['material'] ?? '',
-//       serial: json['serial'] ?? 0,
-//       sku: json['sku'] ?? '',
-//       barcode: json['barcode'] ?? '',
-//       barcodeImage: json['barcode_image'] ?? '',
-//       productImageVariants:
-//           (json['product_image_variants'] as List?)?.cast<String>() ?? [],
-//       unitPurchasePrice: json['unit_purchase_price']?.toString() ?? '0.00',
-//       hsn: json['hsn'],
+//       unitPrice: json['unit_price']?.toString() ?? '0.00',
 //     );
 //   }
 // }

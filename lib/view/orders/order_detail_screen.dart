@@ -11,6 +11,7 @@ import '../../res/components/widgets/courier_return_bottom_sheet.dart';
 import '../../res/components/widgets/create_bill_dialog_widget.dart';
 import '../../res/components/widgets/custom_text_field.dart';
 import '../../res/components/widgets/customer_return_bottom_sheet.dart';
+import '../../res/components/widgets/order_amount_breakdown_card.dart';
 import '../../res/components/widgets/order_status_section.dart';
 import '../../res/components/widgets/package_form_widget.dart';
 import '../../view_models/services/other_services/barcode_pdf_service.dart';
@@ -268,6 +269,10 @@ class OrderDetailScreen extends StatelessWidget {
                         _OrderItemCard(item: order.items[index]),
                   ),
 
+                  const SizedBox(height: 20),
+
+                  // ── Bill Breakdown ────────────────────────────────────────
+                  OrderAmountBreakdownCard(order: order),
                   const SizedBox(height: 20),
 
                   // ── Barcode PDF ───────────────────────────────────────────

@@ -42,7 +42,7 @@ void showCreateBillDialog(BuildContext context, int orderId) {
                 controller.clearBillForm(); // ✅ Clear form on close
                 Get.back();
               },
-            )
+            ),
           ],
         ),
       ),
@@ -69,10 +69,8 @@ void showCreateBillDialog(BuildContext context, int orderId) {
 
         // ✅ Calculate order total for display
         final order = controller.orderDetail.value;
-        final orderTotal = order?.items.fold(
-          0.0,
-              (sum, item) => sum + item.totalPrice,
-        ) ?? 0.0;
+        final orderTotal =
+            order?.items.fold(0.0, (sum, item) => sum + item.totalPrice) ?? 0.0;
 
         return SizedBox(
           width: isTablet ? screenWidth * 0.4 : screenWidth * 0.85,
@@ -171,9 +169,9 @@ void showCreateBillDialog(BuildContext context, int orderId) {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          DateFormat('dd MMMM, yyyy').format(
-                            controller.paymentDate.value,
-                          ),
+                          DateFormat(
+                            'dd MMMM, yyyy',
+                          ).format(controller.paymentDate.value),
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
@@ -191,148 +189,151 @@ void showCreateBillDialog(BuildContext context, int orderId) {
                 // Status Selection
                 _sectionHeader("Payment Status"),
                 const SizedBox(height: 10),
-                Obx(() => Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildStatusChip(
-                            controller,
-                            "PAID",
-                            "Paid",
-                            Colors.green,
+                Obx(
+                  () => Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildStatusChip(
+                              controller,
+                              "PAID",
+                              "Paid",
+                              Colors.green,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildStatusChip(
-                            controller,
-                            "PARTIAL",
-                            "Partial",
-                            Colors.blue,
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildStatusChip(
+                              controller,
+                              "PARTIAL",
+                              "Partial",
+                              Colors.blue,
+                            ),
                           ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildStatusChip(
+                              controller,
+                              "UNPAID",
+                              "Unpaid",
+                              Colors.orange,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // ✅ Partial Amount Field - Show only when PARTIAL selected
+                      if (controller.paidStatus.value == "PARTIAL") ...[
+                        const SizedBox(height: 16),
+                        TextField(
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          style: const TextStyle(fontSize: 15),
+                          decoration: InputDecoration(
+                            labelText: "Received Amount *",
+                            labelStyle: const TextStyle(color: primaryColor),
+                            prefixIcon: const Icon(
+                              Icons.currency_rupee,
+                              color: primaryColor,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: primaryColor,
+                                width: 1.5,
+                              ),
+                            ),
+                            hintText: "Enter partial amount",
+                            hintStyle: TextStyle(color: Colors.grey.shade400),
+                            helperText:
+                                "Max: ₹${orderTotal.toStringAsFixed(2)}",
+                            helperStyle: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          onChanged: (value) {
+                            // ✅ Set partial amount in controller
+                            controller.partialAmount.value = value;
+                          },
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _buildStatusChip(
-                            controller,
-                            "UNPAID",
-                            "Unpaid",
-                            Colors.orange,
+                      ],
+
+                      // ✅ PAID Status - Show total amount being charged
+                      if (controller.paidStatus.value == "PAID") ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.green.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.check_circle_outline,
+                                color: Colors.green,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                "Full payment: ₹${orderTotal.toStringAsFixed(2)}",
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
-                    ),
 
-                    // ✅ Partial Amount Field - Show only when PARTIAL selected
-                    if (controller.paidStatus.value == "PARTIAL") ...[
-                      const SizedBox(height: 16),
-                      TextField(
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        style: const TextStyle(fontSize: 15),
-                        decoration: InputDecoration(
-                          labelText: "Received Amount *",
-                          labelStyle: const TextStyle(color: primaryColor),
-                          prefixIcon: const Icon(
-                            Icons.currency_rupee,
-                            color: primaryColor,
-                          ),
-                          border: OutlineInputBorder(
+                      // ✅ UNPAID Status - Show 0 amount
+                      if (controller.paidStatus.value == "UNPAID") ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
                             borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.orange.shade200),
                           ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: Colors.grey.shade300,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: primaryColor,
-                              width: 1.5,
-                            ),
-                          ),
-                          hintText: "Enter partial amount",
-                          hintStyle: TextStyle(color: Colors.grey.shade400),
-                          helperText: "Max: ₹${orderTotal.toStringAsFixed(2)}",
-                          helperStyle: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                        onChanged: (value) {
-                          // ✅ Set partial amount in controller
-                          controller.partialAmount.value = value;
-                        },
-                      ),
-                    ],
-
-                    // ✅ PAID Status - Show total amount being charged
-                    if (controller.paidStatus.value == "PAID") ...[
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.green.shade200),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.check_circle_outline,
-                              color: Colors.green,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              "Full payment: ₹${orderTotal.toStringAsFixed(2)}",
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.green,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-
-                    // ✅ UNPAID Status - Show 0 amount
-                    if (controller.paidStatus.value == "UNPAID") ...[
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.orange.shade200),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              color: Colors.orange,
-                              size: 20,
-                            ),
-                            SizedBox(width: 12),
-                            Text(
-                              "No payment received yet (₹0.00)",
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
+                          child: const Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
                                 color: Colors.orange,
+                                size: 20,
                               ),
-                            ),
-                          ],
+                              SizedBox(width: 12),
+                              Text(
+                                "No payment received yet (₹0.00)",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.orange,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
-                )),
+                  ),
+                ),
 
                 const SizedBox(height: 24),
 
@@ -372,20 +373,22 @@ void showCreateBillDialog(BuildContext context, int orderId) {
       }),
       actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
       actions: [
-        Obx(() => SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: AppGradientButton(
-            onPressed: controller.isLoading.value
-                ? null
-                : () async {
-              await controller.createOrderBill(orderId);
-              // Dialog automatically closes in controller after success
-            },
-            text: "Generate Invoice",
-            isLoading: controller.isLoading.value,
+        Obx(
+          () => SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: AppGradientButton(
+              onPressed: controller.isLoading.value
+                  ? null
+                  : () async {
+                      await controller.createOrderBill(orderId);
+                      // Dialog automatically closes in controller after success
+                    },
+              text: "Generate Invoice",
+              isLoading: controller.isLoading.value,
+            ),
           ),
-        ))
+        ),
       ],
     ),
   );
@@ -406,11 +409,11 @@ Widget _sectionHeader(String title) {
 
 // Attractive Payment Tile Helper
 Widget _buildPaymentOption(
-    OrderController controller,
-    String value,
-    String text,
-    IconData icon,
-    ) {
+  OrderController controller,
+  String value,
+  String text,
+  IconData icon,
+) {
   bool isSelected = controller.selectedMethod.value == value;
   const Color primaryColor = Color(0xFF1A1A4F);
 
@@ -449,11 +452,11 @@ Widget _buildPaymentOption(
 
 // Attractive Status Chip Helper
 Widget _buildStatusChip(
-    OrderController controller,
-    String value,
-    String text,
-    Color color,
-    ) {
+  OrderController controller,
+  String value,
+  String text,
+  Color color,
+) {
   bool isSelected = controller.paidStatus.value == value;
 
   return GestureDetector(
@@ -466,12 +469,12 @@ Widget _buildStatusChip(
         border: Border.all(color: isSelected ? color : Colors.grey.shade300),
         boxShadow: isSelected
             ? [
-          BoxShadow(
-            color: color.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          )
-        ]
+                BoxShadow(
+                  color: color.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ]
             : [],
       ),
       child: Center(
