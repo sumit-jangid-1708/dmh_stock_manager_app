@@ -2,16 +2,13 @@
 
 import 'dart:typed_data';
 
-import 'package:dmj_stock_manager/res/components/barcode_dialog.dart';
 import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
-import 'package:dmj_stock_manager/res/components/widgets/iamge_share_dialog.dart';
 import 'package:dmj_stock_manager/view/items/item_detail_screen.dart';
 import 'package:dmj_stock_manager/view/stock/stock_screen.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/stock_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -19,7 +16,6 @@ import 'package:printing/printing.dart';
 import '../../model/product_models/product_model.dart';
 import '../../res/components/sku_qr_widget.dart';
 import '../../res/components/widgets/edit_item_form_bottom_sheet.dart';
-import '../../utils/app_alerts.dart';
 import '../../view_models/services/other_services/product_share_service.dart';
 
 class ItemsScreen extends StatelessWidget {

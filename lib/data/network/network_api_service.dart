@@ -184,11 +184,11 @@ class NetworkApiServices extends BaseApiServices {
     }
   }
 
-  Map<String, dynamic> _tryDecodeJson(String body) {
-    try {
-      return jsonDecode(body);
-    } catch (_) {
-      return {};
-    }
-  }
+  // Map<String, dynamic> _tryDecodeJson(String body) {
+  //   try {
+  //     return jsonDecode(body);
+  //   } catch (_) {
+  //     return {};
+  //   }
+  // }
 }

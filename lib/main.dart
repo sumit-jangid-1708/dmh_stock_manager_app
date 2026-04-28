@@ -10,7 +10,7 @@ Future<void> main() async {
   await GetStorage.init();
 
   // Read token from local storage
-  final storage = GetStorage();
+  // final storage = GetStorage();
   // final token = storage.read("access_token");
   //
   //    // Decide initial route based on token availability

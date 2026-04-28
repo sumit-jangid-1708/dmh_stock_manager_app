@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 
 import '../view_models/controller/order_controller.dart';
-import '../view_models/controller/util_controller.dart';
 
 class UtilBinding extends Bindings{
   @override

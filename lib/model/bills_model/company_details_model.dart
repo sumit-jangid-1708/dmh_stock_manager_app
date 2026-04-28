@@ -1,18 +1,14 @@
 // lib/model/company_details_model.dart
 
-/// Holds company details entered per-bill session.
-/// These are NOT persisted globally — used only for one invoice generation.
-///
-/// [gst] is optional — pass null when the business is not GST-registered.
 class CompanyDetails {
   final String name;
-  final String? gst; // nullable — not all businesses are GST-registered
+  final String? gst;
   final String address;
   final String phone;
 
   const CompanyDetails({
     required this.name,
-    this.gst,           // optional
+    this.gst,
     required this.address,
     required this.phone,
   });

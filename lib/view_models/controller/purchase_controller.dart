@@ -32,8 +32,27 @@ class PurchaseController extends GetxController with BaseController {
   final TextEditingController billNumberController = TextEditingController(
     text: "PB-",
   );
+  final RxString selectedPurchaseType = 'WITHOUT_GST'.obs;
+  final RxString selectedGstType = 'SGST_CGST'.obs;
+  final TextEditingController sgstController = TextEditingController();
+  final TextEditingController cgstController = TextEditingController();
+  final TextEditingController igstController = TextEditingController();
+
   final TextEditingController paidAmountController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
+
+  final TextEditingController placeOfSupplyController = TextEditingController();
+  final TextEditingController discountController = TextEditingController();
+  final TextEditingController shippingController = TextEditingController();
+  final TextEditingController otherChargesController = TextEditingController();
+  final TextEditingController roundOffController = TextEditingController();
+  // final TextEditingController gatPercentController = TextEditingController();
+  final TextEditingController dueDate = TextEditingController();
+  // Payment
+  final RxString paymentMode = "CASH".obs;
+  // final Rx<DateTime?> dueDate = Rx<DateTime?>(null);
+  final TextEditingController transactionIdController = TextEditingController();
+
   final RxString selectedStatus = "UNPAID".obs;
   var purchaseList = <PurchaseBillModel>[].obs;
 
@@ -70,6 +89,11 @@ class PurchaseController extends GetxController with BaseController {
     descriptionController.clear();
     selectedStatus.value = "UNPAID";
     addNewItem(); // Start with one empty item
+    selectedPurchaseType.value = 'WITHOUT_GST';
+    selectedGstType.value = 'SGST_CGST';
+    sgstController.clear();
+    cgstController.clear();
+    igstController.clear();
   }
 
   @override
@@ -93,6 +117,9 @@ class PurchaseController extends GetxController with BaseController {
     paidAmountController.dispose();
     descriptionController.dispose();
     super.onClose();
+    sgstController.dispose();
+    cgstController.dispose();
+    igstController.dispose();
   }
 
   void _filterPurchases() {
@@ -188,7 +215,9 @@ class PurchaseController extends GetxController with BaseController {
         if (response is Map<String, dynamic>) {
           // If response has the expected structure
           if (response.containsKey('message')) {
-            final purchaseResponse = PurchaseBillResponseModel.fromJson(response,);
+            final purchaseResponse = PurchaseBillResponseModel.fromJson(
+              response,
+            );
             successMessage = purchaseResponse.message.isNotEmpty
                 ? purchaseResponse.message
                 : successMessage;
@@ -202,7 +231,9 @@ class PurchaseController extends GetxController with BaseController {
           }
         }
       } catch (parseError) {
-        debugPrint("⚠️ Response parsing failed, using default message: $parseError",);
+        debugPrint(
+          "⚠️ Response parsing failed, using default message: $parseError",
+        );
         // Continue with default success message
       }
       debugPrint("✅ Purchase Bill Created Successfully!");
@@ -222,16 +253,16 @@ class PurchaseController extends GetxController with BaseController {
       await Future.delayed(const Duration(milliseconds: 100));
 
       debugPrint("✅ Bottom sheet closed and snackbar shown!");
-    // } on AppExceptions catch (e) {
-    //   debugPrint("❌ AppException caught: $e");
-    //   Get.snackbar(
-    //     "Error",
-    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-    //     duration: const Duration(seconds: 2),
-    //     snackPosition: SnackPosition.TOP,
-    //     backgroundColor: Colors.red,
-    //     colorText: Colors.white,
-    //   );
+      // } on AppExceptions catch (e) {
+      //   debugPrint("❌ AppException caught: $e");
+      //   Get.snackbar(
+      //     "Error",
+      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+      //     duration: const Duration(seconds: 2),
+      //     snackPosition: SnackPosition.TOP,
+      //     backgroundColor: Colors.red,
+      //     colorText: Colors.white,
+      //   );
     } catch (e, stackTrace) {
       debugPrint("❌ General Exception caught: $e");
       debugPrint("❌ Stack Trace: $stackTrace");
@@ -251,18 +282,18 @@ class PurchaseController extends GetxController with BaseController {
           .map((item) => PurchaseBillModel.fromJson(item))
           .toList();
       _filterPurchases();
-    // } on AppExceptions catch (e) {
-    //   if (kDebugMode) {
-    //     print("❌ Exception Details: $e"); // full stack ya raw details
-    //   }
-    //   Get.snackbar(
-    //     "Error",
-    //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
-    //     duration: const Duration(seconds: 1),
-    //     snackPosition: SnackPosition.TOP,
-    //     backgroundColor: Colors.red,
-    //     colorText: Colors.white,
-    //   );
+      // } on AppExceptions catch (e) {
+      //   if (kDebugMode) {
+      //     print("❌ Exception Details: $e"); // full stack ya raw details
+      //   }
+      //   Get.snackbar(
+      //     "Error",
+      //     e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+      //     duration: const Duration(seconds: 1),
+      //     snackPosition: SnackPosition.TOP,
+      //     backgroundColor: Colors.red,
+      //     colorText: Colors.white,
+      //   );
     } catch (e) {
       handleError(e, onRetry: () => getPurchaseList());
       print("Error fetching order list $e");
