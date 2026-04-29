@@ -22,7 +22,7 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
   List<File> _selectedImages = [];
 
   final Rx<String?> _selectedColor = Rx<String?>(null);
-  final Rx<String?> _selectedSize = Rx<String?>(null);  // single-label
+  final Rx<String?> _selectedSize = Rx<String?>(null);
   final Rx<String?> _selectedMaterial = Rx<String?>(null);
   final Rx<String?> _selectedHsnCode = Rx<String?>(null);
   final Rx<VendorModel?> _selectedVendor = Rx<VendorModel?>(null);

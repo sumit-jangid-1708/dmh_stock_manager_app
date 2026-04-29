@@ -197,24 +197,35 @@ class DashboardController extends GetxController with WidgetsBindingObserver, Ba
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        item.name,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 14,
-                                          color: Color(0xFF1A1A4F),
+                                  // 👇 LEFT SIDE (FIX)
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          item.name,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                            color: Color(0xFF1A1A4F),
+                                          ),
+                                          maxLines: 2, // 👈 control overflow
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                      ),
-                                      Text(
-                                        "SKU: ${item.baseSku}",
-                                        style: const TextStyle(color: Colors.grey, fontSize: 11),
-                                      ),
-                                    ],
+                                        Text(
+                                          "SKU: ${item.baseSku}",
+                                          style: const TextStyle(color: Colors.grey, fontSize: 11),
+                                        ),
+                                      ],
+                                    ),
                                   ),
+
+                                  const SizedBox(width: 8),
+
+                                  // 👇 RIGHT SIDE (FIXED WIDTH)
                                   Column(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
                                         item.quantity.toString(),
