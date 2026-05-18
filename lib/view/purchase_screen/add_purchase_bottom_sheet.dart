@@ -170,7 +170,8 @@ class AddPurchaseBottomSheet extends StatelessWidget {
 
               // ── GST Section (Conditional) ──────────────────────────────
               Obx(() {
-                if (purchaseController.selectedPurchaseType.value != 'WITH_GST') {
+                if (purchaseController.selectedPurchaseType.value !=
+                    'WITH_GST') {
                   return const SizedBox.shrink();
                 }
                 return Column(

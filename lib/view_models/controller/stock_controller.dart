@@ -36,8 +36,8 @@ class StockController extends GetxController with BaseController{
       inventoryList.sort(
             (a, b) => (b.id ?? 0).compareTo(a.id ?? 0),
       );
-    } catch (e) {
-      print("Error fetching Inventory: $e");
+    } catch (e, s) {
+      print("❌❌❌Error fetching Inventory: $e $s");
       handleError(e, onRetry: ()=> fetchInventoryList());
     } finally {
       isLoading.value = false;

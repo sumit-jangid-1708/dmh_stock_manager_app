@@ -134,9 +134,9 @@ class VendorController extends GetxController with BaseController{
       filteredVendors.assignAll(vendors); // update filtered list
       expandedList.value = List.generate(vendors.length, (_) => false); // update expanded list
       print("✅ Vendors fetched: ${vendors.length}");
-    } catch (e) {
+    } catch (e, s) {
       if (kDebugMode) {
-        print("🚩Vendor Error ❌ Exception Details: $e");
+        print("🚩Vendor Error ❌ Exception Details: $e $s");
       }
       Get.snackbar(
         'Error',

@@ -5,7 +5,7 @@ class BillingService {
   final NetworkApiServices _apiServices = NetworkApiServices();
 
   Future<dynamic> getBills({required int page}) async {
-    final response = await _apiServices.getApi('${AppUrl.allBills}?"page=$page');
+    final response = await _apiServices.getApi('${AppUrl.allBills}?page=$page');
     return response;
   }
  }

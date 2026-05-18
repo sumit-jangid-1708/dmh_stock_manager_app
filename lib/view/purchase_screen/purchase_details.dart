@@ -8,17 +8,21 @@ class PurchaseDetails extends StatelessWidget {
 
   const PurchaseDetails({super.key, required this.purchase});
 
+  // ✅ Safe parse: API sends totalAmount as String
+  double _parseAmount(String? value) =>
+      double.tryParse(value ?? '0') ?? 0.0;
+
   String _getVendorInitials(String name) {
     if (name.isEmpty) return "V";
-    final words = name.split(' ');
+    final words = name.trim().split(' ');
     if (words.length >= 2) {
       return "${words[0][0]}${words[1][0]}".toUpperCase();
     }
     return name.substring(0, 1).toUpperCase();
   }
 
-  Color _getStatusColor(String status) {
-    switch (status.toUpperCase()) {
+  Color _getStatusColor(String? status) {
+    switch ((status ?? '').toUpperCase()) {
       case 'PAID':
         return Colors.green;
       case 'UNPAID':
@@ -30,17 +34,33 @@ class PurchaseDetails extends StatelessWidget {
     }
   }
 
+  /// Tries to format a date string like "2026-05-12" → "12 May, 2026"
+  String _formatDate(String? dateStr) {
+    if (dateStr == null || dateStr.isEmpty) return '-';
+    try {
+      final dt = DateTime.parse(dateStr);
+      return DateFormat('dd MMM, yyyy').format(dt);
+    } catch (_) {
+      return dateStr;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final vendor = purchase.vendor;
-    final outstanding = purchase.totalAmount - purchase.paidAmount;
+    final vendorName = vendor?.name ?? 'Unknown Vendor';
+    final vendorMobile = vendor?.mobile ?? '-';
+
+    final totalAmount = _parseAmount(purchase.totalAmount);
+    final paidAmount = _parseAmount(purchase.paidAmount);
+    final outstanding = totalAmount - paidAmount;
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       body: SafeArea(
         child: Column(
           children: [
-            // 🎨 Gradient Header
+            // Gradient Header
             Container(
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
@@ -70,16 +90,17 @@ class PurchaseDetails extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: IconButton(
-                            icon: const Icon(Icons.arrow_back, size: 20, color: Colors.white),
+                            icon: const Icon(Icons.arrow_back,
+                                size: 20, color: Colors.white),
                             onPressed: () => Get.back(),
                             padding: EdgeInsets.zero,
                           ),
                         ),
                         const SizedBox(width: 16),
-                        Expanded(
+                        const Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
+                            children: [
                               Text(
                                 "Purchase Bill Details",
                                 style: TextStyle(
@@ -90,22 +111,29 @@ class PurchaseDetails extends StatelessWidget {
                               ),
                               Text(
                                 "Complete purchase information",
-                                style: TextStyle(color: Colors.white70, fontSize: 12),
+                                style: TextStyle(
+                                    color: Colors.white70, fontSize: 12),
                               ),
                             ],
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: _getStatusColor(purchase.status).withOpacity(0.2),
+                            color: _getStatusColor(purchase.status)
+                                .withOpacity(0.2),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: _getStatusColor(purchase.status), width: 1),
+                            border: Border.all(
+                                color:
+                                _getStatusColor(purchase.status),
+                                width: 1),
                           ),
                           child: Row(
                             children: [
                               Icon(
-                                purchase.status.toUpperCase() == 'PAID'
+                                (purchase.status ?? '').toUpperCase() ==
+                                    'PAID'
                                     ? Icons.check_circle
                                     : Icons.pending_actions,
                                 size: 14,
@@ -113,7 +141,7 @@ class PurchaseDetails extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                purchase.status.toUpperCase(),
+                                (purchase.status ?? '').toUpperCase(),
                                 style: TextStyle(
                                   color: _getStatusColor(purchase.status),
                                   fontSize: 11,
@@ -136,7 +164,7 @@ class PurchaseDetails extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            purchase.billNumber,
+                            purchase.billNumber ?? '-',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
@@ -144,11 +172,9 @@ class PurchaseDetails extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            DateFormat('dd MMM, yyyy').format(purchase.billDate),
+                            _formatDate(purchase.billDate),
                             style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                            ),
+                                color: Colors.white70, fontSize: 14),
                           ),
                         ],
                       ),
@@ -158,14 +184,14 @@ class PurchaseDetails extends StatelessWidget {
               ),
             ),
 
-            // 📋 Content
+            // Content
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 🏢 Vendor Card
+                    // ── Vendor Card ──────────────────────────────
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -180,6 +206,7 @@ class PurchaseDetails extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
+                          // Vendor header
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
@@ -202,19 +229,23 @@ class PurchaseDetails extends StatelessWidget {
                                   alignment: Alignment.center,
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
-                                      colors: [Color(0xFF1A1A4F), Color(0xFF2D2D7F)],
+                                      colors: [
+                                        Color(0xFF1A1A4F),
+                                        Color(0xFF2D2D7F)
+                                      ],
                                     ),
                                     borderRadius: BorderRadius.circular(12),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFF1A1A4F).withOpacity(0.3),
+                                        color: const Color(0xFF1A1A4F)
+                                            .withOpacity(0.3),
                                         blurRadius: 8,
                                         offset: const Offset(0, 4),
                                       ),
                                     ],
                                   ),
                                   child: Text(
-                                    _getVendorInitials(vendor.name),
+                                    _getVendorInitials(vendorName),
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 20,
@@ -225,10 +256,11 @@ class PurchaseDetails extends StatelessWidget {
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        vendor.name,
+                                        vendorName,
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 18,
@@ -236,12 +268,20 @@ class PurchaseDetails extends StatelessWidget {
                                         ),
                                       ),
                                       const SizedBox(height: 4),
-                                      Text(
-                                        vendor.firmName,
-                                        style: TextStyle(
-                                          color: Colors.grey.shade600,
-                                          fontSize: 13,
-                                        ),
+                                      Row(
+                                        children: [
+                                          Icon(Icons.badge_outlined,
+                                              size: 14,
+                                              color: Colors.grey.shade600),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            "Vendor ID: ${vendor?.id ?? '-'}",
+                                            style: TextStyle(
+                                              color: Colors.grey.shade600,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
@@ -250,40 +290,14 @@ class PurchaseDetails extends StatelessWidget {
                             ),
                           ),
 
+                          // Vendor detail rows
                           Padding(
                             padding: const EdgeInsets.all(16),
-                            child: Column(
-                              children: [
-                                _buildDetailRow(
-                                  icon: Icons.phone_outlined,
-                                  label: "Mobile",
-                                  value: "${vendor.countryCode} ${vendor.mobile}",
-                                  iconColor: Colors.green,
-                                ),
-                                const Divider(height: 24),
-                                _buildDetailRow(
-                                  icon: Icons.email_outlined,
-                                  label: "Email",
-                                  value: vendor.email,
-                                  iconColor: Colors.blue,
-                                ),
-                                const Divider(height: 24),
-                                _buildDetailRow(
-                                  icon: Icons.location_on_outlined,
-                                  label: "Address",
-                                  value: "${vendor.city}, ${vendor.state}",
-                                  iconColor: Colors.red,
-                                ),
-                                if (vendor.withGst) ...[
-                                  const Divider(height: 24),
-                                  _buildDetailRow(
-                                    icon: Icons.account_balance_outlined,
-                                    label: "GST Number",
-                                    value: vendor.gstNumber,
-                                    iconColor: Colors.purple,
-                                  ),
-                                ],
-                              ],
+                            child: _buildDetailRow(
+                              icon: Icons.phone_outlined,
+                              label: "Mobile",
+                              value: vendorMobile,
+                              iconColor: Colors.green,
                             ),
                           ),
                         ],
@@ -292,7 +306,7 @@ class PurchaseDetails extends StatelessWidget {
 
                     const SizedBox(height: 20),
 
-                    // 💰 Payment Summary
+                    // ── Payment Summary ──────────────────────────
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -319,9 +333,8 @@ class PurchaseDetails extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(Icons.account_balance_wallet,
-                                    size: 20,
-                                    color: Colors.green.shade700,
-                                  ),
+                                      size: 20,
+                                      color: Colors.green.shade700),
                                 ),
                                 const SizedBox(width: 12),
                                 const Text(
@@ -334,32 +347,48 @@ class PurchaseDetails extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 16),
-                            _buildAmountRow("Total Amount", purchase.totalAmount,
-                                const Color(0xFF1A1A4F), bold: true, large: true),
+                            _buildAmountRow(
+                                "Total Amount",
+                                totalAmount,
+                                const Color(0xFF1A1A4F),
+                                bold: true,
+                                large: true),
                             const SizedBox(height: 12),
-                            _buildAmountRow("Paid Amount", purchase.paidAmount,
-                                Colors.green),
+                            _buildAmountRow(
+                                "Paid Amount", paidAmount, Colors.green),
                             const SizedBox(height: 12),
                             _buildAmountRow("Outstanding", outstanding,
-                                Colors.red, bold: true),
-                            if (purchase.paidDate != null) ...[
+                                Colors.red,
+                                bold: true),
+
+                            // Remaining amount
+                            if ((purchase.remainingAmount ?? 0) > 0) ...[
+                              const SizedBox(height: 12),
+                              _buildAmountRow(
+                                  "Remaining",
+                                  purchase.remainingAmount ?? 0,
+                                  Colors.orange,
+                                  bold: true),
+                            ],
+
+                            if (purchase.paidDate != null &&
+                                purchase.paidDate!.isNotEmpty) ...[
                               const Divider(height: 24),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     "Payment Date",
                                     style: TextStyle(
-                                      color: Colors.grey.shade700,
-                                      fontSize: 14,
-                                    ),
+                                        color: Colors.grey.shade700,
+                                        fontSize: 14),
                                   ),
                                   Text(
-                                    DateFormat('dd MMM, yyyy').format(purchase.paidDate!),
+                                    _formatDate(purchase.paidDate),
                                     style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                    ),
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14),
                                   ),
                                 ],
                               ),
@@ -371,7 +400,7 @@ class PurchaseDetails extends StatelessWidget {
 
                     const SizedBox(height: 20),
 
-                    // 📦 Purchase Items
+                    // ── Purchased Items ──────────────────────────
                     Row(
                       children: [
                         Container(
@@ -380,34 +409,29 @@ class PurchaseDetails extends StatelessWidget {
                             color: const Color(0xFF1A1A4F).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(
-                            Icons.inventory_2,
-                            color: Color(0xFF1A1A4F),
-                            size: 20,
-                          ),
+                          child: const Icon(Icons.inventory_2,
+                              color: Color(0xFF1A1A4F), size: 20),
                         ),
                         const SizedBox(width: 12),
                         const Text(
                           "Purchased Items",
                           style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                              fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         const Spacer(),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: const Color(0xFF1A1A4F),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            "${purchase.items.length} Items",
+                            "${purchase.items?.length ?? 0} Items",
                             style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
@@ -418,14 +442,15 @@ class PurchaseDetails extends StatelessWidget {
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: purchase.items.length,
+                      itemCount: purchase.items?.length ?? 0,
                       itemBuilder: (context, index) {
-                        final item = purchase.items[index];
+                        final item = purchase.items![index];
                         return PurchaseItemCard(item: item, index: index);
                       },
                     ),
 
-                    if (purchase.description.isNotEmpty) ...[
+                    // Description
+                    if ((purchase.description ?? '').isNotEmpty) ...[
                       const SizedBox(height: 20),
                       Container(
                         padding: const EdgeInsets.all(16),
@@ -440,9 +465,8 @@ class PurchaseDetails extends StatelessWidget {
                             Row(
                               children: [
                                 Icon(Icons.note_alt_outlined,
-                                  size: 18,
-                                  color: Colors.blue.shade700,
-                                ),
+                                    size: 18,
+                                    color: Colors.blue.shade700),
                                 const SizedBox(width: 8),
                                 Text(
                                   "Description",
@@ -456,11 +480,10 @@ class PurchaseDetails extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              purchase.description,
+                              purchase.description!,
                               style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.blue.shade900,
-                              ),
+                                  fontSize: 13,
+                                  color: Colors.blue.shade900),
                             ),
                           ],
                         ),
@@ -496,18 +519,15 @@ class PurchaseDetails extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(
-            label,
-            style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
-          ),
+          child: Text(label,
+              style:
+              TextStyle(color: Colors.grey.shade700, fontSize: 14)),
         ),
         Expanded(
           child: Text(
             value,
             style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
+                fontWeight: FontWeight.w600, fontSize: 14),
             textAlign: TextAlign.end,
             overflow: TextOverflow.ellipsis,
           ),
@@ -530,7 +550,7 @@ class PurchaseDetails extends StatelessWidget {
           ),
         ),
         Text(
-          "₹ ${amount.toStringAsFixed(2)}",
+          "₹ ${NumberFormat('#,##,###.##').format(amount)}",
           style: TextStyle(
             fontSize: large ? 20 : 16,
             fontWeight: bold ? FontWeight.bold : FontWeight.w600,
@@ -546,10 +566,19 @@ class PurchaseItemCard extends StatelessWidget {
   final PurchaseItemModel item;
   final int index;
 
-  const PurchaseItemCard({super.key, required this.item, required this.index});
+  const PurchaseItemCard(
+      {super.key, required this.item, required this.index});
 
   @override
   Widget build(BuildContext context) {
+    final unitPrice = item.unitPrice ?? 0.0;
+    final quantity = item.quantity ?? 0;
+    // totalPrice comes as 0.0 from API; compute locally as fallback
+    final computedTotal =
+    (item.totalPrice ?? 0.0) > 0
+        ? (item.totalPrice ?? 0.0)
+        : unitPrice * quantity;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -570,7 +599,6 @@ class PurchaseItemCard extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             child: Row(
               children: [
-                // Item Number Badge
                 Container(
                   width: 36,
                   height: 36,
@@ -584,41 +612,37 @@ class PurchaseItemCard extends StatelessWidget {
                   child: Text(
                     "#${index + 1}",
                     style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(width: 14),
-
-                // Product Details
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.productName,
+                        item.productName ?? '-',
                         style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: Colors.black87,
-                        ),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.black87),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.qr_code, size: 12, color: Colors.grey.shade600),
+                          Icon(Icons.qr_code,
+                              size: 12, color: Colors.grey.shade600),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              "SKU: ${item.productSku}",
+                              "SKU: ${item.productSku ?? '-'}",
                               style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 12,
-                              ),
+                                  color: Colors.grey.shade600,
+                                  fontSize: 12),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -631,7 +655,7 @@ class PurchaseItemCard extends StatelessWidget {
             ),
           ),
 
-          // Price Details Section
+          // Price Details
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
@@ -646,46 +670,36 @@ class PurchaseItemCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      "Unit Price:",
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade700,
-                      ),
-                    ),
-                    Text(
-                      "₹ ${item.unitPrice.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
+                    Text("Unit Price:",
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade700)),
+                    Text("₹ ${unitPrice.toStringAsFixed(2)}",
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 14)),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      "Quantity:",
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade700,
-                      ),
-                    ),
+                    Text("Quantity:",
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade700)),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: const Color(0xFF1A1A4F).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        "${item.quantity}",
+                        "$quantity",
                         style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: Color(0xFF1A1A4F),
-                        ),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Color(0xFF1A1A4F)),
                       ),
                     ),
                   ],
@@ -707,20 +721,16 @@ class PurchaseItemCard extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        "Total Price",
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      const Text("Total Price",
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600)),
                       Text(
-                        "₹ ${item.totalPrice.toStringAsFixed(2)}",
+                        "₹ ${computedTotal.toStringAsFixed(2)}",
                         style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                          color: Color(0xFF1A1A4F),
-                        ),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: Color(0xFF1A1A4F)),
                       ),
                     ],
                   ),

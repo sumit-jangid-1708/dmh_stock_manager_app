@@ -107,7 +107,7 @@ class ProductShareService {
       overlay.remove();
 
       if (imageFiles.isNotEmpty) {
-        await Share.shareXFiles(
+        await  Share.shareXFiles(
           imageFiles,
           text: message.toString(),
         );

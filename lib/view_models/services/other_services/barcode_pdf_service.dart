@@ -1,90 +1,183 @@
 import 'dart:io';
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+
 import '../../../model/order_models/order_detail_model.dart';
 import '../../../res/components/sku_qr_widget.dart';
 
 class BarcodePdfService {
-  // ✅ 50x25mm — standard thermal label size
-  static const PdfPageFormat _pageFormat = PdfPageFormat(
-    58 * PdfPageFormat.mm,
-    210 * PdfPageFormat.mm,
-    marginAll: 3 * PdfPageFormat.mm,
-  );
 
-  static Future<Uint8List> generateSerialBarcodePdf(OrderDetailsModel order) async {
+  /// ================================
+  /// LABEL SETTINGS
+  /// ================================
+
+  static const double _labelWidth  = 50 * PdfPageFormat.mm;
+  static const double _labelHeight = 25 * PdfPageFormat.mm;
+
+  /// QR SIZE
+  static const double _qrSize = 20 * PdfPageFormat.mm;
+
+  /// PADDING
+  static const double _paddingLeft   = 1.5 * PdfPageFormat.mm;
+  static const double _paddingRight  = 1.5 * PdfPageFormat.mm;
+  static const double _paddingTop    = 1.5 * PdfPageFormat.mm;
+  static const double _paddingBottom = 1.5 * PdfPageFormat.mm;
+
+  /// TEXT
+  static const double _fontSize = 5.5;
+
+  /// ================================
+  /// GENERATE PDF
+  /// ================================
+
+  static Future<Uint8List> generateSerialBarcodePdf(
+      OrderDetailsModel order,
+      ) async {
+
     final pdf = pw.Document();
-    // ── Collect all serials ──
+
     final List<_SerialEntry> allSerials = [];
+
+    /// Collect all serials
     for (final item in order.items) {
       for (final serial in item.serials) {
-        allSerials.add(_SerialEntry(
-          serialNumber: serial.serialNumber,
-          productName: item.productName,
-        ));
+        allSerials.add(
+          _SerialEntry(
+            serialNumber: serial.serialNumber,
+            productName: item.productName,
+          ),
+        );
       }
     }
 
+    /// No serials
     if (allSerials.isEmpty) {
-      pdf.addPage(pw.Page(
-        pageFormat: _pageFormat,
-        build: (_) => pw.Center(child: pw.Text("No serials found.")),
-      ));
+
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat(
+            _labelWidth,
+            _labelHeight,
+            marginAll: 0,
+          ),
+
+          margin: pw.EdgeInsets.zero,
+
+          build: (_) {
+            return pw.Center(
+              child: pw.Text("No serials found"),
+            );
+          },
+        ),
+      );
+
       return pdf.save();
     }
 
-    // ✅ Generate QR bytes for all serials in parallel — no backend call
+    /// Generate QR Images
     final List<Uint8List> qrImages = await Future.wait(
-      allSerials.map((e) => SkuQrWidget.toImageBytes(e.serialNumber, size: 300,)),
+      allSerials.map(
+            (e) => SkuQrWidget.toImageBytes(
+          e.serialNumber,
+          size: 600, // HIGH QUALITY QR
+        ),
+      ),
     );
 
+    /// TOTAL PAGE HEIGHT
+    final double totalHeight =
+        allSerials.length * _labelHeight;
+
+    /// SINGLE LONG PAGE
     pdf.addPage(
-      pw.MultiPage(
-        pageFormat: _pageFormat,
-        margin: const pw.EdgeInsets.all(3 * PdfPageFormat.mm),
+
+      pw.Page(
+
+        pageFormat: PdfPageFormat(
+          _labelWidth,
+          totalHeight,
+          marginAll: 0,
+        ),
+
+        margin: pw.EdgeInsets.zero,
+
         build: (context) {
-          return List.generate(allSerials.length, (i) {
-            final entry = allSerials[i];
-            final qrBytes = qrImages[i];
 
-            return pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.center,
-              children: [
-                // ── QR Code ──
-                pw.Center(
-                  child: pw.Image(
-                    pw.MemoryImage(qrBytes),
-                    width: 40 * PdfPageFormat.mm,
-                    height: 40 * PdfPageFormat.mm,
-                    fit: pw.BoxFit.contain,
-                  ),
+          return pw.Column(
+
+            mainAxisSize: pw.MainAxisSize.min,
+
+            children: List.generate(allSerials.length, (i) {
+
+              final entry   = allSerials[i];
+              final qrBytes = qrImages[i];
+
+              return pw.Container(
+
+                width: _labelWidth,
+                height: _labelHeight,
+
+                padding: pw.EdgeInsets.only(
+                  left: _paddingLeft,
+                  right: _paddingRight,
+                  top: _paddingTop,
+                  bottom: _paddingBottom,
                 ),
 
-                pw.SizedBox(height: 1.5 * PdfPageFormat.mm),
+                child: pw.Row(
 
-                // ── Serial number text ──
-                pw.Text(
-                  entry.serialNumber,
-                  textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(
-                    fontSize: 5.5,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.black,
-                  ),
+                  crossAxisAlignment: pw.CrossAxisAlignment.center,
+
+                  children: [
+
+                    /// QR CODE
+                    pw.Container(
+                      width: _qrSize,
+                      height: _qrSize,
+
+                      child: pw.Image(
+                        pw.MemoryImage(qrBytes),
+
+                        width: _qrSize,
+                        height: _qrSize,
+
+                        fit: pw.BoxFit.contain,
+                      ),
+                    ),
+
+                    pw.SizedBox(width: 2 * PdfPageFormat.mm),
+
+                    /// SERIAL TEXT
+                    pw.Expanded(
+
+                      child: pw.Align(
+
+                        alignment: pw.Alignment.centerLeft,
+
+                        child: pw.Text(
+
+                          entry.serialNumber,
+
+                          maxLines: 3,
+
+                          style: pw.TextStyle(
+                            fontSize: _fontSize,
+                            fontWeight: pw.FontWeight.bold,
+                            color: PdfColors.black,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-
-                if (i < allSerials.length - 1) ...[
-                  pw.SizedBox(height: 2 * PdfPageFormat.mm),
-                  pw.Divider(color: PdfColors.grey300, thickness: 0.5),
-                  pw.SizedBox(height: 2 * PdfPageFormat.mm),
-                ],
-              ],
-            );
-          });
+              );
+            }),
+          );
         },
       ),
     );
@@ -92,62 +185,139 @@ class BarcodePdfService {
     return pdf.save();
   }
 
-  static Future<void> printBarcodePdf(BuildContext context, OrderDetailsModel order) async {
+  /// ================================
+  /// PRINT PDF
+  /// ================================
+
+  static Future<void> printBarcodePdf(
+      BuildContext context,
+      OrderDetailsModel order,
+      ) async {
+
     try {
-      final pdfBytes = await generateSerialBarcodePdf(order);
+
+      final pdfBytes =
+      await generateSerialBarcodePdf(order);
+
+      /// Count total serials
+      int totalLabels = 0;
+
+      for (final item in order.items) {
+        totalLabels += item.serials.length;
+      }
+
+      final double totalHeight =
+          totalLabels * _labelHeight;
+
       await Printing.layoutPdf(
-        onLayout: (_) async => pdfBytes,
+
         name: "Order_${order.orderId}_Serials",
-        format: _pageFormat,
+
+        format: PdfPageFormat(
+          _labelWidth,
+          totalHeight,
+          marginAll: 0,
+        ),
+
+        onLayout: (format) async => pdfBytes,
       );
+
     } catch (e) {
+
       debugPrint("❌ Print error: $e");
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Print failed: $e"), backgroundColor: Colors.red),
+
+        SnackBar(
+          content: Text("Print failed: $e"),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
 
-  static Future<void> downloadBarcodePdf(BuildContext context, OrderDetailsModel order) async {
+  /// ================================
+  /// DOWNLOAD PDF
+  /// ================================
+
+  static Future<void> downloadBarcodePdf(
+      BuildContext context,
+      OrderDetailsModel order,
+      ) async {
+
     try {
-      final pdfBytes = await generateSerialBarcodePdf(order);
+
+      final pdfBytes =
+      await generateSerialBarcodePdf(order);
+
+      final String fileName =
+          "Order_${order.orderId}_QR_${DateTime.now().millisecondsSinceEpoch}.pdf";
 
       final Directory dir = Platform.isAndroid
           ? Directory('/storage/emulated/0/Download')
           : await getApplicationDocumentsDirectory();
 
-      if (!await dir.exists()) await dir.create(recursive: true);
+      if (!await dir.exists()) {
+        await dir.create(recursive: true);
+      }
 
-      final String fileName =
-          "Order_${order.orderId}_QR_${DateTime.now().millisecondsSinceEpoch}.pdf";
-      final File file = File('${dir.path}/$fileName');
+      final File file =
+      File('${dir.path}/$fileName');
+
       await file.writeAsBytes(pdfBytes);
 
       ScaffoldMessenger.of(context).showSnackBar(
+
         SnackBar(
+
           content: Text("Saved: $fileName"),
+
           backgroundColor: Colors.green,
+
           action: SnackBarAction(
+
             label: "Share",
+
             textColor: Colors.white,
-            onPressed: () => Printing.sharePdf(bytes: pdfBytes, filename: fileName),
+
+            onPressed: () {
+
+              Printing.sharePdf(
+                bytes: pdfBytes,
+                filename: fileName,
+              );
+            },
           ),
         ),
       );
+
     } catch (e) {
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Download failed: $e"), backgroundColor: Colors.red),
+
+        SnackBar(
+          content: Text("Download failed: $e"),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
 }
 
+/// ================================
+/// SERIAL MODEL
+/// ================================
+
 class _SerialEntry {
+
   final String serialNumber;
   final String productName;
-  _SerialEntry({required this.serialNumber, required this.productName});
-}
 
+  _SerialEntry({
+    required this.serialNumber,
+    required this.productName,
+  });
+}
 
 
 // import 'dart:io';
