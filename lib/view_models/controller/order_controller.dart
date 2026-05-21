@@ -18,6 +18,7 @@ import 'package:get/get.dart';
 import 'package:dmj_stock_manager/model/channel_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../data/app_exceptions.dart';
 import '../../model/order_models/courier_partner_model.dart';
 import '../../model/order_models/order_detail_model.dart';
 import '../../model/order_models/order_with_shipment_model.dart';
@@ -331,8 +332,12 @@ class OrderController extends GetxController with BaseController {
       await getOrderList();
       stockController.fetchInventoryList();
     } catch (e) {
-      handleError(e);
       if (kDebugMode) print("❌ Create Order Error: $e");
+      if (e is AppExceptions) {
+        AppAlerts.error(e.toString());
+      } else {
+        handleError(e);
+      }
     } finally {
       isLoading.value = false;
     }

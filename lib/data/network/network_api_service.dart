@@ -155,7 +155,30 @@ class NetworkApiServices extends BaseApiServices {
       case 404:
         throw AppExceptions('Resource not found (404)');
       case 500:
-        throw ServerException();
+        final body = safeDecodeBody();
+        // ✅ Backend ne meaningful error diya ho to wo dikhao
+        if (body is Map) {
+          // "details" field mein actual error hota hai
+          final details = body['details']?.toString();
+          final error = body['error']?.toString();
+          final message = body['message']?.toString();
+
+          // Stock error ya koi specific error extract karo
+          if (details != null && details.isNotEmpty) {
+            // "stock_error" jaise nested errors handle karo
+            if (details.contains('stock_error')) {
+              // Extract readable part
+              final match = RegExp(r"string='([^']+)'").firstMatch(details);
+              if (match != null) {
+                throw AppExceptions(match.group(1)); // "No inventory record found for X"
+              }
+            }
+            throw AppExceptions(details);
+          }
+          if (message != null && message.isNotEmpty) throw AppExceptions(message);
+          if (error != null && error != 'Something went wrong') throw AppExceptions(error);
+        }
+        throw ServerException(); // generic fallback
       case 502:
         throw AppExceptions(
           'Server gateway error (502). Please try again later.',
