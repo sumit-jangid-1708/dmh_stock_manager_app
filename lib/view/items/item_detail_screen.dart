@@ -23,16 +23,33 @@ class ItemDetailScreen extends StatelessWidget {
 
   static const String _baseUrl = "https://traders.testwebs.in";
 
+  // String _getImageUrl(dynamic imageItem) {
+  //   String raw = '';
+  //   if (imageItem is String) {
+  //     raw = imageItem;
+  //   } else {
+  //     return "https://via.placeholder.com/150";
+  //   }
+  //   if (raw.isEmpty) return "https://via.placeholder.com/150";
+  //   if (raw.startsWith('http')) return raw;
+  //   return '$_baseUrl$raw';
+  // }
   String _getImageUrl(dynamic imageItem) {
     String raw = '';
+
     if (imageItem is String) {
       raw = imageItem;
     } else {
       return "https://via.placeholder.com/150";
     }
+
     if (raw.isEmpty) return "https://via.placeholder.com/150";
+
+    // Already full URL — as-is use karo
     if (raw.startsWith('http')) return raw;
-    return '$_baseUrl$raw';
+
+    // Relative path — API server ka base URL lagao
+    return 'http://69.62.75.208:8000$raw';
   }
 
   @override

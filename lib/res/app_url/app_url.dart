@@ -2,7 +2,7 @@ class AppUrl {
   static const String baseUrl = "http://69.62.75.208:8000/api";
   // static const String baseUrl = "https://traders.testwebs.in/api";
   static const String localUrl = "http://127.0.0.1:8000/api";
-
+static const String imageBaseUrl = "http://69.62.75.208:8000";
   static const String addVendor = "$baseUrl/vendors/";
   static const String product = "$baseUrl/products/";
   static const String channels = "$baseUrl/channels/";
@@ -24,6 +24,9 @@ class AppUrl {
   static const String bestSellingProducts = "$baseUrl/product-list";
   static const String purchaseItem = "$baseUrl/purchase-item";
   static const String getPurchaseDetails = "$baseUrl/purchase-list";
+  static const String updatePurchase = "$baseUrl/purchase-update";
+  static const String deletePurchase = "$baseUrl/purchase-delete";
+
 
   // courier return
   static const String courierReturn = "$baseUrl/courier-return/";

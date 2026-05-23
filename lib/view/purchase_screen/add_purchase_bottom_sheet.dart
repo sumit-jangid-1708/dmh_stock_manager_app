@@ -13,7 +13,7 @@ import '../../view_models/controller/vendor_controller.dart';
 class AddPurchaseBottomSheet extends StatelessWidget {
   AddPurchaseBottomSheet({super.key});
 
-  final PurchaseController purchaseController = Get.put(PurchaseController());
+  final PurchaseController purchaseController = Get.find<PurchaseController>();
   final VendorController vendorController = Get.find<VendorController>();
   final ItemController itemController = Get.find<ItemController>();
 
@@ -65,20 +65,28 @@ class AddPurchaseBottomSheet extends StatelessWidget {
               const SizedBox(height: 20),
 
               // Title
-              const Row(
+              // Title Row replace karo
+              Obx(() => Row(
                 children: [
-                  Icon(Icons.add_shopping_cart, color: primaryColor),
-                  SizedBox(width: 10),
+                  Icon(
+                    purchaseController.isEditMode.value
+                        ? Icons.edit_note
+                        : Icons.add_shopping_cart,
+                    color: primaryColor,
+                  ),
+                  const SizedBox(width: 10),
                   Text(
-                    "Create Purchase Bill",
-                    style: TextStyle(
+                    purchaseController.isEditMode.value
+                        ? "Edit Purchase Bill"
+                        : "Create Purchase Bill",
+                    style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: primaryColor,
                     ),
                   ),
                 ],
-              ),
+              )),
               const SizedBox(height: 25),
 
               // ── 1. VENDOR & BILL INFO ──────────────────────────────────
@@ -379,15 +387,18 @@ class AddPurchaseBottomSheet extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
+                    Obx(() => DropdownButtonFormField<String>(
+                      value: purchaseController.paymentMode.value,
                       decoration: Utils.inputDecoration("Mode", Icons.payment),
                       items: const [
                         DropdownMenuItem(value: "CASH", child: Text("Cash")),
                         DropdownMenuItem(value: "UPI", child: Text("UPI")),
                         DropdownMenuItem(value: "BANK", child: Text("Bank")),
                       ],
-                      onChanged: (val) {},
-                    ),
+                      onChanged: (val) {
+                        if (val != null) purchaseController.paymentMode.value = val;
+                      },
+                    )),
                     const SizedBox(height: 12),
                     Row(
                       children: [
@@ -470,25 +481,19 @@ class AddPurchaseBottomSheet extends StatelessWidget {
                         ),
                         onPressed: purchaseController.isLoading.value
                             ? null
-                            : () => purchaseController.addPurchaseBill(
-                                onSuccess: () => Get.back(),
-                              ),
+                            : () => purchaseController.savePurchaseBill(
+                          onSuccess: () => Get.back(),
+                        ),
+                        // ElevatedButton child replace karo
                         child: purchaseController.isLoading.value
                             ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(
-                                "Create Bill",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                          height: 20, width: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                            : Obx(() => Text(
+                          purchaseController.isEditMode.value ? "Update Bill" : "Create Bill",
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        )),
                       ),
                     ),
                   ),

@@ -156,39 +156,42 @@ class NetworkApiServices extends BaseApiServices {
         throw AppExceptions('Resource not found (404)');
       case 500:
         final body = safeDecodeBody();
-        // ✅ Backend ne meaningful error diya ho to wo dikhao
         if (body is Map) {
-          // "details" field mein actual error hota hai
           final details = body['details']?.toString();
-          final error = body['error']?.toString();
           final message = body['message']?.toString();
+          final error = body['error']?.toString();
 
-          // Stock error ya koi specific error extract karo
           if (details != null && details.isNotEmpty) {
-            // "stock_error" jaise nested errors handle karo
             if (details.contains('stock_error')) {
-              // Extract readable part
               final match = RegExp(r"string='([^']+)'").firstMatch(details);
-              if (match != null) {
-                throw AppExceptions(match.group(1)); // "No inventory record found for X"
-              }
+              if (match != null) throw AppExceptions(match.group(1));
             }
             throw AppExceptions(details);
           }
-          if (message != null && message.isNotEmpty) throw AppExceptions(message);
-          if (error != null && error != 'Something went wrong') throw AppExceptions(error);
+          if (message != null && message.isNotEmpty)
+            throw AppExceptions(message);
+          if (error != null && error != 'Something went wrong')
+            throw AppExceptions(error);
         }
         throw ServerException(); // generic fallback
+
+      // ✅ 502, 503, 504 bhi ServerException throw karo — ye sab server issues hain
       case 502:
-        throw AppExceptions(
-          'Server gateway error (502). Please try again later.',
-        );
       case 503:
-        throw AppExceptions(
-          'Server is temporarily unavailable (503). Please try again later.',
-        );
       case 504:
-        throw AppExceptions('Server timed out (504). Please try again later.');
+        throw ServerException(
+          'Server is currently unavailable. Please try again later.',
+        );
+      // case 502:
+      //   throw AppExceptions(
+      //     'Server gateway error (502). Please try again later.',
+      //   );
+      // case 503:
+      //   throw AppExceptions(
+      //     'Server is temporarily unavailable (503). Please try again later.',
+      //   );
+      // case 504:
+      //   throw AppExceptions('Server timed out (504). Please try again later.');
       default:
         throw AppExceptions('Unexpected error ($statusCode)');
     }

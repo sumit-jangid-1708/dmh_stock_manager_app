@@ -26,4 +26,13 @@ class PurchaseService {
     return [];
   }
 
+  Future<dynamic> updatePurchase(int purchaseId, var data) async {
+    final response = await _apiServices.putApi(data, "${AppUrl.updatePurchase}/$purchaseId/");
+    return response;
+  }
+  Future<dynamic> deletePurchase(int purchaseId) async {
+    final response = await _apiServices.deleteApi("${AppUrl.deletePurchase}/$purchaseId/");
+    return response;
+  }
+
 }

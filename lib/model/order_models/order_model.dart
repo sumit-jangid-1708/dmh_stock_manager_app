@@ -100,6 +100,8 @@ class OrderDetailModel {
         return "Courier Return";
       case 6:
         return "Customer Return";
+      case 7:
+        return "Return Received";
       default:
         return status;
     }
@@ -119,6 +121,8 @@ class OrderDetailModel {
         return const Color(0xFFF44336);
       case 6:
         return const Color(0xFFFF5722);
+        case 7:
+        return const Color(0xFF00897B);
       default:
         return Colors.grey;
     }

@@ -92,6 +92,8 @@ class OrderDetailsModel {
         return "Courier Return";
       case 6:
         return "Customer Return";
+      case 7:
+        return "Return Received";
       default:
         return "Unknown";
     }
@@ -111,6 +113,8 @@ class OrderDetailsModel {
         return const Color(0xFFF44336); // Red
       case 6:
         return const Color(0xFFFF5722); // Deep Orange
+      case 7:
+        return const Color(0xFF00897B); // Teal
       default:
         return Colors.grey;
     }

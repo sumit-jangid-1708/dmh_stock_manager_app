@@ -2,6 +2,7 @@
 
 import 'dart:typed_data';
 
+import 'package:dmj_stock_manager/res/app_url/app_url.dart';
 import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/view/items/item_detail_screen.dart';
 import 'package:dmj_stock_manager/view/stock/stock_screen.dart';
@@ -24,7 +25,7 @@ class ItemsScreen extends StatelessWidget {
   final ScrollController _scrollController = ScrollController();
   ItemsScreen({super.key});
 
-  static const String _baseUrl = "https://traders.testwebs.in";
+  static const String _baseUrl = AppUrl.imageBaseUrl;
 
   // ✅ Convert relative or absolute path → full URL
   String _getImageUrl(dynamic imageItem) {

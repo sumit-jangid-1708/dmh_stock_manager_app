@@ -19,6 +19,7 @@ class OrderScreen extends StatelessWidget {
     {"label": "Delivered", "value": 4},
     {"label": "Courier Return", "value": 5},
     {"label": "Customer Return", "value": 6},
+    {"label": "Return Received", "value": 7},
   ];
 
   Color _getStatusColor(String? status) {

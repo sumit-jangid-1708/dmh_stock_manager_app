@@ -15,7 +15,7 @@ class PurchaseScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final PurchaseController purchaseController =
-    Get.find<PurchaseController>();
+        Get.find<PurchaseController>();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -59,8 +59,7 @@ class PurchaseScreen extends StatelessWidget {
                           ),
                           Text(
                             "Manage all vendor purchases",
-                            style:
-                            TextStyle(fontSize: 14, color: Colors.grey),
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
                           ),
                         ],
                       ),
@@ -109,8 +108,7 @@ class PurchaseScreen extends StatelessWidget {
 
                 const Text(
                   "Recent Purchase Bills",
-                  style:
-                  TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
 
@@ -125,8 +123,7 @@ class PurchaseScreen extends StatelessWidget {
                     );
                   }
 
-                  final listToShow =
-                      purchaseController.filteredPurchaseList;
+                  final listToShow = purchaseController.filteredPurchaseList;
                   if (listToShow.isEmpty) {
                     return Center(
                       child: Padding(
@@ -211,8 +208,7 @@ class PurchaseListCard extends StatelessWidget {
   }
 
   // ✅ Safe double parsing from String? fields
-  double _parseAmount(String? value) =>
-      double.tryParse(value ?? '0') ?? 0.0;
+  double _parseAmount(String? value) => double.tryParse(value ?? '0') ?? 0.0;
 
   @override
   Widget build(BuildContext context) {
@@ -291,14 +287,16 @@ class PurchaseListCard extends StatelessWidget {
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
-                                color: _getStatusColor(purchase.status)
-                                    .withOpacity(0.15),
+                                color: _getStatusColor(
+                                  purchase.status,
+                                ).withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color:
-                                  _getStatusColor(purchase.status),
+                                  color: _getStatusColor(purchase.status),
                                   width: 1,
                                 ),
                               ),
@@ -307,8 +305,7 @@ class PurchaseListCard extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.bold,
-                                  color:
-                                  _getStatusColor(purchase.status),
+                                  color: _getStatusColor(purchase.status),
                                 ),
                               ),
                             ),
@@ -318,41 +315,62 @@ class PurchaseListCard extends StatelessWidget {
                         const SizedBox(height: 6),
 
                         // Bill Number, Date & Items count
+                        // ✅ AB — do alag rows
+// Row 1: Bill number + GST badge
                         Row(
                           children: [
                             Icon(Icons.receipt_outlined,
-                                size: 14,
-                                color: Colors.grey.shade600),
+                                size: 14, color: Colors.grey.shade600),
                             const SizedBox(width: 4),
-                            Text(
-                              purchase.billNumber ?? '-',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade600,
-                                fontWeight: FontWeight.w500,
+                            Flexible(
+                              child: Text(
+                                purchase.billNumber ?? '-',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            if ((purchase.gstType ?? '').toLowerCase().contains('with')) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.purple.shade50,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  "GST",
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.purple.shade700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+// Row 2: Date + Items count
+                        Row(
+                          children: [
                             Icon(Icons.calendar_today_outlined,
-                                size: 13,
-                                color: Colors.grey.shade500),
+                                size: 13, color: Colors.grey.shade500),
                             const SizedBox(width: 4),
                             Text(
                               purchase.billDate ?? '-',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade600),
+                              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                             ),
                             const SizedBox(width: 10),
                             Icon(Icons.inventory_2_outlined,
-                                size: 14,
-                                color: Colors.grey.shade600),
+                                size: 14, color: Colors.grey.shade600),
                             const SizedBox(width: 4),
                             Text(
                               "$itemCount Items",
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade600),
+                              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                             ),
                           ],
                         ),
@@ -361,18 +379,17 @@ class PurchaseListCard extends StatelessWidget {
 
                         // Amount Row
                         Row(
-                          mainAxisAlignment:
-                          MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Column(
-                              crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   "Total",
                                   style: TextStyle(
-                                      fontSize: 10,
-                                      color: Colors.grey.shade600),
+                                    fontSize: 10,
+                                    color: Colors.grey.shade600,
+                                  ),
                                 ),
                                 Text(
                                   "₹${NumberFormat('#,##,###').format(totalAmount)}",
@@ -386,14 +403,14 @@ class PurchaseListCard extends StatelessWidget {
                             ),
                             if (outstanding > 0)
                               Column(
-                                crossAxisAlignment:
-                                CrossAxisAlignment.end,
+                                crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
                                     "Due",
                                     style: TextStyle(
-                                        fontSize: 10,
-                                        color: Colors.red.shade700),
+                                      fontSize: 10,
+                                      color: Colors.red.shade700,
+                                    ),
                                   ),
                                   Text(
                                     "₹${NumberFormat('#,##,###').format(outstanding)}",
@@ -411,9 +428,103 @@ class PurchaseListCard extends StatelessWidget {
                     ),
                   ),
 
-                  Icon(Icons.arrow_forward_ios_rounded,
-                      size: 16, color: Colors.grey.shade400),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Edit Button
+                      InkWell(
+                        onTap: () {
+                          final controller = Get.find<PurchaseController>();
+                          controller.populateFormForEdit(purchase);
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(20),
+                              ),
+                            ),
+                            builder: (_) => AddPurchaseBottomSheet(),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.all(7),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1A1A4F).withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.edit_outlined,
+                            size: 16,
+                            color: Color(0xFF1A1A4F),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Delete Button
+                      InkWell(
+                        onTap: () => _showDeleteDialog(context),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.all(7),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.delete_outline,
+                            size: 16,
+                            color: Colors.red,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 14,
+                        color: Colors.grey.shade400,
+                      ),
+                    ],
+                  ),
                 ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context) {
+    final controller = Get.find<PurchaseController>();
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          "Delete Purchase Bill",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          "'${purchase.billNumber ?? 'this bill'}' permanently delete karna chahte ho?",
+          style: const TextStyle(fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Get.back(); // dialog close
+              controller.deletePurchaseBill(purchase.id!);
+            },
+            child: const Text(
+              "Delete",
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),

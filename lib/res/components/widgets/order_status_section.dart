@@ -30,6 +30,7 @@ class OrderStatusSection extends StatelessWidget {
     4: 'Delivered',
     5: 'Courier Return',
     6: 'Customer Return',
+    7: 'Return Received',
   };
   static const _statusColors = {
     1: Color(0xFFFFF3CD),
@@ -38,6 +39,7 @@ class OrderStatusSection extends StatelessWidget {
     4: Color(0xFFD4EDDA),
     5: Color(0xFFF8D7DA),
     6: Color(0xFFFDE8D8),
+    7: Color(0xFFD0F0ED),
   };
   static const _statusTextColors = {
     1: Color(0xFF7D5A00),
@@ -46,6 +48,7 @@ class OrderStatusSection extends StatelessWidget {
     4: Color(0xFF155724),
     5: Color(0xFF721C24),
     6: Color(0xFF7B3206),
+    7: Color(0xFF00574B),
   };
   static const _statusIcons = {
     1: Icons.settings_outlined,
@@ -54,6 +57,7 @@ class OrderStatusSection extends StatelessWidget {
     4: Icons.check_circle_outline,
     5: Icons.assignment_return_outlined,
     6: Icons.keyboard_return_outlined,
+    7: Icons.check_circle_outline,
   };
 
   String _label(int s) => _statusLabels[s] ?? 'Unknown';
@@ -84,127 +88,158 @@ class OrderStatusSection extends StatelessWidget {
       DateFormat('dd/MM/yyyy - HH:mm').format(dt.toLocal());
 
   // ── Timeline builder — uses real log timestamps ───────────────────────────
-
   List<_TimelineStep> _buildTimeline(
-    int currentStatus,
-    DateTime createdAt,
-    List<OrderStatusLog> logs,
-  ) {
+      int currentStatus,
+      DateTime createdAt,
+      List<OrderStatusLog> logs,
+      ) {
     final steps = <_TimelineStep>[];
 
-    // Step 0: Order Created (always present)
-    steps.add(
-      _TimelineStep(
-        icon: Icons.add_circle_outline,
-        title: 'Order Created',
-        subtitle: DateFormat(
-          'dd MMM yyyy, hh:mm a',
-        ).format(createdAt.toLocal()),
-        isDone: true,
-      ),
-    );
+    // Step 0: Order Created
+    steps.add(_TimelineStep(
+      icon: Icons.add_circle_outline,
+      title: 'Order Created',
+      subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(createdAt.toLocal()),
+      isDone: true,
+    ));
 
-    // Step 1 → 2: Packed
+    // Packed
     if (currentStatus >= 2) {
       final log = _logFor(logs, 2);
-      steps.add(
-        _TimelineStep(
-          icon: Icons.inventory_2_outlined,
-          title: 'Packed',
-          subtitle: _formatLogDate(log?.createdAt),
-          isDone: true,
-        ),
-      );
+      steps.add(_TimelineStep(
+        icon: Icons.inventory_2_outlined,
+        title: 'Packed',
+        subtitle: _formatLogDate(log?.createdAt),
+        isDone: true,
+      ));
     }
 
-    // Step 2 → 3: In Transit
+    // In Transit
     if (currentStatus >= 3) {
       final log = _logFor(logs, 3);
-      steps.add(
-        _TimelineStep(
-          icon: Icons.local_shipping_outlined,
-          title: 'In Transit',
-          subtitle: _formatLogDate(log?.createdAt),
-          isDone: true,
-        ),
-      );
+      steps.add(_TimelineStep(
+        icon: Icons.local_shipping_outlined,
+        title: 'In Transit',
+        subtitle: _formatLogDate(log?.createdAt),
+        isDone: true,
+      ));
     }
 
-    // Terminal: Delivered
+    // ✅ Delivered — status 4 pe terminal, baaki statuses pe bhi dikhao agar log hai
     if (currentStatus == 4) {
       final log = _logFor(logs, 4);
-      steps.add(
-        _TimelineStep(
-          icon: Icons.check_circle_outline,
-          title: 'Delivered',
-          subtitle: _formatLogDate(log?.createdAt),
-          isDone: true,
-          isLast: true,
-        ),
-      );
+      steps.add(_TimelineStep(
+        icon: Icons.check_circle_outline,
+        title: 'Delivered',
+        subtitle: _formatLogDate(log?.createdAt),
+        isDone: true,
+        isLast: true,
+      ));
+      return steps; // terminal — aage kuch nahi
     }
 
-    // Terminal: Courier Return
-    if (currentStatus == 5) {
-      final log = _logFor(logs, 5);
-      steps.add(
-        _TimelineStep(
-          icon: Icons.assignment_return_outlined,
-          title: 'Courier Return',
-          subtitle: _formatLogDate(log?.createdAt),
-          isDone: true,
-          isReturn: true,
-          isLast: true,
-        ),
-      );
+    // ✅ Status 5, 6, 7 ke liye — delivered log exist kare to dikhao
+    final deliveredLog = _logFor(logs, 4);
+    final isCustomerReturnPath = currentStatus == 6 ||
+        (currentStatus == 7 && _logFor(logs, 6) != null);
+
+    if (deliveredLog != null || isCustomerReturnPath) {
+      steps.add(_TimelineStep(
+        icon: Icons.check_circle_outline,
+        title: 'Delivered',
+        subtitle: deliveredLog != null
+            ? _formatLogDate(deliveredLog.createdAt)
+            : 'Date not recorded',
+        isDone: true,
+        isLast: false,
+      ));
     }
 
-    // Terminal: Customer Return
-    if (currentStatus == 6) {
-      final log = _logFor(logs, 6);
-      steps.add(
-        _TimelineStep(
-          icon: Icons.keyboard_return_outlined,
-          title: 'Customer Return',
-          subtitle: _formatLogDate(log?.createdAt),
-          isDone: true,
-          isReturn: true,
-          isLast: true,
-        ),
-      );
-    }
-
-    // Pending next step
-    if (currentStatus == 1) {
-      steps.add(
-        _TimelineStep(
+    // ✅ Courier Return
+    final courierReturnLog = _logFor(logs, 5);
+    if (courierReturnLog != null || currentStatus == 5) {
+      steps.add(_TimelineStep(
+        icon: Icons.assignment_return_outlined,
+        title: 'Courier Return',
+        subtitle: _formatLogDate(courierReturnLog?.createdAt),
+        isDone: courierReturnLog != null,
+        isReturn: true,
+        isLast: currentStatus == 5, // ✅ 7 pending ho to last nahi
+      ));
+      if (currentStatus == 5) {
+        // pending step
+        steps.add(_TimelineStep(
           icon: Icons.inventory_2_outlined,
-          title: 'Pack the Order',
+          title: 'Mark Return Received',
           subtitle: 'Pending',
           isDone: false,
           isLast: true,
-        ),
-      );
+        ));
+        return steps;
+      }
+    }
+
+    // ✅ Customer Return
+    final customerReturnLog = _logFor(logs, 6);
+    if (customerReturnLog != null || currentStatus == 6) {
+      steps.add(_TimelineStep(
+        icon: Icons.keyboard_return_outlined,
+        title: 'Customer Return',
+        subtitle: _formatLogDate(customerReturnLog?.createdAt),
+        isDone: customerReturnLog != null,
+        isReturn: true,
+        isLast: currentStatus == 6,
+      ));
+      if (currentStatus == 6) {
+        steps.add(_TimelineStep(
+          icon: Icons.inventory_2_outlined,
+          title: 'Mark Return Received',
+          subtitle: 'Pending',
+          isDone: false,
+          isLast: true,
+        ));
+        return steps;
+      }
+    }
+
+    // ✅ Return Received
+    if (currentStatus == 7) {
+      final log = _logFor(logs, 7);
+      steps.add(_TimelineStep(
+        icon: Icons.inventory_2_outlined,
+        title: 'Return Received',
+        subtitle: _formatLogDate(log?.createdAt),
+        isDone: true,
+        isLast: true,
+      ));
+      return steps;
+    }
+
+    // Pending steps for status 1, 2, 3
+    if (currentStatus == 1) {
+      steps.add(_TimelineStep(
+        icon: Icons.inventory_2_outlined,
+        title: 'Pack the Order',
+        subtitle: 'Pending',
+        isDone: false,
+        isLast: true,
+      ));
     } else if (currentStatus == 2) {
-      steps.add(
-        _TimelineStep(
-          icon: Icons.local_shipping_outlined,
-          title: 'Create Shipment',
-          subtitle: 'Pending',
-          isDone: false,
-          isLast: true,
-        ),
-      );
+      steps.add(_TimelineStep(
+        icon: Icons.local_shipping_outlined,
+        title: 'Create Shipment',
+        subtitle: 'Pending',
+        isDone: false,
+        isLast: true,
+      ));
     } else if (currentStatus == 3) {
-      steps.add(
-        _TimelineStep(
-          icon: Icons.check_circle_outline,
-          title: 'Delivered / Returned',
-          subtitle: 'Pending',
-          isDone: false,
-          isLast: true,
-        ),
-      );
+      steps.add(_TimelineStep(
+        icon: Icons.check_circle_outline,
+        title: 'Delivered / Returned',
+        subtitle: 'Pending',
+        isDone: false,
+        isLast: true,
+      ));
     }
 
     return steps;
@@ -380,7 +415,19 @@ class OrderStatusSection extends StatelessWidget {
           width: double.infinity,
           height: 50,
         );
-
+      case 5: // ✅ NEW — Courier Return ke baad
+      case 6: // ✅ NEW — Customer Return ke baad
+        return AppGradientButton(
+          onPressed: () async => ctrl.updateOrderStatus(
+            orderId: orderId,
+            status: 7,
+            note: "Return Received",
+          ),
+          text: 'Mark Return Received',
+          icon: Icons.inventory_2_outlined,
+          width: double.infinity,
+          height: 50,
+        );
       default: // 5, 6 — terminal, no button
         return const SizedBox.shrink();
     }
@@ -528,7 +575,19 @@ class OrderStatusSection extends StatelessWidget {
             const SizedBox(height: 16),
 
             // ── Next step or terminal message ─────────────────────────────
-            if (currentStatus < 5) ...[
+            // if (currentStatus < 5 || currentStatus == 7) ...[
+            //   Text(
+            //     'Next Step',
+            //     style: TextStyle(
+            //       fontSize: 13,
+            //       fontWeight: FontWeight.w600,
+            //       color: Colors.grey.shade600,
+            //     ),
+            //   ),
+            // ],
+            // const SizedBox(height: 10),
+            // ✅ Passes log-derived status — buttons now match API truth
+            if (currentStatus < 7) ...[
               Text(
                 'Next Step',
                 style: TextStyle(
@@ -538,7 +597,6 @@ class OrderStatusSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              // ✅ Passes log-derived status — buttons now match API truth
               _buildNextStepButtons(context, currentStatus),
             ] else ...[
               Container(
@@ -596,10 +654,20 @@ class _PackedInfoCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.inventory_2_outlined, size: 14, color: Color(0xFF1A1A4F)),
+              const Icon(
+                Icons.inventory_2_outlined,
+                size: 14,
+                color: Color(0xFF1A1A4F),
+              ),
               const SizedBox(width: 6),
-              const Text('Package Details',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1A1A4F))),
+              const Text(
+                'Package Details',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A4F),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -610,15 +678,16 @@ class _PackedInfoCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── Left: image ──
-              if (extra.packageImages?.isNotEmpty == true)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    extra.packageImages!.first,
-                    height: 80, width: 80, fit: BoxFit.cover,
-                  ),
-                ),
-
+              // if (extra.packageImages?.isNotEmpty == true)
+              //   ClipRRect(
+              //     borderRadius: BorderRadius.circular(8),
+              //     child: Image.network(
+              //       extra.packageImages!.first,
+              //       height: 80,
+              //       width: 80,
+              //       fit: BoxFit.cover,
+              //     ),
+              //   ),
               if (extra.packageImages?.isNotEmpty == true)
                 const SizedBox(width: 14),
 
@@ -627,12 +696,16 @@ class _PackedInfoCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (extra.height?.isNotEmpty == true)     _DimRow('Height',          '${extra.height} cm'),
-                    if (extra.width?.isNotEmpty == true)      _DimRow('Width',           '${extra.width} cm'),
-                    if (extra.length?.isNotEmpty == true)     _DimRow('Length',          '${extra.length} cm'),
-                    if (extra.weight?.isNotEmpty == true)     _DimRow('Dead Weight',     '${extra.weight} g'),
+                    if (extra.height?.isNotEmpty == true)
+                      _DimRow('Height', '${extra.height} cm'),
+                    if (extra.width?.isNotEmpty == true)
+                      _DimRow('Width', '${extra.width} cm'),
+                    if (extra.length?.isNotEmpty == true)
+                      _DimRow('Length', '${extra.length} cm'),
+                    if (extra.weight?.isNotEmpty == true)
+                      _DimRow('Dead Weight', '${extra.weight} g'),
                     if (extra.volumetricWeight?.isNotEmpty == true)
-                      _DimRow('Vol. Weight',   '${extra.volumetricWeight} g'),
+                      _DimRow('Vol. Weight', '${extra.volumetricWeight} g'),
                     if (extra.billedWeight?.isNotEmpty == true)
                       _DimRow('Billed Weight', '${extra.billedWeight} g'),
                   ],
@@ -642,18 +715,27 @@ class _PackedInfoCard extends StatelessWidget {
           ),
 
           // ── Extra images if more than one ──
-          if ((extra.packageImages?.length ?? 0) > 1) ...[
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 6, runSpacing: 6,
-              children: extra.packageImages!.skip(1).map((url) =>
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: Image.network(url, height: 70, width: 70, fit: BoxFit.cover),
-                  ),
-              ).toList(),
-            ),
-          ],
+          // if ((extra.packageImages?.length ?? 0) > 1) ...[
+          //   const SizedBox(height: 10),
+          //   Wrap(
+          //     spacing: 6,
+          //     runSpacing: 6,
+          //     children: extra.packageImages!
+          //         .skip(1)
+          //         .map(
+          //           (url) => ClipRRect(
+          //             borderRadius: BorderRadius.circular(6),
+          //             child: Image.network(
+          //               url,
+          //               height: 70,
+          //               width: 70,
+          //               fit: BoxFit.cover,
+          //             ),
+          //           ),
+          //         )
+          //         .toList(),
+          //   ),
+          // ],
         ],
       ),
     );
@@ -672,11 +754,19 @@ class _DimRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 90,
-            child: Text(label,
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            ),
           ),
-          Text(value,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1A1A4F))),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1A1A4F),
+            ),
+          ),
         ],
       ),
     );
@@ -711,7 +801,9 @@ class _TimelineItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final dotColor = step.isReturn
         ? Colors.red.shade400
-        : step.isDone ? const Color(0xFF1A1A4F) : Colors.grey.shade300;
+        : step.isDone
+        ? const Color(0xFF1A1A4F)
+        : Colors.grey.shade300;
 
     return IntrinsicHeight(
       child: Row(
@@ -723,10 +815,17 @@ class _TimelineItemWidget extends StatelessWidget {
             child: Column(
               children: [
                 Container(
-                  width: 28, height: 28,
-                  decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
-                  child: Icon(step.icon, size: 13,
-                      color: step.isDone ? Colors.white : Colors.grey.shade400),
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: dotColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    step.icon,
+                    size: 13,
+                    color: step.isDone ? Colors.white : Colors.grey.shade400,
+                  ),
                 ),
                 if (!step.isLast)
                   Expanded(
@@ -749,15 +848,21 @@ class _TimelineItemWidget extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(step.title,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: step.isDone ? Colors.black87 : Colors.grey.shade400,
-                      )),
+                  Text(
+                    step.title,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: step.isDone
+                          ? Colors.black87
+                          : Colors.grey.shade400,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text(step.subtitle,
-                      style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
+                  Text(
+                    step.subtitle,
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                  ),
                 ],
               ),
             ),
