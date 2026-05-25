@@ -51,6 +51,7 @@ class OrderController extends GetxController with BaseController {
   final TextEditingController packageExpenseController =
       TextEditingController();
   final TextEditingController buyerShippingCharges = TextEditingController();
+  final TextEditingController buyerTexAmount = TextEditingController();
   final RxList<Map<String, dynamic>> items = <Map<String, dynamic>>[].obs;
 
   final RxList<CourierPartnerDetailModel> courierPartners =
