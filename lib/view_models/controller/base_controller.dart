@@ -14,13 +14,11 @@ mixin BaseController {
     Color color = Colors.red;
 
     if (error is InternetExceptions) {
-      // ✅ Internet nahi hai
       title = "No Internet";
       message = "Please check your internet connection and try again.";
       icon = Icons.wifi_off_rounded;
       color = Colors.orange;
     } else if (error is RequestTimeOut) {
-      // ✅ Internet slow hai ya server ne respond nahi kiya
       title = "Connection Slow";
       message =
           "Your connection is slow or the server took too long.\nPlease check your internet and try again.";
