@@ -75,29 +75,33 @@ void showCustomerReturnDialog(BuildContext context, OrderDetailModel order) {
 
             // Product Selection Dropdown
             Obx(() => DropdownButtonFormField<OrderItem>(
-              value: selectedProduct.value,
-              decoration: Utils.inputDecoration(
-                "Select Product *",
-                Icons.inventory_2_outlined,
+                isExpanded: true,
+                value: selectedProduct.value,
+                decoration: Utils.inputDecoration(
+                  "Select Product *",
+                  Icons.inventory_2_outlined,
+                ),
+                hint: const Text("Choose a product"),
+                items: order.items.map((item) {
+                  return DropdownMenuItem<OrderItem>(
+                    value: item,
+                    child: Text(
+                      "${item.product.name} (Qty: ${item.quantity})",
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  selectedProduct.value = val;
+                  qtyController.clear();
+                  condition.value = null;
+                  refundAmountController.text = "0";
+                  reasonController.clear();
+                },
               ),
-              hint: const Text("Choose a product"),
-              items: order.items.map((item) {
-                return DropdownMenuItem(
-                  value: item,
-                  child: Text(
-                    "${item.product.name} (Qty: ${item.quantity})",
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                );
-              }).toList(),
-              onChanged: (val) {
-                selectedProduct.value = val;
-                qtyController.clear();
-                condition.value = null;
-                refundAmountController.text = "0";
-                reasonController.clear();
-              },
-            )),
+            ),
 
             const SizedBox(height: 16),
 
