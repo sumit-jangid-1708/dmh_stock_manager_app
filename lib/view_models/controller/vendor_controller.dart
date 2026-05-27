@@ -128,12 +128,19 @@ class VendorController extends GetxController with BaseController{
     isLoading.value = true;
     try {
       final response = await _vendorService.getVendors();
-      final List<dynamic> data = response; // fill vendors
+      print("response🤖🤖🤖🤖🤖🤖: $response");
+
+      // ✅ Paginated response handle karo
+      final List<dynamic> data = response is Map
+          ? (response["results"] ?? [])
+          : response as List<dynamic>;
+
       vendors.value = data.map((item) => VendorModel.fromJson(item)).toList();
-      vendors.sort((a, b) => b.id.compareTo(a.id)); // ✅ Sort vendors by ID (latest first)
-      filteredVendors.assignAll(vendors); // update filtered list
-      expandedList.value = List.generate(vendors.length, (_) => false); // update expanded list
+      vendors.sort((a, b) => b.id.compareTo(a.id));
+      filteredVendors.assignAll(vendors);
+      expandedList.value = List.generate(vendors.length, (_) => false);
       print("✅ Vendors fetched: ${vendors.length}");
+
     } catch (e, s) {
       if (kDebugMode) {
         print("🚩Vendor Error ❌ Exception Details: $e $s");

@@ -349,9 +349,7 @@ class PurchaseController extends GetxController with BaseController {
           (p) => p.id == purchaseItem.productId,
         );
 
-        // ✅ Mila toh set karo, nahi mila toh null rehega (user manually select karega)
         pi.selectedProduct.value = matched;
-
         pi.quantityController.text = purchaseItem.quantity?.toString() ?? '';
         pi.unitPriceController.text = purchaseItem.unitPrice?.toString() ?? '';
 
@@ -375,6 +373,8 @@ class PurchaseController extends GetxController with BaseController {
         pinCode: '',
         country: '',
         withGst: false,
+        initials: '',
+        fullLocation: '',
       );
     } catch (_) {
       return null;

@@ -8,7 +8,9 @@ import 'package:dmj_stock_manager/res/components/sku_qr_widget.dart';
 import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
 
-void showBarcodeDialog(BuildContext context, String sku) {
+import '../../view_models/services/other_services/thermal_label_service.dart';
+
+void showBarcodeDialog(BuildContext context, String sku, String name) {
   final qtyController = TextEditingController(text: "1");
   const Color primaryColor = Color(0xFF1A1A4F);
 
@@ -101,8 +103,13 @@ void showBarcodeDialog(BuildContext context, String sku) {
                   AppAlerts.error("Please enter a valid quantity");
                   return;
                 }
-
-                await printSkuLabels(sku, qty);
+                await ThermalPrintService.printSkuLabels(
+                  context,
+                  sku,
+                  name,
+                  qty,
+                );
+                // await printSkuLabels(sku, qty);
               },
             ),
           ],

@@ -9,7 +9,7 @@ class OrderDetailModel {
   final DateTime createdAt;
   final List<OrderRemark> remarks;
   final String status;
-  final LatestStatus? latestStatus; // ✅ NEW
+  final LatestStatus? latestStatus;
   final int? orderStatus;
   final bool isDeleted;
   final int channel;
@@ -31,7 +31,7 @@ class OrderDetailModel {
     required this.customerName,
     required this.createdAt,
     required this.status,
-    required this.latestStatus, // ✅ NEW
+    required this.latestStatus,
     required this.orderStatus,
     required this.isDeleted,
     required this.channel,

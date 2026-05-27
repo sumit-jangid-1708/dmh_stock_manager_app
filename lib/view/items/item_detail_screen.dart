@@ -393,7 +393,11 @@ class ItemDetailScreen extends StatelessWidget {
                         _buildSectionHeader("Identification"),
                         const SizedBox(height: 15),
                         GestureDetector(
-                          onTap: () => showBarcodeDialog(context, product.sku),
+                          onTap: () => showBarcodeDialog(
+                            context,
+                            product.sku,
+                            product.name,
+                          ),
                           child: Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(20),

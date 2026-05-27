@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:dmj_stock_manager/data/app_exceptions.dart';
 import 'package:dmj_stock_manager/data/network/base_api_service.dart';
 import 'package:flutter/foundation.dart';

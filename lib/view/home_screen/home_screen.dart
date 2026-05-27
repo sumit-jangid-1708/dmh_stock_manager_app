@@ -308,6 +308,7 @@ class HomeScreen extends StatelessWidget {
                             context,
                             // product.id,
                             product.barcode,
+                            product.name,
                             // product.barcodeImage,
                           );
                         },

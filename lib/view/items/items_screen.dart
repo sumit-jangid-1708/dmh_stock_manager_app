@@ -18,6 +18,7 @@ import '../../model/product_models/product_model.dart';
 import '../../res/components/sku_qr_widget.dart';
 import '../../res/components/widgets/edit_item_form_bottom_sheet.dart';
 import '../../view_models/services/other_services/product_share_service.dart';
+import '../../view_models/services/other_services/thermal_label_service.dart';
 
 class ItemsScreen extends StatelessWidget {
   final ItemController itemController = Get.put(ItemController());
@@ -578,7 +579,11 @@ Future<void> showProductSelectionDialog(BuildContext context) async {
                             .where((p) => selectedIds.contains(p.id))
                             .toList();
                         Get.back();
-                        await _printSelectedProducts(context, selectedList);
+                        await ThermalPrintService.printProductLabels(
+                          context,
+                          selectedList,
+                        );
+                        // await _printSelectedProducts(context, selectedList);
                       },
                 text: "Print ${selectedIds.length} Barcodes",
               ),
@@ -593,9 +598,9 @@ Future<void> showProductSelectionDialog(BuildContext context) async {
 }
 
 Future<void> _printSelectedProducts(
-    BuildContext context,
-    List<ProductModel> products,
-    ) async {
+  BuildContext context,
+  List<ProductModel> products,
+) async {
   // ✅ Same page format as BarcodePdfService
   const PdfPageFormat pageFormat = PdfPageFormat(
     58 * PdfPageFormat.mm,
@@ -671,7 +676,10 @@ Future<void> _printSelectedProducts(
     Get.back();
     debugPrint("❌ Print error: $e");
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Printing failed: $e"), backgroundColor: Colors.red),
+      SnackBar(
+        content: Text("Printing failed: $e"),
+        backgroundColor: Colors.red,
+      ),
     );
   }
 }

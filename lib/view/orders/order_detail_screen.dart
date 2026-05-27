@@ -15,6 +15,7 @@ import '../../res/components/widgets/order_amount_breakdown_card.dart';
 import '../../res/components/widgets/order_status_section.dart';
 import '../../res/components/widgets/package_form_widget.dart';
 import '../../view_models/services/other_services/barcode_pdf_service.dart';
+import '../../view_models/services/other_services/thermal_label_service.dart';
 
 class OrderDetailScreen extends StatelessWidget {
   const OrderDetailScreen({super.key});
@@ -870,10 +871,7 @@ class _OrderItemCard extends StatelessWidget {
             if (item.productBarcode.isNotEmpty) ...[
               const SizedBox(height: 12),
               GestureDetector(
-                onTap: () => _showBarcodeDialog(
-                  context,
-                  item.productBarcode,
-                ),
+                onTap: () => _showBarcodeDialog(context, item.productBarcode),
                 child: _InfoBox(
                   icon: Icons.qr_code,
                   title: 'Product Barcode',
@@ -914,9 +912,7 @@ void _showBarcodeDialog(BuildContext context, String sku) {
     context: context,
     builder: (_) => Dialog(
       backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -924,32 +920,26 @@ void _showBarcodeDialog(BuildContext context, String sku) {
           children: [
             const Text(
               "Product QR Code",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
 
             /// 🔥 Big QR for print
-            SkuQrWidget(
-              sku: sku,
-              size: 250,
-              showLabel: true,
-            ),
+            SkuQrWidget(sku: sku, size: 250, showLabel: true),
 
             const SizedBox(height: 20),
 
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text("Close"),
-            )
+            ),
           ],
         ),
       ),
     ),
   );
 }
+
 // ── _SerialItem — backend image hatao, QR widget lagao ──
 class _SerialItem extends StatelessWidget {
   const _SerialItem({required this.serial});
@@ -1195,10 +1185,12 @@ class _BarcodePdfCard extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => _handleAction(
-                    context,
-                    () => BarcodePdfService.printBarcodePdf(context, order),
-                  ),
+                  onPressed: () =>
+                      ThermalPrintService.printOrderLabels(context, order),
+                  // onPressed: () => _handleAction(
+                  //   context,
+                  //   () => BarcodePdfService.printBarcodePdf(context, order),
+                  // ),
                   icon: const Icon(Icons.print_outlined, size: 18),
                   label: const Text('Print'),
                   style: OutlinedButton.styleFrom(
