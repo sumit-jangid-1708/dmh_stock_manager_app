@@ -45,7 +45,7 @@ import 'package:dmj_stock_manager/model/customer_return/customer_return_enum.dar
 class CustomerReturnRequest {
   final int orderId;
   final int productId;
-  final int channelId;
+  // final int channelId;
   final int quantity;
   final CustomerReturnCondition condition;
   final double? refundAmount;
@@ -54,7 +54,7 @@ class CustomerReturnRequest {
   CustomerReturnRequest({
     required this.orderId,
     required this.productId,
-    required this.channelId,
+    // required this.channelId,
     required this.quantity,
     required this.condition,
     this.refundAmount,
@@ -65,7 +65,7 @@ class CustomerReturnRequest {
     final Map<String, dynamic> data = {
       "order_id": orderId,
       "product_id": productId,
-      "channel_id": channelId,
+      // "channel_id": channelId,
       "quantity": quantity,
       "condition": condition.apiValue,
     };

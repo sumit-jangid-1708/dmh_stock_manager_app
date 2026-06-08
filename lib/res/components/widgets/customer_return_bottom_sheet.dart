@@ -86,7 +86,7 @@ void showCustomerReturnDialog(BuildContext context, OrderDetailModel order) {
                   return DropdownMenuItem<OrderItem>(
                     value: item,
                     child: Text(
-                      "${item.product.name} (Qty: ${item.quantity})",
+                      "${item.name} (Qty: ${item.quantity})",
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                       style: const TextStyle(fontSize: 12),
@@ -255,8 +255,8 @@ void showCustomerReturnDialog(BuildContext context, OrderDetailModel order) {
                   // Create CustomerReturnRequest
                   final request = CustomerReturnRequest(
                     orderId: order.id,
-                    productId: selectedProduct.value!.product.id,
-                    channelId: order.channel,
+                    productId: selectedProduct.value!.productId,
+                    // channelId: order.channel,
                     quantity: qty,
                     condition: condition.value!,
                     refundAmount: refundAmount,

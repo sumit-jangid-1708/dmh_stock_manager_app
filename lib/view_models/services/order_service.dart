@@ -87,7 +87,12 @@ class OrderService {
     final response = await _apiServices.getApi(
       AppUrl.shipmentList,
     );
-    return response;
+
+    if (response is Map<String, dynamic>) {
+      return response['data'] as List<dynamic>? ?? [];
+    }
+
+    return [];
   }
 
   Future<dynamic> updateOrderStatus(Map<String, dynamic>data) async{

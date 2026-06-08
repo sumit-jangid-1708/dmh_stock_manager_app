@@ -207,8 +207,12 @@ class PurchaseListCard extends StatelessWidget {
     }
   }
 
-  // ✅ Safe double parsing from String? fields
-  double _parseAmount(String? value) => double.tryParse(value ?? '0') ?? 0.0;
+  // ✅ Safe double parsing from various types (String? or double?)
+  double _parseAmount(dynamic value) {
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    return double.tryParse(value?.toString() ?? '0') ?? 0.0;
+  }
 
   @override
   Widget build(BuildContext context) {

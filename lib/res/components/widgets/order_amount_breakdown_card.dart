@@ -11,17 +11,17 @@ class OrderAmountBreakdownCard extends StatelessWidget {
   final OrderDetailsModel order;
 
   static const Color _primary    = Color(0xFF1A1A4F);
-  static const Color _labelColor = Color(0xFF6B7280); // grey-500
 
   @override
   Widget build(BuildContext context) {
     final orderController  = Get.find<OrderController>();
-    final itemsTotal       = orderController.calculateItemsTotal(order);
-    final packageExpense   = order.total.packageExpense;
-    final buyerShipping    = order.total.buyerShipmentCharges;
-    final shippingExpense  = order.total.shipment.shippingExpense;
-    final otherExpense     = order.total.shipment.otherExpense;
-    final grandTotal       = orderController.calculateGrandTotal(order);
+    final itemsTotal       = order.billBreakdown.itemsTotal;
+    final productTax       = order.billBreakdown.productTax;
+    final packageExpense   = order.billBreakdown.packageExpence;
+    final buyerShipping    = order.billBreakdown.buyerShipmentCharger;
+    final shippingExpense  = order.shipment.shippingExpense;
+    final otherExpense     = order.billBreakdown.otherAdjustment;
+    final grandTotal       = order.billBreakdown.grandTotal;
 
     return Container(
       width: double.infinity,
@@ -62,10 +62,11 @@ class OrderAmountBreakdownCard extends StatelessWidget {
 
           // ── Rows ─────────────────────────────────────────────────────
           _Row(label: 'Items Total',       amount: itemsTotal),
+          _Row(label: 'Product Tax',       amount: productTax),
           _Row(label: 'Packaging Charge',  amount: packageExpense),
           _Row(label: 'Buyer Shipping',    amount: buyerShipping),
           _Row(label: 'Shipping Expense',  amount: shippingExpense),
-          _Row(label: 'Other Charges',     amount: otherExpense),
+          _Row(label: 'Other Adjustment',  amount: otherExpense),
 
           const SizedBox(height: 10),
           const Divider(thickness: 1),

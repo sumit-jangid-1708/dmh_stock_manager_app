@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:dmj_stock_manager/model/bills_model/create_bill_model.dart';
 import 'package:dmj_stock_manager/model/order_models/create_order_response_model.dart';
 import 'package:dmj_stock_manager/model/order_models/order_model.dart';
-import 'package:dmj_stock_manager/model/order_models/order_status_log_model.dart'; // ✅ NEW
+import 'package:dmj_stock_manager/model/order_models/order_status_log_model.dart'; 
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
 import 'package:dmj_stock_manager/utils/utils.dart';
 import 'package:dmj_stock_manager/view/billings/billing_screen.dart';
@@ -89,14 +89,11 @@ class OrderController extends GetxController with BaseController {
   final RxSet<int> uploadingPackageIndices = <int>{}.obs;
   bool get isAnyPackageImageUploading => uploadingPackageIndices.isNotEmpty;
 
-  // ✅ NEW: Order status logs
   final RxList<OrderStatusLog> orderStatusLogs = <OrderStatusLog>[].obs;
   final RxBool isLoadingStatusLogs = false.obs;
 
   final RxInt selectedStatusFilter = (-1).obs;
-  // ──────────────────────────────────────────────────────────────────────────
-  // Unchanged methods below — only loadOrderDetail & updateOrderStatus modified
-  // ──────────────────────────────────────────────────────────────────────────
+
   void addItemRow() {
     items.add({
       "product": Rx<ProductModel?>(null),
@@ -205,15 +202,23 @@ class OrderController extends GetxController with BaseController {
     try {
       isLoading.value = true;
       final response = await orderService.getOrderDetailApi();
-      final List<dynamic> data = response;
-      final allOrders = data
-          .map((item) => OrderDetailModel.fromJson(item))
-          .toList();
-      orders.value = allOrders.where((o) => !o.isDeleted).toList();
-      // filteredOrders.assignAll(orders);
+      
+      List<OrderDetailModel> allOrders = [];
+      
+      if (response is Map<String, dynamic>) {
+        final listResponse = OrderListResponse.fromJson(response);
+        allOrders = listResponse.data;
+      } else if (response is List) {
+        allOrders = response
+            .map((item) => OrderDetailModel.fromJson(item))
+            .toList();
+      }
+
+      orders.assignAll(allOrders.where((o) => !o.isDeleted).toList());
       applyFilters();
-    } catch (e) {
+    } catch (e, s) {
       handleError(e, onRetry: () => getOrderList());
+      debugPrint("❌ getOrderList error: $e\n$s");
     } finally {
       isLoading.value = false;
     }
@@ -242,7 +247,6 @@ class OrderController extends GetxController with BaseController {
     }
   }
 
-  // ✅ NEW: Fetch status logs for a specific order
   Future<void> fetchOrderStatusLogs(int orderId) async {
     try {
       isLoadingStatusLogs.value = true;
@@ -253,7 +257,6 @@ class OrderController extends GetxController with BaseController {
       orderStatusLogs.assignAll(result.data);
       debugPrint("✅ Status logs loaded: ${orderStatusLogs.length}");
     } catch (e) {
-      // Non-critical — don't surface error to user; log silently
       debugPrint("❌ fetchOrderStatusLogs error: $e");
     } finally {
       isLoadingStatusLogs.value = false;
@@ -568,10 +571,9 @@ class OrderController extends GetxController with BaseController {
 
   void filterOrders(String query) {
     if (query.isEmpty) {
-      applyFilters(); // ✅ search clear hone par filters wapas apply ho
+      applyFilters(); 
       return;
     }
-    // Apply both search + active filters together
     final statusFilter = selectedStatusFilter.value;
     filteredOrders.assignAll(
       orders.where((order) {
@@ -653,13 +655,11 @@ class OrderController extends GetxController with BaseController {
     addScannedProduct(product);
   }
 
-  // ✅ UPDATED: Also fetches status logs + refreshes order list
   Future<void> loadOrderDetail(int orderId) async {
     try {
       isLoadingDetail.value = true;
       orderDetail.value = await orderService.getOrderDetailById(orderId);
       debugPrint("✅ Order detail loaded: ${orderDetail.value?.orderId}");
-      // Fetch logs in parallel with detail — non-blocking if it fails
       await fetchOrderStatusLogs(orderId);
     } catch (e, s) {
       handleError(e);
@@ -691,7 +691,6 @@ class OrderController extends GetxController with BaseController {
     }
   }
 
-  // ✅ UPDATED: Refreshes order list after status change so cards reflect new status
   Future<void> updateOrderStatus({
     required int orderId,
     required int status,
@@ -710,9 +709,7 @@ class OrderController extends GetxController with BaseController {
       await orderService.updateOrderStatus(data);
       debugPrint("✅ order status updated: orderId=$orderId, status=$status");
 
-      // Refresh detail + logs
       await loadOrderDetail(orderId);
-      // ✅ Refresh list so order card chip updates
       await getOrderList();
     } catch (e) {
       debugPrint("❌ updateOrderStatus error: $e");
@@ -720,25 +717,12 @@ class OrderController extends GetxController with BaseController {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────
-// PASTE THIS METHOD inside OrderController class
-// (after the existing _calculateTotal helper or near the end of the class)
-// ─────────────────────────────────────────────────────────────────────────────
-
-  /// Items subtotal — sum of each item's totalPrice (null-safe)
   double calculateItemsTotal(OrderDetailsModel order) {
-    return order.items.fold(0.0, (sum, item) => sum + (item.totalPrice));
+    return order.billBreakdown.itemsTotal;
   }
 
-  /// Grand total = items + all charges (null-safe, no crash)
   double calculateGrandTotal(OrderDetailsModel order) {
-    final itemsTotal          = calculateItemsTotal(order);
-    final packageExpense      = order.total.packageExpense;
-    final buyerShipping       = order.total.buyerShipmentCharges;
-    final shippingExpense     = order.total.shipment.shippingExpense;
-    final otherExpense        = order.total.shipment.otherExpense;
-
-    return itemsTotal + packageExpense + buyerShipping + shippingExpense + otherExpense;
+    return order.billBreakdown.grandTotal;
   }
 
 }

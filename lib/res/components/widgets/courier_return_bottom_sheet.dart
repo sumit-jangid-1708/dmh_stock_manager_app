@@ -88,7 +88,7 @@ void showCourierReturnDialog(BuildContext context, OrderDetailModel order) {
                   return DropdownMenuItem(
                     value: item,
                     child: Text(
-                      "${item.product.name} (Qty: ${item.quantity})",
+                      "${item.name} (Qty: ${item.quantity})",
                       overflow: TextOverflow.ellipsis,
                     ),
                   );
@@ -296,7 +296,7 @@ void showCourierReturnDialog(BuildContext context, OrderDetailModel order) {
                           try {
                             final request = CourierReturnRequest(
                               order: order.id,
-                              product: selectedProduct.value!.product.id,
+                              product: selectedProduct.value!.productId,
                               quantity: qty,
                               condition: condition.value!,
                               claimStatus: claimStatus.value,

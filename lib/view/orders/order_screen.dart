@@ -172,7 +172,7 @@ class OrderScreen extends StatelessWidget {
   Widget _buildOrderCard(BuildContext context, dynamic order) {
     // Logic for Status Colors
     final bool isActive = order.status?.toLowerCase() == "active";
-    final Color statusColor = _getStatusColor(order.status);
+    final Color statusColor = _getStatusColor(order.orderStatus.toString());
 
     String latestRemark = "NO REMARKS";
     if (order.remarks != null && order.remarks.isNotEmpty) {
@@ -201,22 +201,22 @@ class OrderScreen extends StatelessWidget {
           child: Row(
             children: [
               // ── Indicator Dot (Green/Red) ──────────────────
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: statusColor,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: statusColor.withOpacity(0.3),
-                      blurRadius: 4,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
+              // Container(
+              //   width: 10,
+              //   height: 10,
+              //   decoration: BoxDecoration(
+              //     color: statusColor,
+              //     shape: BoxShape.circle,
+              //     boxShadow: [
+              //       BoxShadow(
+              //         color: statusColor.withOpacity(0.3),
+              //         blurRadius: 4,
+              //         spreadRadius: 1,
+              //       ),
+              //     ],
+              //   ),
+              // ),
+              // const SizedBox(width: 16),
 
               // ── Main Content ───────────────────────────────
               Expanded(
