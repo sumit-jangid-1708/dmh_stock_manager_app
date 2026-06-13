@@ -1,5 +1,6 @@
 import 'package:dmj_stock_manager/view_models/controller/util_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -26,6 +27,15 @@ class _QrScannerWidgetState extends State<QrScannerWidget> {
   @override
   void dispose() {
     controller.dispose();
+    // ✅ Restore System UI when scanner is closed
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor          : Colors.transparent,
+        statusBarIconBrightness : Brightness.dark,
+        systemNavigationBarColor: Colors.transparent,
+      ),
+    );
     super.dispose();
   }
 

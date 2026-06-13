@@ -8,6 +8,7 @@ import 'bindings/initial_binding.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  _setSystemUI();
   await GetStorage.init();
 
   final storage = GetStorage();
@@ -17,18 +18,18 @@ Future<void> main() async {
       ? RouteName.dashboard
       : RouteName.auth;
 
-  // ── Status Bar fix ──────────────────────
+  runApp(MyApp(initialRoute: initialRoute));
+}
+
+void _setSystemUI() {
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
-      statusBarColor           : Colors.transparent,
-      statusBarIconBrightness  : Brightness.dark,
-      systemNavigationBarColor : Colors.transparent,
+      statusBarColor          : Colors.transparent,
+      statusBarIconBrightness : Brightness.dark,
+      systemNavigationBarColor: Colors.transparent,
     ),
   );
-  // ────────────────────────────────────────
-
-  runApp(MyApp(initialRoute: initialRoute));
 }
 
 class MyApp extends StatelessWidget {
