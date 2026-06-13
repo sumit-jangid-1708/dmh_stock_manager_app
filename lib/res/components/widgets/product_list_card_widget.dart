@@ -1,4 +1,5 @@
 import 'package:dmj_stock_manager/model/product_models/product_model.dart';
+import 'package:dmj_stock_manager/res/app_url/app_url.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/stock_controller.dart';
 import 'package:flutter/material.dart';
@@ -23,15 +24,13 @@ class ProductCard extends StatelessWidget {
     this.onAdd,
   });
 
-  static const String _baseUrl = "https://traders.testwebs.in";
-
   String _getImageUrl(dynamic imageItem) {
     String raw = '';
     if (imageItem is String) raw = imageItem;
 
     if (raw.isEmpty) return "https://via.placeholder.com/150";
-    if (raw.startsWith('http')) return raw;
-    return '$_baseUrl$raw';
+    final resolved = AppUrl.mediaUrl(raw);
+    return resolved.isEmpty ? "https://via.placeholder.com/150" : resolved;
   }
 
   @override
@@ -42,14 +41,14 @@ class ProductCard extends StatelessWidget {
 
     int inventoryCount = 0;
     final stockModel = stockController.inventoryList.firstWhereOrNull(
-          (i) => i.product == product.id,
+      (i) => i.product == product.id,
     );
     inventoryCount = stockModel?.quantity ?? 0;
 
     String hsnDisplay = "N/A";
     if (product.hsnId != null) {
       final hsnModel = itemController.hsnList.firstWhereOrNull(
-            (h) => h.id == product.hsnId,
+        (h) => h.id == product.hsnId,
       );
       hsnDisplay = hsnModel?.hsnCode ?? "HSN ID: ${product.hsnId}";
     }
@@ -71,27 +70,30 @@ class ProductCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   child: imageList.isNotEmpty
                       ? GestureDetector(
-                    onTap: () => _showImageDialog(context, imageList),
-                    child: Image.network(
-                      _getImageUrl(imageList.first),
-                      width: 88,
-                      height: 108,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        width: 88,
-                        height: 108,
-                        color: Colors.grey.shade200,
-                        child: const Icon(Icons.image_not_supported, color: Colors.grey),
-                      ),
-                    ),
-                  )
+                          onTap: () => _showImageDialog(context, imageList),
+                          child: Image.network(
+                            _getImageUrl(imageList.first),
+                            width: 88,
+                            height: 108,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              width: 88,
+                              height: 108,
+                              color: Colors.grey.shade200,
+                              child: const Icon(Icons.image_not_supported,
+                                  color: Colors.grey),
+                            ),
+                          ),
+                        )
                       : Container(
-                    width: 88,
-                    height: 108,
-                    color: Colors.grey.shade200,
-                    alignment: Alignment.center,
-                    child: const Text("No Image", style: TextStyle(color: Colors.grey, fontSize: 12)),
-                  ),
+                          width: 88,
+                          height: 108,
+                          color: Colors.grey.shade200,
+                          alignment: Alignment.center,
+                          child: const Text("No Image",
+                              style:
+                                  TextStyle(color: Colors.grey, fontSize: 12)),
+                        ),
                 ),
 
                 const SizedBox(width: 12),
@@ -103,7 +105,8 @@ class ProductCard extends StatelessWidget {
                     children: [
                       Text(
                         product.name,
-                        style: const TextStyle(fontSize: 15.5, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            fontSize: 15.5, fontWeight: FontWeight.bold),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -111,7 +114,10 @@ class ProductCard extends StatelessWidget {
 
                       Text(
                         "SKU: ${product.baseSku}",
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87),
+                        style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87),
                       ),
                       const SizedBox(height: 6),
 
@@ -122,7 +128,8 @@ class ProductCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               product.material,
-                              style: TextStyle(fontSize: 11.5, color: Colors.grey.shade700),
+                              style: TextStyle(
+                                  fontSize: 11.5, color: Colors.grey.shade700),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -152,11 +159,13 @@ class ProductCard extends StatelessWidget {
                         children: [
                           if (product.hsnId != null)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(
                                 color: const Color(0xFF1A1A4F).withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: const Color(0xFF1A1A4F), width: 1),
+                                border: Border.all(
+                                    color: const Color(0xFF1A1A4F), width: 1),
                               ),
                               child: Text(
                                 hsnDisplay,
@@ -169,7 +178,6 @@ class ProductCard extends StatelessWidget {
                             )
                           else
                             const SizedBox.shrink(),
-
                           Row(
                             children: [
                               AppGradientButton(
@@ -205,7 +213,8 @@ class ProductCard extends StatelessWidget {
                 bottomLeft: Radius.circular(12),
                 bottomRight: Radius.circular(12),
               ),
-              border: Border(top: BorderSide(color: Colors.grey.shade200, width: 1)),
+              border: Border(
+                  top: BorderSide(color: Colors.grey.shade200, width: 1)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -217,9 +226,11 @@ class ProductCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.green.shade50,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.green.shade300, width: 1),
+                        border:
+                            Border.all(color: Colors.green.shade300, width: 1),
                       ),
-                      child: Icon(Icons.inventory_2_outlined, size: 18, color: Colors.green.shade700),
+                      child: Icon(Icons.inventory_2_outlined,
+                          size: 18, color: Colors.green.shade700),
                     ),
                     const SizedBox(width: 10),
                     Column(
@@ -227,11 +238,17 @@ class ProductCard extends StatelessWidget {
                       children: [
                         const Text(
                           "Current Stock",
-                          style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w500),
                         ),
                         Text(
                           inventoryCount.toString(),
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green.shade700),
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green.shade700),
                         ),
                       ],
                     ),
@@ -250,6 +267,7 @@ class ProductCard extends StatelessWidget {
       ),
     );
   }
+
   void _showImageDialog(BuildContext context, List<String> images) {
     if (images.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -274,12 +292,12 @@ class ProductCard extends StatelessWidget {
                     loadingBuilder: (_, child, progress) => progress == null
                         ? child
                         : const Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                      ),
-                    ),
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          ),
                     errorBuilder: (_, __, ___) =>
-                    const Icon(Icons.error, color: Colors.white),
+                        const Icon(Icons.error, color: Colors.white),
                   ),
                 );
               },
@@ -288,8 +306,7 @@ class ProductCard extends StatelessWidget {
               top: 10,
               right: 10,
               child: IconButton(
-                icon:
-                const Icon(Icons.close, color: Colors.white, size: 30),
+                icon: const Icon(Icons.close, color: Colors.white, size: 30),
                 onPressed: () => Navigator.pop(context),
               ),
             ),

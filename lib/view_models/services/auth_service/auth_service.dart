@@ -12,7 +12,7 @@ class AuthService {
   // }
 
   Future<LoginResponseModel> loginApi(Map<String, dynamic> data) async {
-    final response = await _apiServices.postApi(data, AppUrl.loginOtp);
+    final response = await _apiServices.postApi(data, AppUrl.appLogin);
     return LoginResponseModel.fromJson(response);
   }
 }

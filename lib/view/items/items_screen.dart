@@ -79,10 +79,10 @@ class ItemsScreen extends StatelessWidget {
                       ),
                       onPressed: () =>
                           ProductShareService.shareProductsAsWhatsappCatalogue(
-                            context,
-                            itemController.shareSelectedProducts,
-                            itemController.exitSelectionMode,
-                          ),
+                        context,
+                        itemController.shareSelectedProducts,
+                        itemController.exitSelectionMode,
+                      ),
                     ),
                   ],
                 )
@@ -306,11 +306,11 @@ class ItemsScreen extends StatelessWidget {
   }
 
   Widget _imagePlaceholder() => Container(
-    width: 70,
-    height: 70,
-    color: Colors.grey.shade200,
-    child: const Icon(Icons.image_not_supported, color: Colors.grey),
-  );
+        width: 70,
+        height: 70,
+        color: Colors.grey.shade200,
+        child: const Icon(Icons.image_not_supported, color: Colors.grey),
+      );
 
   Widget _actionButton({
     required IconData icon,
@@ -489,7 +489,6 @@ Future<void> showProductSelectionDialog(BuildContext context) async {
               ),
             ),
             const SizedBox(height: 15),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -524,7 +523,6 @@ Future<void> showProductSelectionDialog(BuildContext context) async {
               ],
             ),
             const Divider(),
-
             Expanded(
               child: Obx(() {
                 if (itemController.filteredProducts.isEmpty) {
@@ -565,9 +563,7 @@ Future<void> showProductSelectionDialog(BuildContext context) async {
                 );
               }),
             ),
-
             const SizedBox(height: 15),
-
             Obx(
               () => AppGradientButton(
                 width: double.infinity,
@@ -714,7 +710,6 @@ void showAddInventoryDialog(ProductModel product, Function(int qty) onAdd) {
               ],
             ),
             const SizedBox(height: 10),
-
             TextField(
               controller: qtyController,
               keyboardType: TextInputType.number,
@@ -744,7 +739,6 @@ void showAddInventoryDialog(ProductModel product, Function(int qty) onAdd) {
               ),
             ),
             const SizedBox(height: 16),
-
             AppGradientButton(
               width: double.infinity,
               height: 50,
@@ -772,7 +766,14 @@ void showAdjustInventoryDialog(String sku) {
   final TextEditingController noteController = TextEditingController();
   String? selectedReason;
 
-  final List<String> reason = ["ORDER", "DAMAGED", "RETURN", "OTHER"];
+  final List<String> reason = [
+    "ORDER",
+    "PURCHASE",
+    "RETURN",
+    "WPS",
+    "ADJUST",
+    "OTHER",
+  ];
 
   Get.dialog(
     Dialog(
@@ -801,7 +802,6 @@ void showAdjustInventoryDialog(String sku) {
               ],
             ),
             const SizedBox(height: 12),
-
             TextField(
               controller: deltaController,
               keyboardType: TextInputType.number,
@@ -831,7 +831,6 @@ void showAdjustInventoryDialog(String sku) {
               ),
             ),
             const SizedBox(height: 12),
-
             DropdownButtonFormField<String>(
               decoration: InputDecoration(
                 labelText: "Reason",
@@ -845,7 +844,6 @@ void showAdjustInventoryDialog(String sku) {
               onChanged: (val) => selectedReason = val,
             ),
             const SizedBox(height: 12),
-
             TextField(
               controller: noteController,
               decoration: InputDecoration(
@@ -856,7 +854,6 @@ void showAdjustInventoryDialog(String sku) {
               ),
             ),
             const SizedBox(height: 20),
-
             AppGradientButton(
               onPressed: () async {
                 final delta = int.tryParse(deltaController.text) ?? 0;

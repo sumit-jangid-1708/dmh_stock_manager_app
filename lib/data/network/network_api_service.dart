@@ -17,8 +17,11 @@ class NetworkApiServices extends BaseApiServices {
     Map<String, String>? extra,
   }) async {
     final token = storage.read("access_token") ?? "";
-    final headers = {'Content-Type': 'application/json'};
-    if (!url.contains(AppUrl.loginOtp)) {
+    final headers = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    };
+    if (!url.contains(AppUrl.loginOtp) && !url.contains(AppUrl.appLogin)) {
       if (token.isNotEmpty) headers['Authorization'] = 'Bearer $token';
     }
     if (extra != null) headers.addAll(extra);
@@ -30,9 +33,11 @@ class NetworkApiServices extends BaseApiServices {
     if (kDebugMode) print('🌐 GET → $url');
     try {
       final headers = await _getHeaders(url);
-      final response = await http
-          .get(Uri.parse(url), headers: headers)
-          .timeout(const Duration(seconds: 20));
+      final uri = Uri.parse(url);
+      final response = await _sendWithRetry(
+        () => http.get(uri, headers: headers),
+        timeout: const Duration(seconds: 30),
+      );
       return _returnResponse(response);
     } on SocketException {
       throw InternetExceptions();
@@ -53,9 +58,12 @@ class NetworkApiServices extends BaseApiServices {
     }
     try {
       final mergedHeaders = await _getHeaders(url, extra: headers);
-      final response = await http
-          .post(Uri.parse(url), body: jsonEncode(data), headers: mergedHeaders)
-          .timeout(const Duration(seconds: 30));
+      final uri = Uri.parse(url);
+      final body = jsonEncode(data);
+      final response = await _sendWithRetry(
+        () => http.post(uri, body: body, headers: mergedHeaders),
+        timeout: const Duration(seconds: 40),
+      );
       return _returnResponse(response);
     } on SocketException {
       throw InternetExceptions();
@@ -76,9 +84,12 @@ class NetworkApiServices extends BaseApiServices {
     }
     try {
       final mergedHeaders = await _getHeaders(url, extra: headers);
-      final response = await http
-          .put(Uri.parse(url), body: jsonEncode(data), headers: mergedHeaders)
-          .timeout(const Duration(seconds: 30));
+      final uri = Uri.parse(url);
+      final body = jsonEncode(data);
+      final response = await _sendWithRetry(
+        () => http.put(uri, body: body, headers: mergedHeaders),
+        timeout: const Duration(seconds: 40),
+      );
       return _returnResponse(response);
     } on SocketException {
       throw InternetExceptions();
@@ -87,19 +98,63 @@ class NetworkApiServices extends BaseApiServices {
     }
   }
 
+  @override
   Future<dynamic> deleteApi(String url, {Map<String, String>? headers}) async {
     if (kDebugMode) print('🌐 DELETE → $url');
     try {
       final mergedHeaders = await _getHeaders(url, extra: headers);
-      final response = await http
-          .delete(Uri.parse(url), headers: mergedHeaders)
-          .timeout(const Duration(seconds: 30));
+      final uri = Uri.parse(url);
+      final response = await _sendWithRetry(
+        () => http.delete(uri, headers: mergedHeaders),
+        timeout: const Duration(seconds: 40),
+      );
       return _returnResponse(response);
     } on SocketException {
       throw InternetExceptions();
     } on TimeoutException {
       throw RequestTimeOut();
     }
+  }
+
+  Future<http.Response> _sendWithRetry(
+    Future<http.Response> Function() send, {
+    required Duration timeout,
+  }) async {
+    const maxAttempts = 3;
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        final response = await send().timeout(timeout);
+        if (!_shouldRetry(response) || attempt == maxAttempts) {
+          return response;
+        }
+        if (kDebugMode) {
+          print(
+            '🌐 Retry $attempt/$maxAttempts after gateway response '
+            '${response.statusCode}',
+          );
+        }
+      } on SocketException {
+        if (attempt == maxAttempts) rethrow;
+        if (kDebugMode)
+          print('🌐 Retry $attempt/$maxAttempts after socket error');
+      } on TimeoutException {
+        if (attempt == maxAttempts) rethrow;
+        if (kDebugMode) print('🌐 Retry $attempt/$maxAttempts after timeout');
+      }
+      await Future.delayed(Duration(milliseconds: 500 * attempt));
+    }
+    throw RequestTimeOut();
+  }
+
+  bool _shouldRetry(http.Response response) {
+    if (response.statusCode == 502 ||
+        response.statusCode == 503 ||
+        response.statusCode == 504) {
+      return true;
+    }
+    final body = response.body.toLowerCase();
+    return body.contains('err_ngrok_3004') ||
+        body.contains('ngrok gateway error');
   }
 
   dynamic _returnResponse(http.Response response) {
@@ -116,8 +171,7 @@ class NetworkApiServices extends BaseApiServices {
       return response.bodyBytes;
     }
 
-    final isJson =
-        contentType.contains('application/json') ||
+    final isJson = contentType.contains('application/json') ||
         contentType.contains('text/json');
 
     dynamic safeDecodeBody() {
@@ -136,6 +190,16 @@ class NetworkApiServices extends BaseApiServices {
         return safeDecodeBody();
       case 204:
         return {'message': 'Success'};
+      case 301:
+      case 302:
+      case 303:
+      case 307:
+      case 308:
+        final location = response.headers['location'] ?? '';
+        if (location.contains('/login')) {
+          throw UnauthorizedException();
+        }
+        throw AppExceptions('Request was redirected. Please try again.');
       case 400:
         final body = safeDecodeBody();
         if (body is Map) {
@@ -149,8 +213,14 @@ class NetworkApiServices extends BaseApiServices {
         }
         throw AppExceptions('Bad request (400)');
       case 401:
-      case 403:
         throw UnauthorizedException();
+      case 403:
+        final body = safeDecodeBody();
+        if (body is Map) {
+          final detail = body['detail'] ?? body['message'] ?? body['error'];
+          if (detail != null) throw AppExceptions(detail.toString());
+        }
+        throw AppExceptions('Aapko is action ki permission nahi hai.');
       case 404:
         throw AppExceptions('Resource not found (404)');
       case 500:

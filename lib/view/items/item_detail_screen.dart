@@ -1,4 +1,5 @@
 import 'package:dmj_stock_manager/model/product_models/product_model.dart';
+import 'package:dmj_stock_manager/res/app_url/app_url.dart';
 import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/view/items/items_screen.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
@@ -20,8 +21,6 @@ class ItemDetailScreen extends StatelessWidget {
   final ItemController itemController = Get.find<ItemController>();
   final StockController stockController = Get.find<StockController>();
   final PageController _pageController = PageController();
-
-  static const String _baseUrl = "https://traders.testwebs.in";
 
   // String _getImageUrl(dynamic imageItem) {
   //   String raw = '';
@@ -45,11 +44,7 @@ class ItemDetailScreen extends StatelessWidget {
 
     if (raw.isEmpty) return "https://via.placeholder.com/150";
 
-    // Already full URL — as-is use karo
-    if (raw.startsWith('http')) return raw;
-
-    // Relative path — API server ka base URL lagao
-    return 'http://69.62.75.208:8000$raw';
+    return AppUrl.mediaUrl(raw);
   }
 
   @override
@@ -74,8 +69,8 @@ class ItemDetailScreen extends StatelessWidget {
     // ✅ Detect if this product has multi-label size
     final bool hasMultiLabel =
         (product.length != null && product.length!.isNotEmpty) ||
-        (product.width != null && product.width!.isNotEmpty) ||
-        (product.height != null && product.height!.isNotEmpty);
+            (product.width != null && product.width!.isNotEmpty) ||
+            (product.height != null && product.height!.isNotEmpty);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
@@ -193,12 +188,12 @@ class ItemDetailScreen extends StatelessWidget {
                               color: Color(0xFF1A1A4F),
                               size: 20,
                             ),
-                            onPressed: () =>
-                                ProductShareService.shareProductsAsWhatsappCatalogue(
-                                  context,
-                                  [product],
-                                  () {},
-                                ),
+                            onPressed: () => ProductShareService
+                                .shareProductsAsWhatsappCatalogue(
+                              context,
+                              [product],
+                              () {},
+                            ),
                           ),
                         ),
                       ),

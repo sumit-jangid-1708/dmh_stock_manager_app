@@ -163,9 +163,8 @@ class PurchaseController extends GetxController with BaseController {
       // ✅ Service now always returns List<dynamic>
       final List<dynamic> data = await purchaseService.getPurchaseListApi();
 
-      purchaseList.value = data
-          .map((item) => PurchaseBillModel.fromJson(item))
-          .toList();
+      purchaseList.value =
+          data.map((item) => PurchaseBillModel.fromJson(item)).toList();
 
       _filterPurchases();
     } catch (e, s) {
@@ -213,12 +212,12 @@ class PurchaseController extends GetxController with BaseController {
           ? DateFormat('yyyy-MM-dd').format(billDate.value!)
           : DateFormat('yyyy-MM-dd').format(DateTime.now());
 
-      final gstTypeForApi = selectedPurchaseType.value == 'WITH_GST'
-          ? 'with_gst'
-          : 'no_gst';
+      final gstTypeForApi =
+          selectedPurchaseType.value == 'WITH_GST' ? 'with_gst' : 'no_gst';
 
       final Map<String, dynamic> data = {
         "vendor": selectedVendor.value!.id,
+        "bill_number": billNumberController.text.trim(),
         "bill_date": formattedBillDate,
         "place_of_supply": placeOfSupplyController.text.trim(),
         "gst_type": gstTypeForApi,
@@ -228,7 +227,7 @@ class PurchaseController extends GetxController with BaseController {
         "shipping": double.tryParse(shippingController.text) ?? 0,
         "other_expense": double.tryParse(otherChargesController.text) ?? 0,
         "round_off": double.tryParse(roundOffController.text) ?? 0,
-        "payment_mode": paymentMode.value.toLowerCase(),
+        "payment_mode": _paymentModeForApi(),
         "transaction_id": transactionIdController.text.trim(),
       };
 
@@ -414,11 +413,11 @@ class PurchaseController extends GetxController with BaseController {
           ? DateFormat('yyyy-MM-dd').format(billDate.value!)
           : DateFormat('yyyy-MM-dd').format(DateTime.now());
 
-      final gstTypeForApi = selectedPurchaseType.value == 'WITH_GST'
-          ? 'with_gst'
-          : 'no_gst';
+      final gstTypeForApi =
+          selectedPurchaseType.value == 'WITH_GST' ? 'with_gst' : 'no_gst';
 
       final Map<String, dynamic> data = {
+        "bill_number": billNumberController.text.trim(),
         "bill_date": formattedBillDate,
         "place_of_supply": placeOfSupplyController.text.trim(),
         "gst_type": gstTypeForApi,
@@ -428,7 +427,7 @@ class PurchaseController extends GetxController with BaseController {
         "shipping": double.tryParse(shippingController.text) ?? 0,
         "other_expense": double.tryParse(otherChargesController.text) ?? 0,
         "round_off": double.tryParse(roundOffController.text) ?? 0,
-        "payment_mode": paymentMode.value.toLowerCase(),
+        "payment_mode": _paymentModeForApi(),
         "transaction_id": transactionIdController.text.trim(),
       };
 
@@ -475,6 +474,19 @@ class PurchaseController extends GetxController with BaseController {
       handleError(e);
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  String _paymentModeForApi() {
+    switch (paymentMode.value.toUpperCase()) {
+      case "BANK":
+      case "BANK_TRANSFER":
+        return "bank_transfer";
+      case "UPI":
+        return "upi";
+      case "CASH":
+      default:
+        return "cash";
     }
   }
 

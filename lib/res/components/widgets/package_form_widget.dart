@@ -82,22 +82,15 @@ class PackOrderBottomSheet extends StatelessWidget {
       // ✅ Convert to full URLs
       final fullUrls = validPaths.map((e) => ItemService.toFullUrl(e)).toList();
 
-      await orderController.updateOrderStatus(
+      await orderController.packOrder(
         orderId: orderId,
-        status: 2,
-        note: "Packed",
-        extraData: {
-          if (_heightCtrl.text.isNotEmpty) "height": _heightCtrl.text.trim(),
-          if (_widthCtrl.text.isNotEmpty) "width": _widthCtrl.text.trim(),
-          if (_lengthCtrl.text.isNotEmpty) "length": _lengthCtrl.text.trim(),
-          if (_deadWeightCtrl.text.isNotEmpty)
-            "weight": _deadWeightCtrl.text.trim(),
-          if (_volumetricWeightCtrl.text.isNotEmpty)
-            "volumetric_weight": _volumetricWeightCtrl.text.trim(),
-          if (_billedWeightCtrl.text.isNotEmpty)
-            "billed_weight": _billedWeightCtrl.text.trim(),
-          if (fullUrls.isNotEmpty) "package_images": fullUrls,
-        },
+        height: _heightCtrl.text,
+        width: _widthCtrl.text,
+        length: _lengthCtrl.text,
+        deadWeight: _deadWeightCtrl.text,
+        volumetricWeight: _volumetricWeightCtrl.text,
+        billedWeight: _billedWeightCtrl.text,
+        packageImages: fullUrls,
       );
 
       Get.back();
@@ -216,8 +209,8 @@ class PackOrderBottomSheet extends StatelessWidget {
                                 prefixIcon: Icons.height,
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
-                                      decimal: true,
-                                    ),
+                                  decimal: true,
+                                ),
                                 validator: (v) =>
                                     v == null || v.isEmpty ? "Required" : null,
                               ),
@@ -231,8 +224,8 @@ class PackOrderBottomSheet extends StatelessWidget {
                                 prefixIcon: Icons.width_normal,
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
-                                      decimal: true,
-                                    ),
+                                  decimal: true,
+                                ),
                                 validator: (v) =>
                                     v == null || v.isEmpty ? "Required" : null,
                               ),

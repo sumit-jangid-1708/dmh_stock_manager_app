@@ -109,11 +109,13 @@ class OrderDetailModel {
       transactionId: json['transaction_id']?.toString(),
       totalAmount: json['total_amount']?.toString() ?? '0.00',
       packageExpence: json['package_expence']?.toString() ?? '0.00',
-      buyerShipmentCharger: json['buyer_shipment_charger']?.toString() ?? '0.00',
+      buyerShipmentCharger:
+          json['buyer_shipment_charger']?.toString() ?? '0.00',
       buyerTaxAmount: json['buyer_tax_amount']?.toString() ?? '0.00',
       paidAmount: json['paid_amount']?.toString() ?? '0.00',
       refundedAmount: json['refunded_amount']?.toString() ?? '0.00',
-      refundAdditionalCharges: json['refund_additional_charges']?.toString() ?? '0.00',
+      refundAdditionalCharges:
+          json['refund_additional_charges']?.toString() ?? '0.00',
     );
   }
 
@@ -127,27 +129,47 @@ class OrderDetailModel {
 
   String get orderStatusText {
     switch (effectiveStatus) {
-      case 1: return "In Process";
-      case 2: return "Packed";
-      case 3: return "In Transit";
-      case 4: return "Delivered";
-      case 5: return "Courier Return";
-      case 6: return "Customer Return";
-      case 7: return "Return Received";
-      default: return status.isEmpty ? "Unknown" : status;
+      case 1:
+        return "In Process";
+      case 2:
+        return "Packed";
+      case 3:
+        return "In Transit";
+      case 4:
+        return "Delivered";
+      case 5:
+        return "Cancelled";
+      case 6:
+        return "Courier Return";
+      case 7:
+        return "Customer Return";
+      case 8:
+        return "Return Received";
+      default:
+        return status.isEmpty ? "Unknown" : status;
     }
   }
 
   Color get orderStatusColor {
     switch (effectiveStatus) {
-      case 1: return const Color(0xFFFF9800);
-      case 2: return const Color(0xFF0C5460);
-      case 3: return const Color(0xFF004085);
-      case 4: return const Color(0xFF4CAF50);
-      case 5: return const Color(0xFFF44336);
-      case 6: return const Color(0xFFFF5722);
-      case 7: return const Color(0xFF00897B);
-      default: return Colors.grey;
+      case 1:
+        return const Color(0xFFFF9800);
+      case 2:
+        return const Color(0xFF0C5460);
+      case 3:
+        return const Color(0xFF004085);
+      case 4:
+        return const Color(0xFF4CAF50);
+      case 5:
+        return const Color(0xFFF44336);
+      case 6:
+        return const Color(0xFFFF5722);
+      case 7:
+        return const Color(0xFF673AB7);
+      case 8:
+        return const Color(0xFF00897B);
+      default:
+        return Colors.grey;
     }
   }
 }
@@ -203,7 +225,9 @@ class OrderRemark {
 
   factory OrderRemark.fromJson(Map<String, dynamic> json) {
     return OrderRemark(
-      id: (json['id'] is int) ? json['id'] : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+      id: (json['id'] is int)
+          ? json['id']
+          : int.tryParse(json['id']?.toString() ?? '') ?? 0,
       remark: json['remark'] ?? '',
       createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
     );
@@ -223,7 +247,9 @@ class LatestStatus {
 
   factory LatestStatus.fromJson(Map<String, dynamic> json) {
     return LatestStatus(
-      status: (json['status'] is int) ? json['status'] : int.tryParse(json['status']?.toString() ?? '') ?? 0,
+      status: (json['status'] is int)
+          ? json['status']
+          : int.tryParse(json['status']?.toString() ?? '') ?? 0,
       note: json['note'] ?? '',
       createdAt: DateTime.tryParse(json['created_at'] ?? '') ?? DateTime.now(),
     );

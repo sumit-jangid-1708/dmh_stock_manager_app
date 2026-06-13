@@ -9,16 +9,14 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await GetStorage.init();
 
-  // Read token from local storage
-  // final storage = GetStorage();
-  // final token = storage.read("access_token");
-  //
-  //    // Decide initial route based on token availability
-  // final initialRoute = (token != null && token.isNotEmpty)
-  //     ? RouteName.dashboard // already logged in
-  //     : RouteName.auth;     // login required
+  final storage = GetStorage();
+  final token = storage.read("access_token");
+  final user = storage.read("app_user");
+  final initialRoute = (token is String && token.isNotEmpty && user is Map)
+      ? RouteName.dashboard
+      : RouteName.auth;
 
-  runApp(const MyApp(initialRoute: RouteName.auth,));
+  runApp(MyApp(initialRoute: initialRoute));
 }
 
 class MyApp extends StatelessWidget {
@@ -34,9 +32,8 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
       ),
       initialBinding: InitialBinding(),
-      initialRoute: RouteName.auth,
+      initialRoute: initialRoute,
       getPages: AppRoutes.appRoute(),
     );
   }
 }
-

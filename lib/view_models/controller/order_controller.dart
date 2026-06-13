@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:dmj_stock_manager/model/bills_model/create_bill_model.dart';
 import 'package:dmj_stock_manager/model/order_models/create_order_response_model.dart';
 import 'package:dmj_stock_manager/model/order_models/order_model.dart';
-import 'package:dmj_stock_manager/model/order_models/order_status_log_model.dart'; 
+import 'package:dmj_stock_manager/model/order_models/order_status_log_model.dart';
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
 import 'package:dmj_stock_manager/utils/utils.dart';
 import 'package:dmj_stock_manager/view/billings/billing_screen.dart';
@@ -202,16 +202,15 @@ class OrderController extends GetxController with BaseController {
     try {
       isLoading.value = true;
       final response = await orderService.getOrderDetailApi();
-      
+
       List<OrderDetailModel> allOrders = [];
-      
+
       if (response is Map<String, dynamic>) {
         final listResponse = OrderListResponse.fromJson(response);
         allOrders = listResponse.data;
       } else if (response is List) {
-        allOrders = response
-            .map((item) => OrderDetailModel.fromJson(item))
-            .toList();
+        allOrders =
+            response.map((item) => OrderDetailModel.fromJson(item)).toList();
       }
 
       orders.assignAll(allOrders.where((o) => !o.isDeleted).toList());
@@ -229,10 +228,6 @@ class OrderController extends GetxController with BaseController {
       isLoadingShipmentsList.value = true;
       final response = await orderService.getOrdersWithShipments();
       debugPrint("📦 Shipments API response length: ${response.length}");
-      if (response is! List) {
-        debugPrint("❌ Expected List but got: ${response.runtimeType}");
-        return;
-      }
       ordersWithShipments.value = response
           .map(
             (e) => OrderWithShipmentModel.fromJson(e as Map<String, dynamic>),
@@ -314,8 +309,7 @@ class OrderController extends GetxController with BaseController {
         return;
       }
 
-      final bool isSuccess =
-          response.containsKey('order_id') ||
+      final bool isSuccess = response.containsKey('order_id') ||
           response.containsKey('id') ||
           response.containsKey('order');
       if (!isSuccess) {
@@ -571,7 +565,7 @@ class OrderController extends GetxController with BaseController {
 
   void filterOrders(String query) {
     if (query.isEmpty) {
-      applyFilters(); 
+      applyFilters();
       return;
     }
     final statusFilter = selectedStatusFilter.value;
@@ -717,6 +711,40 @@ class OrderController extends GetxController with BaseController {
     }
   }
 
+  Future<void> packOrder({
+    required int orderId,
+    required String height,
+    required String width,
+    required String length,
+    required String deadWeight,
+    required String volumetricWeight,
+    required String billedWeight,
+    List<String> packageImages = const [],
+  }) async {
+    try {
+      final data = {
+        "height": height.trim(),
+        "width": width.trim(),
+        "length": length.trim(),
+        "dead_weight": deadWeight.trim(),
+        "vol_weight": volumetricWeight.trim(),
+        if (billedWeight.trim().isNotEmpty)
+          "billed_weight": billedWeight.trim(),
+        if (packageImages.isNotEmpty) "package_images": packageImages,
+        if (packageImages.isNotEmpty) "product_image": packageImages.first,
+      };
+
+      final response = await orderService.packOrder(data, orderId);
+      AppAlerts.success(response?["message"] ?? "Order packed successfully");
+      await loadOrderDetail(orderId);
+      await getOrderList();
+    } catch (e) {
+      debugPrint("❌ packOrder error: $e");
+      handleError(e);
+      rethrow;
+    }
+  }
+
   double calculateItemsTotal(OrderDetailsModel order) {
     return order.billBreakdown.itemsTotal;
   }
@@ -724,5 +752,4 @@ class OrderController extends GetxController with BaseController {
   double calculateGrandTotal(OrderDetailsModel order) {
     return order.billBreakdown.grandTotal;
   }
-
 }

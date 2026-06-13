@@ -4,22 +4,19 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:dmj_stock_manager/model/product_models/product_model.dart';
+import 'package:dmj_stock_manager/res/app_url/app_url.dart';
 
 class ProductShareService {
-  static const String _baseUrl = "https://traders.testwebs.in";
-
   // ── Full image URL resolve ──
   static String _resolveUrl(String raw) {
-    if (raw.isEmpty) return '';
-    return raw.startsWith('http') ? raw : '$_baseUrl$raw';
+    return AppUrl.mediaUrl(raw);
   }
 
   // ── Download image to temp file ──
   static Future<File?> _downloadImage(String url) async {
     try {
-      final response = await http
-          .get(Uri.parse(url))
-          .timeout(const Duration(seconds: 10));
+      final response =
+          await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
       if (response.statusCode != 200) return null;
 
       final dir = await getTemporaryDirectory();
@@ -47,10 +44,10 @@ class ProductShareService {
 
   /// ── Main share method ──
   static Future<void> shareProductsAsWhatsappCatalogue(
-      BuildContext context,
-      List<ProductModel> products,
-      VoidCallback onDone,
-      ) async {
+    BuildContext context,
+    List<ProductModel> products,
+    VoidCallback onDone,
+  ) async {
     if (products.isEmpty) return;
 
     final overlay = OverlayEntry(
@@ -107,14 +104,13 @@ class ProductShareService {
       overlay.remove();
 
       if (imageFiles.isNotEmpty) {
-        await  Share.shareXFiles(
+        await Share.shareXFiles(
           imageFiles,
           text: message.toString(),
         );
       } else {
         await Share.share(message.toString());
       }
-
     } catch (e) {
       overlay.remove();
       debugPrint("WhatsApp share failed: $e");

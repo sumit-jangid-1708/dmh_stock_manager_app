@@ -1,5 +1,4 @@
 import 'package:dmj_stock_manager/model/courier_return/courier_enums.dart';
-import 'package:dmj_stock_manager/model/courier_return/courier_return_request.dart';
 import 'package:dmj_stock_manager/model/order_models/order_model.dart';
 import 'package:dmj_stock_manager/res/routes/routes_names.dart';
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
@@ -18,15 +17,17 @@ void showCourierReturnDialog(BuildContext context, OrderDetailModel order) {
   final selectedProduct = Rx<OrderItem?>(null);
   final qtyController = TextEditingController();
   final claimAmountController = TextEditingController();
+  final returnChargesController = TextEditingController();
   final remarksController = TextEditingController();
+  final reasonDetailsController = TextEditingController();
 
   final condition = Rx<ReturnCondition?>(null);
-  final claimStatus = Rx<ClaimStatus?>(null);
-  final claimResult = Rx<ClaimResult?>(null);
+  final claimStatus = "NOT_CLAIMED".obs;
+  final approvalStatus = "APPROVED".obs;
+  final receiveDate = Rx<DateTime?>(DateTime.now());
+  final returnReason = "".obs;
 
   final conditions = [ReturnCondition.safe, ReturnCondition.damaged];
-  final claimStatuses = [ClaimStatus.claimed, ClaimStatus.notClaimed];
-  final claimResults = [ClaimResult.received, ClaimResult.rejected];
 
   Get.bottomSheet(
     Container(
@@ -97,9 +98,11 @@ void showCourierReturnDialog(BuildContext context, OrderDetailModel order) {
                   selectedProduct.value = val;
                   qtyController.clear();
                   condition.value = null;
-                  claimStatus.value = null;
-                  claimResult.value = null;
+                  claimStatus.value = "NOT_CLAIMED";
+                  approvalStatus.value = "APPROVED";
                   claimAmountController.clear();
+                  returnChargesController.clear();
+                  reasonDetailsController.clear();
                   remarksController.clear();
                 },
               ),
@@ -131,96 +134,147 @@ void showCourierReturnDialog(BuildContext context, OrderDetailModel order) {
                 }).toList(),
                 onChanged: (val) {
                   condition.value = val;
-                  if (val == ReturnCondition.safe) {
-                    claimStatus.value = null;
-                    claimResult.value = null;
-                    claimAmountController.clear();
-                    remarksController.clear();
-                  }
+                  claimStatus.value = "NOT_CLAIMED";
+                  approvalStatus.value = "APPROVED";
+                  claimAmountController.clear();
+                  returnChargesController.clear();
+                  reasonDetailsController.clear();
+                  remarksController.clear();
                 },
               ),
             ),
 
-            // Show additional fields only for DAMAGED condition
-            Obx(() {
-              if (condition.value == ReturnCondition.damaged) {
-                return Column(
-                  children: [
-                    const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-                    // Claim Status Dropdown
-                    DropdownButtonFormField<ClaimStatus>(
-                      value: claimStatus.value,
-                      decoration: Utils.inputDecoration(
-                        "Claim Status *",
-                        Icons.verified_outlined,
-                      ),
-                      hint: const Text("Select claim status"),
-                      items: claimStatuses.map((s) {
-                        return DropdownMenuItem(
-                          value: s,
-                          child: Text(s.apiValue),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        claimStatus.value = val;
-                        claimResult.value = null;
-                        claimAmountController.clear();
-                        remarksController.clear();
-                      },
+            Obx(() => DropdownButtonFormField<String>(
+                  value: claimStatus.value,
+                  decoration: Utils.inputDecoration(
+                    "Claim Status *",
+                    Icons.verified_outlined,
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: "NOT_CLAIMED",
+                      child: Text("Not Claimed"),
                     ),
-
-                    // Show fields based on claim status
-                    if (claimStatus.value == ClaimStatus.claimed) ...[
-                      const SizedBox(height: 16),
-
-                      // Claim Result Dropdown
-                      DropdownButtonFormField<ClaimResult>(
-                        value: claimResult.value,
-                        decoration: Utils.inputDecoration(
-                          "Claim Result *",
-                          Icons.assignment_turned_in_outlined,
-                        ),
-                        hint: const Text("Select claim result"),
-                        items: claimResults.map((r) {
-                          return DropdownMenuItem(
-                            value: r,
-                            child: Text(r.apiValue),
-                          );
-                        }).toList(),
-                        onChanged: (val) {
-                          claimResult.value = val;
-                          claimAmountController.clear();
-                        },
-                      ),
-
-                      // Show Claim Amount only if RECEIVED
-                      if (claimResult.value == ClaimResult.received) ...[
-                        const SizedBox(height: 16),
-                        AppTextField(
-                          controller: claimAmountController,
-                          hintText: "Claim Amount *",
-                          prefixIcon: Icons.currency_rupee,
-                          keyboardType: TextInputType.number,
-                        ),
-                      ],
-                    ],
-
-                    // Show Remarks field if NOT_CLAIMED
-                    if (claimStatus.value == ClaimStatus.notClaimed) ...[
-                      const SizedBox(height: 16),
-                      AppTextField(
-                        controller: remarksController,
-                        hintText: "Remarks (Mandatory) *",
-                        prefixIcon: Icons.note_outlined,
-                        maxLines: 3,
-                      ),
-                    ],
+                    DropdownMenuItem(value: "CLAIMED", child: Text("Claimed")),
                   ],
-                );
+                  onChanged: (val) {
+                    if (val == null) return;
+                    claimStatus.value = val;
+                    approvalStatus.value = "APPROVED";
+                    claimAmountController.clear();
+                  },
+                )),
+
+            Obx(() {
+              if (claimStatus.value != "CLAIMED") {
+                return const SizedBox.shrink();
               }
-              return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: DropdownButtonFormField<String>(
+                  value: approvalStatus.value,
+                  decoration: Utils.inputDecoration(
+                    "Approval Status *",
+                    Icons.assignment_turned_in_outlined,
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: "APPROVED",
+                      child: Text("Approved"),
+                    ),
+                    DropdownMenuItem(
+                      value: "NOT_APPROVED",
+                      child: Text("Not Approved"),
+                    ),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) approvalStatus.value = val;
+                  },
+                ),
+              );
             }),
+
+            const SizedBox(height: 16),
+            AppTextField(
+              controller: claimAmountController,
+              hintText: "Return Amount",
+              prefixIcon: Icons.currency_rupee,
+              keyboardType: TextInputType.number,
+            ),
+
+            const SizedBox(height: 16),
+            AppTextField(
+              controller: returnChargesController,
+              hintText: "Return Charges",
+              prefixIcon: Icons.receipt_long_outlined,
+              keyboardType: TextInputType.number,
+            ),
+
+            const SizedBox(height: 16),
+            Obx(
+              () => InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: receiveDate.value ?? DateTime.now(),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (picked != null) receiveDate.value = picked;
+                },
+                child: InputDecorator(
+                  decoration: Utils.inputDecoration(
+                    "Receive Date",
+                    Icons.calendar_today_outlined,
+                  ),
+                  child: Text(
+                    receiveDate.value == null
+                        ? "Select date"
+                        : "${receiveDate.value!.year.toString().padLeft(4, '0')}-${receiveDate.value!.month.toString().padLeft(2, '0')}-${receiveDate.value!.day.toString().padLeft(2, '0')}",
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+            Obx(() => DropdownButtonFormField<String>(
+                  value: returnReason.value.isEmpty ? null : returnReason.value,
+                  decoration: Utils.inputDecoration(
+                    "Return Reason",
+                    Icons.report_problem_outlined,
+                  ),
+                  hint: const Text("Select Return Reason"),
+                  items: const [
+                    DropdownMenuItem(
+                      value: "AGENT_ERROR",
+                      child: Text("Agent Error"),
+                    ),
+                    DropdownMenuItem(
+                      value: "LACK_OF_STOCK",
+                      child: Text("Lack of Stock"),
+                    ),
+                  ],
+                  onChanged: (val) => returnReason.value = val ?? "",
+                )),
+
+            const SizedBox(height: 16),
+            AppTextField(
+              controller: reasonDetailsController,
+              hintText: "Optional reason details",
+              prefixIcon: Icons.note_outlined,
+              maxLines: 3,
+            ),
+
+            const SizedBox(height: 16),
+            AppTextField(
+              controller: remarksController,
+              hintText: "Remarks",
+              prefixIcon: Icons.edit_note_outlined,
+              maxLines: 3,
+            ),
 
             const SizedBox(height: 24),
 
@@ -256,63 +310,45 @@ void showCourierReturnDialog(BuildContext context, OrderDetailModel order) {
                             return;
                           }
 
-                          // Additional validation for DAMAGED
-                          if (condition.value == ReturnCondition.damaged) {
-                            if (claimStatus.value == null) {
-                              AppAlerts.error("Please select claim status");
-                              return;
-                            }
-
-                            if (claimStatus.value == ClaimStatus.claimed) {
-                              if (claimResult.value == null) {
-                                AppAlerts.error("Please select claim result");
-                                return;
-                              }
-
-                              if (claimResult.value == ClaimResult.received) {
-                                final claimAmount =
-                                    int.tryParse(claimAmountController.text) ??
-                                    0;
-                                if (claimAmount <= 0) {
-                                  AppAlerts.error(
-                                    "Please enter valid claim amount",
-                                  );
-                                  return;
-                                }
-                              }
-                            }
-
-                            if (claimStatus.value == ClaimStatus.notClaimed) {
-                              if (remarksController.text.trim().isEmpty) {
-                                AppAlerts.error(
-                                  "Remarks are mandatory for NOT CLAIMED status",
-                                );
-                                return;
-                              }
-                            }
-                          }
-
-                          // Create CourierReturnRequest
                           try {
-                            final request = CourierReturnRequest(
-                              order: order.id,
-                              product: selectedProduct.value!.productId,
-                              quantity: qty,
-                              condition: condition.value!,
-                              claimStatus: claimStatus.value,
-                              claimResult: claimResult.value,
-                              claimAmount:
-                                  claimResult.value == ClaimResult.received
-                                  ? int.tryParse(claimAmountController.text)
-                                  : null,
-                              remarks:
-                                  claimStatus.value == ClaimStatus.notClaimed
-                                  ? remarksController.text.trim()
-                                  : null,
-                            );
-
-                            // Convert to JSON and call API
-                            final payload = request.toJson();
+                            final reasonText =
+                                reasonDetailsController.text.trim();
+                            final payload = <String, dynamic>{
+                              "order": order.id,
+                              "product": selectedProduct.value!.productId,
+                              "quantity": qty,
+                              "condition": condition.value!.apiValue,
+                              "claim_status": claimStatus.value,
+                              if (claimStatus.value == "CLAIMED")
+                                "claim": approvalStatus.value
+                                    .toLowerCase()
+                                    .replaceAll("_", " "),
+                              if (claimAmountController.text.trim().isNotEmpty)
+                                "claim_amount": double.tryParse(
+                                      claimAmountController.text.trim(),
+                                    ) ??
+                                    0,
+                              if (returnChargesController.text
+                                  .trim()
+                                  .isNotEmpty)
+                                "return_charges": double.tryParse(
+                                      returnChargesController.text.trim(),
+                                    ) ??
+                                    0,
+                              if (receiveDate.value != null)
+                                "return_recive_date":
+                                    "${receiveDate.value!.year.toString().padLeft(4, '0')}-${receiveDate.value!.month.toString().padLeft(2, '0')}-${receiveDate.value!.day.toString().padLeft(2, '0')}",
+                              if (returnReason.value == "AGENT_ERROR")
+                                "agent_error": reasonText.isEmpty
+                                    ? "Agent error"
+                                    : reasonText,
+                              if (returnReason.value == "LACK_OF_STOCK")
+                                "lack_of_stock": reasonText.isEmpty
+                                    ? "Lack of stock"
+                                    : reasonText,
+                              if (remarksController.text.trim().isNotEmpty)
+                                "rmark": remarksController.text.trim(),
+                            };
 
                             // ✅ Call ReturnController API with callback to refresh orders
                             await returnController.courierReturn(
@@ -320,7 +356,7 @@ void showCourierReturnDialog(BuildContext context, OrderDetailModel order) {
                               onSuccess: () {
                                 orderController.updateOrderStatus(
                                   orderId: order.id,
-                                  status: 5,
+                                  status: 6,
                                   note: "Courier Return",
                                 );
                                 // Refresh order list after success

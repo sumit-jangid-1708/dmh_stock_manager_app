@@ -1,5 +1,6 @@
 import 'package:dmj_stock_manager/model/stock_inventory_models/inventory_model.dart';
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
+import 'package:dmj_stock_manager/utils/response_list.dart';
 import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
 import 'package:dmj_stock_manager/view_models/services/stock_service.dart';
@@ -10,7 +11,7 @@ import 'package:get/get.dart';
 import '../../data/app_exceptions.dart';
 import '../../model/product_models/product_model.dart';
 
-class StockController extends GetxController with BaseController{
+class StockController extends GetxController with BaseController {
   //form key
   final StockService stockService = StockService();
   final formKey = GlobalKey<FormState>();
@@ -27,18 +28,16 @@ class StockController extends GetxController with BaseController{
     isLoading.value = true;
     try {
       final response = await stockService.fetchInventoryApi();
-      final List<dynamic> data = response;
-      inventoryList.value = data
-          .map((item) => InventoryModel.fromJson(item)
-      )
-          .toList();
+      final data = responseList(response);
+      inventoryList.value =
+          data.map((item) => InventoryModel.fromJson(item)).toList();
 
       inventoryList.sort(
-            (a, b) => (b.id ?? 0).compareTo(a.id ?? 0),
+        (a, b) => (b.id ?? 0).compareTo(a.id ?? 0),
       );
     } catch (e, s) {
       print("❌❌❌Error fetching Inventory: $e $s");
-      handleError(e, onRetry: ()=> fetchInventoryList());
+      handleError(e, onRetry: () => fetchInventoryList());
     } finally {
       isLoading.value = false;
     }
@@ -46,8 +45,8 @@ class StockController extends GetxController with BaseController{
 
   ProductModel? getProductById(int id) {
     final product = Get.find<ItemController>().products.firstWhereOrNull(
-      (p) => p.id == id,
-    );
+          (p) => p.id == id,
+        );
     // return product?.name ?? "Unknown Product";
     return product;
   }
@@ -64,9 +63,10 @@ class StockController extends GetxController with BaseController{
       inventoryList.add(product);
       fetchInventoryList();
       AppAlerts.success("Quantity added successfully");
-    }catch (e,s) {
+    } catch (e, s) {
       if (kDebugMode) {
-        print("🚩 Add Inventory Error ❌ Exception Details: $e $s"); // full stack ya raw details
+        print(
+            "🚩 Add Inventory Error ❌ Exception Details: $e $s"); // full stack ya raw details
       }
       handleError(e);
     } finally {
@@ -81,20 +81,28 @@ class StockController extends GetxController with BaseController{
     required String note,
   }) async {
     isLoading.value = true;
+    final apiReason = _inventoryReasonForApi(reason);
+    final cleanNote = note.trim();
+    final apiNote = apiReason == reason
+        ? cleanNote
+        : [
+            "Selected reason: $reason",
+            if (cleanNote.isNotEmpty) cleanNote,
+          ].join(" - ");
     Map data = {
       "sku": sku,
       "delta": delta,
-      "reason": reason,
-      "note": note ?? " ",
+      "reason": apiReason,
+      "note": apiNote.isEmpty ? " " : apiNote,
     };
 
     try {
       final response = await stockService.inventoryAdjustApi(data);
       if (response["new_quantity"] != null) {
-        AppAlerts.success("Inventory adjusted. New qty: ${response["new_quantity"]}");
+        AppAlerts.success(
+            "Inventory adjusted. New qty: ${response["new_quantity"]}");
       }
       fetchInventoryList();
-
     } catch (e) {
       if (kDebugMode) {
         print("❌ Exception Details: $e");
@@ -103,5 +111,17 @@ class StockController extends GetxController with BaseController{
     } finally {
       isLoading.value = false;
     }
+  }
+
+  String _inventoryReasonForApi(String reason) {
+    final normalized = reason.trim().toUpperCase().replaceAll(" ", "_");
+    const validReasons = {"ORDER", "PURCHASE", "RETURN", "WPS", "ADJUST"};
+    if (validReasons.contains(normalized)) {
+      return normalized;
+    }
+    if (normalized == "OTHER" || normalized == "DAMAGED") {
+      return "ADJUST";
+    }
+    return "ADJUST";
   }
 }

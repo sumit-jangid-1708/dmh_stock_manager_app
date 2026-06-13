@@ -3,42 +3,15 @@ import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.
 import 'package:dmj_stock_manager/view_models/controller/auth/auth_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pinput/pinput.dart';
 
 class AuthScreen extends StatelessWidget {
   AuthScreen({super.key});
 
   final AuthController authController = Get.put(AuthController());
 
-  // ✅ Pin Themes
-  final defaultPinTheme = PinTheme(
-    width: 50,
-    height: 56,
-    textStyle: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1b1850)),
-    decoration: BoxDecoration(
-      color: Colors.grey.shade50,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: Colors.grey.shade300),
-    ),
-  );
-
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-
-    final focusedPinTheme = defaultPinTheme.copyWith(
-      decoration: defaultPinTheme.decoration!.copyWith(
-        border: Border.all(color: const Color(0xFF1b1850), width: 1.5),
-        color: Colors.white,
-      ),
-    );
-
-    final submittedPinTheme = defaultPinTheme.copyWith(
-      decoration: defaultPinTheme.decoration!.copyWith(
-        color: const Color(0xFFF1F4FF),
-        border: Border.all(color: const Color(0xFF1b1850).withOpacity(0.5)),
-      ),
-    );
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -54,7 +27,7 @@ class AuthScreen extends StatelessWidget {
                 // --- Logo Section (Bigger Circle for Logo) ---
                 Container(
                   height: 160, // Container ka fixed height
-                  width: 160,  // Container ka fixed width
+                  width: 160, // Container ka fixed width
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
@@ -63,8 +36,7 @@ class AuthScreen extends StatelessWidget {
                       BoxShadow(
                           color: Colors.black.withOpacity(0.08),
                           blurRadius: 30,
-                          spreadRadius: 2
-                      ),
+                          spreadRadius: 2),
                     ],
                   ),
                   child: ClipOval(
@@ -79,9 +51,8 @@ class AuthScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 50),
 
-                // --- Text Section ---
                 const Text(
-                  "Security Check",
+                  "Login",
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -91,42 +62,72 @@ class AuthScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  "Enter your 6-digit administrative passcode here",
+                  "Use the username and password created in admin panel",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade500,
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 30),
 
-                // --- Pinput Section ---
-                Pinput(
-                  keyboardType: TextInputType.number,
-                  length: 6,
-                  controller: authController.otpController,
-                  defaultPinTheme: defaultPinTheme,
-                  focusedPinTheme: focusedPinTheme,
-                  submittedPinTheme: submittedPinTheme,
-                  showCursor: true,
-                  onCompleted: (pin) {},
+                TextField(
+                  controller: authController.usernameController,
+                  textInputAction: TextInputAction.next,
+                  decoration: _inputDecoration(
+                    icon: Icons.person_outline,
+                    hint: "Username",
+                  ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: authController.passwordController,
+                  obscureText: true,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => authController.loginWithPassword(),
+                  decoration: _inputDecoration(
+                    icon: Icons.lock_outline,
+                    hint: "Password",
+                  ),
+                ),
+                const SizedBox(height: 30),
 
-                // --- Submit Button ---
-                Obx(() => authController.isLoading.value
-                    ? const CircularProgressIndicator(color: Color(0xFF1b1850))
-                    : AppGradientButton(
-                  onPressed: () => authController.verifyOtp(),
-                  text: "Submit",
-                  width: size.width,
-                  height: 55,
-                ),
+                Obx(
+                  () => authController.isLoading.value
+                      ? const CircularProgressIndicator(
+                          color: Color(0xFF1b1850))
+                      : AppGradientButton(
+                          onPressed: () => authController.loginWithPassword(),
+                          text: "Login",
+                          width: size.width,
+                          height: 55,
+                        ),
                 ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration({
+    required IconData icon,
+    required String hint,
+  }) {
+    return InputDecoration(
+      prefixIcon: Icon(icon, color: const Color(0xFF1b1850)),
+      hintText: hint,
+      filled: true,
+      fillColor: Colors.grey.shade50,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFF1b1850), width: 1.5),
       ),
     );
   }

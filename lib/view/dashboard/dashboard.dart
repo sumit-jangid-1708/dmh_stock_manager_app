@@ -4,6 +4,7 @@ import 'package:dmj_stock_manager/res/components/widgets/app_header.dart';
 import 'package:dmj_stock_manager/view/home_screen/home_screen.dart';
 import 'package:dmj_stock_manager/view/items/items_screen.dart';
 import 'package:dmj_stock_manager/view/vendors/vendor_screen.dart';
+import 'package:dmj_stock_manager/view_models/controller/auth/auth_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/dashboard_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,27 +14,49 @@ import '../orders/order_screen.dart';
 class DashboardScreen extends StatelessWidget {
   final DashboardController dashboardController =
       Get.find<DashboardController>();
+  final AuthController authController = Get.find<AuthController>();
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
 
-  final List<IconData> icons = [
-    Icons.home_rounded,
-    Icons.inventory_2_rounded,
-    Icons.people_rounded,
-    Icons.shopping_cart_rounded,
-  ];
-
-  final List<String> labels = ["Home", "Items", "Vendors", "Orders"];
   DashboardScreen({super.key});
+
+  List<_DashboardTab> _visibleTabs() {
+    final tabs = <_DashboardTab>[
+      _DashboardTab(
+        moduleKey: "dashboard",
+        label: "Home",
+        icon: Icons.home_rounded,
+        screen: HomeScreen(),
+      ),
+    ];
+    if (authController.canView("items")) {
+      tabs.add(_DashboardTab(
+        moduleKey: "items",
+        label: "Items",
+        icon: Icons.inventory_2_rounded,
+        screen: ItemsScreen(),
+      ));
+    }
+    if (authController.canView("vendors")) {
+      tabs.add(_DashboardTab(
+        moduleKey: "vendors",
+        label: "Vendors",
+        icon: Icons.people_rounded,
+        screen: VendorScreen(),
+      ));
+    }
+    if (authController.canView("orders")) {
+      tabs.add(_DashboardTab(
+        moduleKey: "orders",
+        label: "Orders",
+        icon: Icons.shopping_cart_rounded,
+        screen: OrderScreen(),
+      ));
+    }
+    return tabs;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> screens = [
-      HomeScreen(),
-      ItemsScreen(),
-      VendorScreen(),
-      OrderScreen(),
-    ];
-
     return WillPopScope(
       onWillPop: () async {
         final controller = dashboardController;
@@ -44,6 +67,11 @@ class DashboardScreen extends StatelessWidget {
         return true; // on home : allow app to close
       },
       child: Obx(() {
+        final tabs = _visibleTabs();
+        if (dashboardController.currentIndex.value >= tabs.length) {
+          dashboardController.currentIndex.value = 0;
+        }
+        final currentTab = tabs[dashboardController.currentIndex.value];
         return Scaffold(
           key: scaffoldKey,
           drawer: Drawer(
@@ -64,7 +92,7 @@ class DashboardScreen extends StatelessWidget {
               // Main Content
               Padding(
                 padding: const EdgeInsets.only(top: 70),
-                child: screens[dashboardController.currentIndex.value],
+                child: currentTab.screen,
               ),
 
               // Top Header
@@ -110,7 +138,8 @@ class DashboardScreen extends StatelessWidget {
               ),
 
               // Floating Action Button (Only on Items tab)
-              if (dashboardController.currentIndex.value == 1)
+              if (currentTab.moduleKey == "items" &&
+                  authController.canAction("items", "add"))
                 Positioned(
                   bottom: 20,
                   right: 20,
@@ -171,68 +200,90 @@ class DashboardScreen extends StatelessWidget {
         ],
       ),
       child: Obx(
-        () => Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(icons.length, (index) {
-            final isSelected = dashboardController.currentIndex.value == index;
-            return GestureDetector(
-              onTap: () => dashboardController.changeTab(index),
-              child: AnimatedContainer(
-                duration: Duration(milliseconds: 200),
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  gradient: isSelected
-                      ? LinearGradient(
-                          colors: [
-                            Color(0xFF1A1A4F).withOpacity(0.15),
-                            Color(0xFF2D2D7F).withOpacity(0.1),
-                          ],
-                        )
-                      : null,
-                  borderRadius: BorderRadius.circular(16),
+        () {
+          final tabs = _visibleTabs();
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(tabs.length, (index) {
+              final isSelected =
+                  dashboardController.currentIndex.value == index;
+              final tab = tabs[index];
+              return GestureDetector(
+                onTap: () => dashboardController.changeTab(index),
+                child: AnimatedContainer(
+                  duration: Duration(milliseconds: 200),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    gradient: isSelected
+                        ? LinearGradient(
+                            colors: [
+                              Color(0xFF1A1A4F).withOpacity(0.15),
+                              Color(0xFF2D2D7F).withOpacity(0.1),
+                            ],
+                          )
+                        : null,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          gradient: isSelected
+                              ? LinearGradient(
+                                  colors: [
+                                    Color(0xFF1A1A4F),
+                                    Color(0xFF2D2D7F)
+                                  ],
+                                )
+                              : null,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          tab.icon,
+                          size: 24,
+                          color:
+                              isSelected ? Colors.white : Colors.grey.shade600,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        tab.label,
+                        style: TextStyle(
+                          color: isSelected
+                              ? Color(0xFF1A1A4F)
+                              : Colors.grey.shade600,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        gradient: isSelected
-                            ? LinearGradient(
-                                colors: [Color(0xFF1A1A4F), Color(0xFF2D2D7F)],
-                              )
-                            : null,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        icons[index],
-                        size: 24,
-                        color: isSelected ? Colors.white : Colors.grey.shade600,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      labels[index],
-                      style: TextStyle(
-                        color: isSelected
-                            ? Color(0xFF1A1A4F)
-                            : Colors.grey.shade600,
-                        fontWeight: isSelected
-                            ? FontWeight.bold
-                            : FontWeight.w500,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
-        ),
+              );
+            }),
+          );
+        },
       ),
     );
   }
+}
+
+class _DashboardTab {
+  final String moduleKey;
+  final String label;
+  final IconData icon;
+  final Widget screen;
+
+  const _DashboardTab({
+    required this.moduleKey,
+    required this.label,
+    required this.icon,
+    required this.screen,
+  });
 }
 
 // import 'package:dmj_stock_manager/res/components/side_bar/side_bar.dart';

@@ -34,8 +34,9 @@ class VendorModel {
   });
 
   factory VendorModel.fromJson(Map<String, dynamic> json) {
+    final rawId = json["id"];
     return VendorModel(
-      id: json["id"],
+      id: rawId is int ? rawId : int.tryParse(rawId?.toString() ?? "") ?? 0,
       vendorName: json["name"] ?? "",
       phoneNumber: json["mobile"] ?? "",
       countryCode: json["country_code"] ?? "",

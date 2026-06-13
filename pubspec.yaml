@@ -43,7 +43,6 @@ dependencies:
   flutter_svg: ^2.2.0
   barcode_image: ^2.0.3
   image: ^4.5.4
-  printer: ^0.0.5
   printing: ^5.14.2
   pdf: ^3.11.3
   intl_phone_field: ^3.2.0

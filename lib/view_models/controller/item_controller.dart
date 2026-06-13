@@ -6,6 +6,7 @@ import 'dart:typed_data';
 import 'package:dmj_stock_manager/model/product_models/hsn_model.dart';
 import 'package:dmj_stock_manager/model/product_models/product_model.dart';
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
+import 'package:dmj_stock_manager/utils/response_list.dart';
 import 'package:dmj_stock_manager/view_models/controller/base_controller.dart';
 import 'package:dmj_stock_manager/view_models/services/items_service%20.dart';
 import 'package:flutter/foundation.dart';
@@ -81,8 +82,8 @@ class ItemController extends GetxController with BaseController {
       } else {
         filteredProducts.assignAll(
           products.where(
-                (product) =>
-            product.name.toLowerCase().contains(query) ||
+            (product) =>
+                product.name.toLowerCase().contains(query) ||
                 product.sku.toLowerCase().contains(query),
           ),
         );
@@ -90,7 +91,7 @@ class ItemController extends GetxController with BaseController {
     });
   }
 
-  void enterSelectionMode(int productId){
+  void enterSelectionMode(int productId) {
     isSelectedMode.value = true;
     selectedProductIds.add(productId);
   }
@@ -100,11 +101,11 @@ class ItemController extends GetxController with BaseController {
     selectedProductIds.clear();
   }
 
-  void toggleSelection(int productId){
-    if(selectedProductIds.contains(productId)){
+  void toggleSelection(int productId) {
+    if (selectedProductIds.contains(productId)) {
       selectedProductIds.remove(productId);
       if (selectedProductIds.isEmpty) exitSelectionMode();
-    }else{
+    } else {
       selectedProductIds.add(productId);
     }
   }
@@ -131,7 +132,8 @@ class ItemController extends GetxController with BaseController {
   Future<void> _uploadImageAtIndex(File image, int index) async {
     uploadingIndices.add(index);
     try {
-      if (kDebugMode) print("📤 Uploading image at index $index: ${image.path}");
+      if (kDebugMode)
+        print("📤 Uploading image at index $index: ${image.path}");
       final String path = await itemService.uploadImage(image);
 
       if (index < uploadedImagePaths.length) {
@@ -197,8 +199,10 @@ class ItemController extends GetxController with BaseController {
     isLoading.value = true;
     try {
       final response = await itemService.showProducts();
-      final List<dynamic> data = response;
-      products.value = data.map<ProductModel>((item) => ProductModel.fromJson(item)).toList();
+      final data = responseList(response);
+      products.value = data
+          .map<ProductModel>((item) => ProductModel.fromJson(item))
+          .toList();
       products.sort((a, b) => b.id.compareTo(a.id));
       filteredProducts.assignAll(products);
       print("✅ Products fetched: ${products.length}");
@@ -217,34 +221,34 @@ class ItemController extends GetxController with BaseController {
   //                     false → send size string from dropdown
   // ─────────────────────────────────────────────────────────────────────────
   Future<void> addProduct(
-      String vendorId,
-      String color,
-      String size, // used when isMultiLabelSize = false
-      String material,
-      String purchasePrice,
-      int? hsn,
-      String? description, {
-        bool isMultiLabelSize = false,
-        String? unit,
-        String? length,
-        String? width,
-        String? height,
-      }) async {
+    String vendorId,
+    String color,
+    String size, // used when isMultiLabelSize = false
+    String material,
+    String purchasePrice,
+    int? hsn,
+    String? description, {
+    bool isMultiLabelSize = false,
+    String? unit,
+    String? length,
+    String? width,
+    String? height,
+  }) async {
     if (isAnyImageUploading) {
       AppAlerts.error("Please wait, images are still uploading...");
       return;
     }
 
-    final List<String> validPaths = uploadedImagePaths.where((p) => p.isNotEmpty).toList();
+    final List<String> validPaths =
+        uploadedImagePaths.where((p) => p.isNotEmpty).toList();
     if (validPaths.isEmpty) {
       AppAlerts.error("Please select at least one product image");
       return;
     }
 
     // ✅ Compute final size string for backend
-    final String finalSize = isMultiLabelSize
-        ? _buildSizeString(length, width, height, unit)
-        : size;
+    final String finalSize =
+        isMultiLabelSize ? _buildSizeString(length, width, height, unit) : size;
 
     Map<String, dynamic> fields = {
       "vendor": vendorId,
@@ -256,8 +260,12 @@ class ItemController extends GetxController with BaseController {
       "unit_purchase_price": purchasePrice,
       "hsn": hsn,
       "desc": description,
-      "weight_before": weightBefore.value.text.trim().isEmpty ? null : weightBefore.value.text.trim(),
-      "weight_after": weightAfter.value.text.trim().isEmpty ? null : weightAfter.value.text.trim(),
+      "weight_before": weightBefore.value.text.trim().isEmpty
+          ? null
+          : weightBefore.value.text.trim(),
+      "weight_after": weightAfter.value.text.trim().isEmpty
+          ? null
+          : weightAfter.value.text.trim(),
     };
 
     // ✅ Send individual dimension fields only for multi-label
@@ -275,7 +283,8 @@ class ItemController extends GetxController with BaseController {
         for (final p in validPaths) print("  → $p");
       }
 
-      final response = await itemService.addProductApi(fields: fields, imagePaths: validPaths);
+      final response = await itemService.addProductApi(
+          fields: fields, imagePaths: validPaths);
       ProductModel.fromJson(response);
       await getProducts();
       AppAlerts.success("Product added successfully");
@@ -313,13 +322,14 @@ class ItemController extends GetxController with BaseController {
     }
 
     // ✅ Determine image paths to send
-    final List<String> newPaths = uploadedImagePaths.where((p) => p.isNotEmpty).toList();
-    final List<String> pathsToSend = newPaths.isNotEmpty ? newPaths : existingImageUrls.toList();
+    final List<String> newPaths =
+        uploadedImagePaths.where((p) => p.isNotEmpty).toList();
+    final List<String> pathsToSend =
+        newPaths.isNotEmpty ? newPaths : existingImageUrls.toList();
 
     // ✅ Compute final size
-    final String finalSize = isMultiLabelSize
-        ? _buildSizeString(length, width, height, unit)
-        : size;
+    final String finalSize =
+        isMultiLabelSize ? _buildSizeString(length, width, height, unit) : size;
 
     Map<String, dynamic> fields = {
       "vendor": vendorId,
@@ -331,8 +341,12 @@ class ItemController extends GetxController with BaseController {
       "unit_purchase_price": purchasePrice,
       "hsn": hsnId,
       "desc": description,
-      "weight_before": weightBefore.value.text.trim().isEmpty ? null : weightBefore.value.text.trim(),
-      "weight_after": weightAfter.value.text.trim().isEmpty ? null : weightAfter.value.text.trim(),
+      "weight_before": weightBefore.value.text.trim().isEmpty
+          ? null
+          : weightBefore.value.text.trim(),
+      "weight_after": weightAfter.value.text.trim().isEmpty
+          ? null
+          : weightAfter.value.text.trim(),
     };
 
     if (isMultiLabelSize) {
@@ -374,8 +388,11 @@ class ItemController extends GetxController with BaseController {
   }
 
   // ✅ Build size string from dimensions: "10X5X3CM"
-  String _buildSizeString(String? length, String? width, String? height, String? unit) {
-    final parts = [length, width, height].where((v) => v != null && v.isNotEmpty).toList();
+  String _buildSizeString(
+      String? length, String? width, String? height, String? unit) {
+    final parts = [length, width, height]
+        .where((v) => v != null && v.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return '';
     final dims = parts.join('X');
     final u = (unit != null && unit.isNotEmpty) ? unit : '';
@@ -480,7 +497,10 @@ class ItemController extends GetxController with BaseController {
   Future<void> exportProductListToExcel() async {
     try {
       var status = await Permission.storage.request();
-      if (!status.isGranted) { AppAlerts.error("Storage permission required"); return; }
+      if (!status.isGranted) {
+        AppAlerts.error("Storage permission required");
+        return;
+      }
       final Workbook workbook = Workbook();
       final Worksheet sheet = workbook.worksheets[0];
       sheet.getRangeByName('A1').setText('ID');
@@ -514,10 +534,15 @@ class ItemController extends GetxController with BaseController {
   }
 
   void toggleProduct(ProductModel product) {
-    if (selectedProducts.contains(product)) { selectedProducts.remove(product); }
-    else { selectedProducts.add(product); }
+    if (selectedProducts.contains(product)) {
+      selectedProducts.remove(product);
+    } else {
+      selectedProducts.add(product);
+    }
   }
-  void selectAll(List<ProductModel> products) => selectedProducts.assignAll(products);
+
+  void selectAll(List<ProductModel> products) =>
+      selectedProducts.assignAll(products);
   void clearSelection() => selectedProducts.clear();
 
   Future<void> getHsnList() async {
@@ -525,7 +550,8 @@ class ItemController extends GetxController with BaseController {
       isLoading.value = true;
       final response = await itemService.hsnCodeList();
       if (response is! List) throw Exception("Invalid HSN response format");
-      hsnList.assignAll(response.map<HsnGstModel>((e) => HsnGstModel.fromJson(e)).toList());
+      hsnList.assignAll(
+          response.map<HsnGstModel>((e) => HsnGstModel.fromJson(e)).toList());
       if (kDebugMode) print("✅ HSN List fetched: ${hsnList.length}");
     } catch (e) {
       if (kDebugMode) print("❌ HSN Error: $e");
@@ -537,14 +563,21 @@ class ItemController extends GetxController with BaseController {
 
   Future<void> addHsn(String hsnCode, double gstPercentage) async {
     final alreadyExistsLocally = hsnList.any((e) => e.hsnCode == hsnCode);
-    if (alreadyExistsLocally) { AppAlerts.error("This Hsn code already exists"); return; }
+    if (alreadyExistsLocally) {
+      AppAlerts.error("This Hsn code already exists");
+      return;
+    }
     try {
       isLoading.value = true;
-      final response = await itemService.addHsn({"hsn_code": hsnCode, "gst_percentage": gstPercentage});
+      final response = await itemService
+          .addHsn({"hsn_code": hsnCode, "gst_percentage": gstPercentage});
       final newHsn = HsnGstModel.fromJson(response);
       hsnList.add(newHsn);
       AppAlerts.success("Hsn added successfully");
-    } catch (e) { handleError(e); }
-    finally { isLoading.value = false; }
+    } catch (e) {
+      handleError(e);
+    } finally {
+      isLoading.value = false;
+    }
   }
 }

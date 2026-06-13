@@ -28,9 +28,11 @@ class OrderStatusSection extends StatelessWidget {
     2: 'Packed',
     3: 'In Transit',
     4: 'Delivered',
-    5: 'Courier Return',
-    6: 'Customer Return',
-    7: 'Return Received',
+    5: 'Cancelled',
+    6: 'Courier Return',
+    7: 'Customer Return',
+    8: 'Return Received',
+    9: 'Return Received',
   };
   static const _statusColors = {
     1: Color(0xFFFFF3CD),
@@ -39,7 +41,9 @@ class OrderStatusSection extends StatelessWidget {
     4: Color(0xFFD4EDDA),
     5: Color(0xFFF8D7DA),
     6: Color(0xFFFDE8D8),
-    7: Color(0xFFD0F0ED),
+    7: Color(0xFFE8E2FF),
+    8: Color(0xFFD0F0ED),
+    9: Color(0xFFD0F0ED),
   };
   static const _statusTextColors = {
     1: Color(0xFF7D5A00),
@@ -48,16 +52,20 @@ class OrderStatusSection extends StatelessWidget {
     4: Color(0xFF155724),
     5: Color(0xFF721C24),
     6: Color(0xFF7B3206),
-    7: Color(0xFF00574B),
+    7: Color(0xFF3B2483),
+    8: Color(0xFF00574B),
+    9: Color(0xFF00574B),
   };
   static const _statusIcons = {
     1: Icons.settings_outlined,
     2: Icons.inventory_2_outlined,
     3: Icons.local_shipping_outlined,
     4: Icons.check_circle_outline,
-    5: Icons.assignment_return_outlined,
-    6: Icons.keyboard_return_outlined,
-    7: Icons.check_circle_outline,
+    5: Icons.cancel_outlined,
+    6: Icons.assignment_return_outlined,
+    7: Icons.keyboard_return_outlined,
+    8: Icons.check_circle_outline,
+    9: Icons.check_circle_outline,
   };
 
   String _label(int s) => _statusLabels[s] ?? 'Unknown';
@@ -89,10 +97,10 @@ class OrderStatusSection extends StatelessWidget {
 
   // ── Timeline builder — uses real log timestamps ───────────────────────────
   List<_TimelineStep> _buildTimeline(
-      int currentStatus,
-      DateTime createdAt,
-      List<OrderStatusLog> logs,
-      ) {
+    int currentStatus,
+    DateTime createdAt,
+    List<OrderStatusLog> logs,
+  ) {
     final steps = <_TimelineStep>[];
 
     // Step 0: Order Created
@@ -102,6 +110,17 @@ class OrderStatusSection extends StatelessWidget {
       subtitle: DateFormat('dd MMM yyyy, hh:mm a').format(createdAt.toLocal()),
       isDone: true,
     ));
+
+    if (currentStatus == 5) {
+      steps.add(_TimelineStep(
+        icon: Icons.cancel_outlined,
+        title: 'Cancelled',
+        subtitle: _formatLogDate(_logFor(logs, 5)?.createdAt),
+        isDone: true,
+        isLast: true,
+      ));
+      return steps;
+    }
 
     // Packed
     if (currentStatus >= 2) {
@@ -138,12 +157,15 @@ class OrderStatusSection extends StatelessWidget {
       return steps; // terminal — aage kuch nahi
     }
 
-    // ✅ Status 5, 6, 7 ke liye — delivered log exist kare to dikhao
+    // Return statuses ke liye delivered log exist kare to dikhao.
     final deliveredLog = _logFor(logs, 4);
-    final isCustomerReturnPath = currentStatus == 6 ||
-        (currentStatus == 7 && _logFor(logs, 6) != null);
+    final isReturnPath = currentStatus == 6 ||
+        currentStatus == 7 ||
+        currentStatus == 8 ||
+        _logFor(logs, 6) != null ||
+        _logFor(logs, 7) != null;
 
-    if (deliveredLog != null || isCustomerReturnPath) {
+    if (deliveredLog != null || isReturnPath) {
       steps.add(_TimelineStep(
         icon: Icons.check_circle_outline,
         title: 'Delivered',
@@ -156,17 +178,17 @@ class OrderStatusSection extends StatelessWidget {
     }
 
     // ✅ Courier Return
-    final courierReturnLog = _logFor(logs, 5);
-    if (courierReturnLog != null || currentStatus == 5) {
+    final courierReturnLog = _logFor(logs, 6);
+    if (courierReturnLog != null || currentStatus == 6) {
       steps.add(_TimelineStep(
         icon: Icons.assignment_return_outlined,
         title: 'Courier Return',
         subtitle: _formatLogDate(courierReturnLog?.createdAt),
         isDone: courierReturnLog != null,
         isReturn: true,
-        isLast: currentStatus == 5, // ✅ 7 pending ho to last nahi
+        isLast: currentStatus == 6,
       ));
-      if (currentStatus == 5) {
+      if (currentStatus == 6) {
         // pending step
         steps.add(_TimelineStep(
           icon: Icons.inventory_2_outlined,
@@ -180,17 +202,17 @@ class OrderStatusSection extends StatelessWidget {
     }
 
     // ✅ Customer Return
-    final customerReturnLog = _logFor(logs, 6);
-    if (customerReturnLog != null || currentStatus == 6) {
+    final customerReturnLog = _logFor(logs, 7);
+    if (customerReturnLog != null || currentStatus == 7) {
       steps.add(_TimelineStep(
         icon: Icons.keyboard_return_outlined,
         title: 'Customer Return',
         subtitle: _formatLogDate(customerReturnLog?.createdAt),
         isDone: customerReturnLog != null,
         isReturn: true,
-        isLast: currentStatus == 6,
+        isLast: currentStatus == 7,
       ));
-      if (currentStatus == 6) {
+      if (currentStatus == 7) {
         steps.add(_TimelineStep(
           icon: Icons.inventory_2_outlined,
           title: 'Mark Return Received',
@@ -203,8 +225,8 @@ class OrderStatusSection extends StatelessWidget {
     }
 
     // ✅ Return Received
-    if (currentStatus == 7) {
-      final log = _logFor(logs, 7);
+    if (currentStatus == 8) {
+      final log = _logFor(logs, 8);
       steps.add(_TimelineStep(
         icon: Icons.inventory_2_outlined,
         title: 'Return Received',
@@ -241,7 +263,6 @@ class OrderStatusSection extends StatelessWidget {
         isLast: true,
       ));
     }
-
     return steps;
   }
 
@@ -340,21 +361,34 @@ class OrderStatusSection extends StatelessWidget {
 
     switch (currentStatus) {
       case 1:
-        return AppGradientButton(
-          onPressed: () => PackOrderBottomSheet.show(context, orderId: orderId),
-          text: 'Pack the Order',
-          icon: Icons.inventory_2_outlined,
-          width: double.infinity,
-          height: 50,
+        return Column(
+          children: [
+            AppGradientButton(
+              onPressed: () =>
+                  PackOrderBottomSheet.show(context, orderId: orderId),
+              text: 'Pack the Order',
+              icon: Icons.inventory_2_outlined,
+              width: double.infinity,
+              height: 50,
+            ),
+            const SizedBox(height: 10),
+            _CancelOrderButton(orderId: orderId),
+          ],
         );
 
       case 2:
-        return AppGradientButton(
-          onPressed: () => showShippingDetailsBottomSheet(context, orderId),
-          text: 'Create Shipment',
-          icon: Icons.local_shipping_outlined,
-          width: double.infinity,
-          height: 50,
+        return Column(
+          children: [
+            AppGradientButton(
+              onPressed: () => showShippingDetailsBottomSheet(context, orderId),
+              text: 'Create Shipment',
+              icon: Icons.local_shipping_outlined,
+              width: double.infinity,
+              height: 50,
+            ),
+            const SizedBox(height: 10),
+            _CancelOrderButton(orderId: orderId),
+          ],
         );
 
       case 3:
@@ -372,34 +406,17 @@ class OrderStatusSection extends StatelessWidget {
               height: 50,
             ),
             const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: AppGradientButton(
-                    onPressed: () {
-                      final o = ctrl.orders.firstWhereOrNull(
-                        (o) => o.id == orderId,
-                      );
-                      if (o != null) showCourierReturnDialog(context, o);
-                    },
-                    text: 'Courier Return',
-                    height: 50,
-                  ),
-                ),
-                // const SizedBox(width: 12),
-                // Expanded(
-                //   child: AppGradientButton(
-                //     onPressed: () {
-                //       final o = ctrl.orders.firstWhereOrNull(
-                //         (o) => o.id == orderId,
-                //       );
-                //       if (o != null) showCustomerReturnDialog(context, o);
-                //     },
-                //     text: 'Customer Return',
-                //     height: 50,
-                //   ),
-                // ),
-              ],
+            AppGradientButton(
+              onPressed: () {
+                final o = ctrl.orders.firstWhereOrNull(
+                  (o) => o.id == orderId,
+                );
+                if (o != null) showCourierReturnDialog(context, o);
+              },
+              text: 'Courier Return',
+              icon: Icons.assignment_return_outlined,
+              width: double.infinity,
+              height: 50,
             ),
           ],
         );
@@ -415,12 +432,12 @@ class OrderStatusSection extends StatelessWidget {
           width: double.infinity,
           height: 50,
         );
-      case 5: // ✅ NEW — Courier Return ke baad
-      case 6: // ✅ NEW — Customer Return ke baad
+      case 6:
+      case 7:
         return AppGradientButton(
           onPressed: () async => ctrl.updateOrderStatus(
             orderId: orderId,
-            status: 7,
+            status: 8,
             note: "Return Received",
           ),
           text: 'Mark Return Received',
@@ -428,7 +445,10 @@ class OrderStatusSection extends StatelessWidget {
           width: double.infinity,
           height: 50,
         );
-      default: // 5, 6 — terminal, no button
+      case 8:
+      case 9:
+        return const _NoFurtherActionButton();
+      default:
         return const SizedBox.shrink();
     }
   }
@@ -551,7 +571,7 @@ class OrderStatusSection extends StatelessWidget {
             ),
 
             // ── Packed dimensions card (shown when status >= 2) ───────────
-            if (currentStatus >= 2) ...[
+            if (currentStatus >= 2 && currentStatus != 5) ...[
               const SizedBox(height: 12),
               Builder(
                 builder: (_) {
@@ -568,7 +588,7 @@ class OrderStatusSection extends StatelessWidget {
               ),
             ],
             // ── Shipping details (status >= 3) ──
-            if (currentStatus >= 3) ...[
+            if (currentStatus >= 3 && currentStatus != 5) ...[
               const SizedBox(height: 12),
               ShippingInfoCard(orderId: orderId),
             ],
@@ -587,7 +607,7 @@ class OrderStatusSection extends StatelessWidget {
             // ],
             // const SizedBox(height: 10),
             // ✅ Passes log-derived status — buttons now match API truth
-            if (currentStatus < 7) ...[
+            if (currentStatus < 8 && currentStatus != 5) ...[
               Text(
                 'Next Step',
                 style: TextStyle(
@@ -793,6 +813,91 @@ class _TimelineStep {
   });
 }
 
+class _CancelOrderButton extends StatelessWidget {
+  const _CancelOrderButton({required this.orderId});
+
+  final int orderId;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: OutlinedButton.icon(
+        onPressed: () => _confirmCancel(context),
+        icon: const Icon(Icons.cancel_outlined, size: 18),
+        label: const Text('Cancel Order'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: const Color(0xFFE53935),
+          side: const BorderSide(color: Color(0xFFE53935)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _confirmCancel(BuildContext context) {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('Cancel Order'),
+        content: const Text('Are you sure you want to cancel this order?'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              Get.find<OrderController>().cancelOrder(orderId);
+            },
+            child: const Text('Yes, Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NoFurtherActionButton extends StatelessWidget {
+  const _NoFurtherActionButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      height: 50,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.check_circle_outline,
+              size: 18, color: Colors.grey.shade600),
+          const SizedBox(width: 8),
+          Text(
+            'No further action required',
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _TimelineItemWidget extends StatelessWidget {
   const _TimelineItemWidget({required this.step});
   final _TimelineStep step;
@@ -802,8 +907,8 @@ class _TimelineItemWidget extends StatelessWidget {
     final dotColor = step.isReturn
         ? Colors.red.shade400
         : step.isDone
-        ? const Color(0xFF1A1A4F)
-        : Colors.grey.shade300;
+            ? const Color(0xFF1A1A4F)
+            : Colors.grey.shade300;
 
     return IntrinsicHeight(
       child: Row(
@@ -853,9 +958,8 @@ class _TimelineItemWidget extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: step.isDone
-                          ? Colors.black87
-                          : Colors.grey.shade400,
+                      color:
+                          step.isDone ? Colors.black87 : Colors.grey.shade400,
                     ),
                   ),
                   const SizedBox(height: 2),

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../model/bills_model/bill_response_model.dart';
+import '../../res/app_url/app_url.dart';
 import '../../res/components/widgets/company_details_form_sheet.dart';
 
 class BillDetailScreen extends StatelessWidget {
@@ -23,10 +24,10 @@ class BillDetailScreen extends StatelessWidget {
   /// 2. If user submits valid details, generates the PDF.
   /// 3. Shows a loader overlay while generating.
   Future<void> _handlePdfAction(
-      BuildContext context,
-      BillModel bill,
-      String action, // 'share' | 'download'
-      ) async {
+    BuildContext context,
+    BillModel bill,
+    String action, // 'share' | 'download'
+  ) async {
     // Open bottom sheet — pre-fill with last used details from this session.
     final details = await CompanyDetailsFormSheet.show(
       context,
@@ -65,14 +66,14 @@ class BillDetailScreen extends StatelessWidget {
     final Color statusColor = isPaid
         ? Colors.green
         : isPartiallyPaid
-        ? Colors.orange
-        : Colors.red;
+            ? Colors.orange
+            : Colors.red;
 
     final String statusText = isPaid
         ? 'PAID'
         : isPartiallyPaid
-        ? 'PARTIALLY PAID'
-        : 'PENDING';
+            ? 'PARTIALLY PAID'
+            : 'PENDING';
 
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
@@ -149,7 +150,7 @@ class BillDetailScreen extends StatelessWidget {
 
                         // ── Share button (intercepted) ─────────────
                         Obx(
-                              () => _HeaderIconButton(
+                          () => _HeaderIconButton(
                             icon: Icons.share_rounded,
                             isLoading: billingController.isGeneratingPdf.value,
                             onPressed: () =>
@@ -159,7 +160,7 @@ class BillDetailScreen extends StatelessWidget {
 
                         // ── Download button (intercepted) ──────────
                         Obx(
-                              () => _HeaderIconButton(
+                          () => _HeaderIconButton(
                             icon: Icons.download_rounded,
                             isLoading: billingController.isGeneratingPdf.value,
                             onPressed: () =>
@@ -409,11 +410,11 @@ class BillDetailScreen extends StatelessWidget {
   }
 
   Widget _buildDetailRow(
-      String label,
-      String value,
-      IconData icon, {
-        int maxLines = 1,
-      }) {
+    String label,
+    String value,
+    IconData icon, {
+    int maxLines = 1,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -445,11 +446,11 @@ class BillDetailScreen extends StatelessWidget {
   }
 
   Widget _buildAmountRow(
-      String label,
-      double amount, {
-        Color? color,
-        bool isBold = false,
-      }) {
+    String label,
+    double amount, {
+    Color? color,
+    bool isBold = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -531,7 +532,7 @@ class BillDetailScreen extends StatelessWidget {
                 const Spacer(),
                 Container(
                   padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: const Color(0xFF1A1A4F),
                     borderRadius: BorderRadius.circular(20),
@@ -571,13 +572,13 @@ class BillDetailScreen extends StatelessWidget {
     final totalPrice = item.quantity * item.unitPrice;
 
     final String? imageUrl =
-    product.imageVariants.isNotEmpty ? product.imageVariants[0] : null;
+        product.imageVariants.isNotEmpty ? product.imageVariants[0] : null;
 
     // HSN lookup
     String hsnDisplay = 'N/A';
     if (product.hsn != null) {
       final hsnModel = itemController.hsnList.firstWhereOrNull(
-            (h) => h.id == product.hsn,
+        (h) => h.id == product.hsn,
       );
       hsnDisplay = hsnModel?.hsnCode ?? 'HSN ID: ${product.hsn}';
     }
@@ -613,18 +614,18 @@ class BillDetailScreen extends StatelessWidget {
                         ),
                         child: imageUrl != null && imageUrl.isNotEmpty
                             ? Image.network(
-                          'https://traders.testwebs.in$imageUrl',
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
-                            Icons.image_not_supported_rounded,
-                            color: Colors.grey,
-                          ),
-                        )
+                                AppUrl.mediaUrl(imageUrl),
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.image_not_supported_rounded,
+                                  color: Colors.grey,
+                                ),
+                              )
                             : Icon(
-                          Icons.image_outlined,
-                          color: Colors.grey.shade400,
-                          size: 35,
-                        ),
+                                Icons.image_outlined,
+                                color: Colors.grey.shade400,
+                                size: 35,
+                              ),
                       ),
                     ),
                     Positioned(
@@ -668,8 +669,8 @@ class BillDetailScreen extends StatelessWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.qr_code, size: 12,
-                              color: Colors.grey),
+                          const Icon(Icons.qr_code,
+                              size: 12, color: Colors.grey),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -862,19 +863,19 @@ class _HeaderIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return isLoading
         ? const Padding(
-      padding: EdgeInsets.all(12),
-      child: SizedBox(
-        width: 20,
-        height: 20,
-        child: CircularProgressIndicator(
-          strokeWidth: 2,
-          color: Colors.white70,
-        ),
-      ),
-    )
+            padding: EdgeInsets.all(12),
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white70,
+              ),
+            ),
+          )
         : IconButton(
-      icon: Icon(icon, color: Colors.white),
-      onPressed: onPressed,
-    );
+            icon: Icon(icon, color: Colors.white),
+            onPressed: onPressed,
+          );
   }
 }

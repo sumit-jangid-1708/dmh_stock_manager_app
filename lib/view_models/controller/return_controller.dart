@@ -38,7 +38,7 @@ class ReturnController extends GetxController with BaseController {
     try {
       isLoading.value = true;
       final CourierReturnResponse response =
-      await returnService.courierReturnApi(body);
+          await returnService.courierReturnApi(body);
 
       // ✅ Close return form dialog
       Get.back();
@@ -65,10 +65,17 @@ class ReturnController extends GetxController with BaseController {
     required CustomerReturnRequest request,
     VoidCallback? onSuccess,
   }) async {
+    await customerReturnRaw(body: request.toJson(), onSuccess: onSuccess);
+  }
+
+  Future<void> customerReturnRaw({
+    required Map<String, dynamic> body,
+    VoidCallback? onSuccess,
+  }) async {
     try {
       isLoading.value = true;
       final CustomerReturnResponse response =
-      await returnService.customerReturnApi(request.toJson());
+          await returnService.customerReturnApi(body);
 
       // ✅ Close return form dialog
       Get.back();
@@ -153,22 +160,21 @@ class ReturnController extends GetxController with BaseController {
     final Color statusColor = newStatus == "in_stock"
         ? Colors.green
         : newStatus == "damaged"
-        ? Colors.orange
-        : Colors.grey;
+            ? Colors.orange
+            : Colors.grey;
 
     // Condition color
     final Color conditionColor = condition == "SAFE"
         ? Colors.green
         : condition == "DAMAGED"
-        ? Colors.orange
-        : Colors.red;
+            ? Colors.orange
+            : Colors.red;
 
     Get.dialog(
       Dialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        insetPadding:
-        const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
         child: Container(
           padding: const EdgeInsets.all(20),
           constraints: const BoxConstraints(maxHeight: 500),
@@ -257,71 +263,68 @@ class ReturnController extends GetxController with BaseController {
                   ),
                   child: serialsProcessed.isEmpty
                       ? const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text(
-                      "No serials were processed",
-                      style:
-                      TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  )
+                          padding: EdgeInsets.all(16),
+                          child: Text(
+                            "No serials were processed",
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                        )
                       : ListView.separated(
-                    shrinkWrap: true,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
-                    itemCount: serialsProcessed.length,
-                    separatorBuilder: (_, __) =>
-                        Divider(color: Colors.grey.shade200, height: 1),
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding:
-                        const EdgeInsets.symmetric(vertical: 6),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 22,
-                              height: 22,
-                              decoration: BoxDecoration(
-                                color: primaryColor.withOpacity(0.1),
-                                borderRadius:
-                                BorderRadius.circular(4),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  "${index + 1}",
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: primaryColor,
+                          shrinkWrap: true,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          itemCount: serialsProcessed.length,
+                          separatorBuilder: (_, __) =>
+                              Divider(color: Colors.grey.shade200, height: 1),
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 22,
+                                    height: 22,
+                                    decoration: BoxDecoration(
+                                      color: primaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        "${index + 1}",
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: primaryColor,
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      serialsProcessed[index],
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontFamily: 'monospace',
+                                        fontWeight: FontWeight.w600,
+                                        color: primaryColor,
+                                      ),
+                                    ),
+                                  ),
+                                  // Status dot
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: statusColor,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                serialsProcessed[index],
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontFamily: 'monospace',
-                                  fontWeight: FontWeight.w600,
-                                  color: primaryColor,
-                                ),
-                              ),
-                            ),
-                            // Status dot
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: statusColor,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
               ),
 
@@ -393,7 +396,6 @@ class ReturnController extends GetxController with BaseController {
       final response = await returnService.getReturnReport();
 
       returnReport.value = ReturnReportResponse.fromJson(response);
-
     } catch (e) {
       handleError(e);
       debugPrint("Return Report Error: $e");
@@ -402,4 +404,3 @@ class ReturnController extends GetxController with BaseController {
     }
   }
 }
-

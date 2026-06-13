@@ -1,5 +1,4 @@
 import 'package:dmj_stock_manager/model/customer_return/customer_return_enum.dart';
-import 'package:dmj_stock_manager/model/customer_return/customer_return_request.dart';
 import 'package:dmj_stock_manager/model/order_models/order_model.dart';
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
 import 'package:dmj_stock_manager/utils/utils.dart';
@@ -17,9 +16,15 @@ void showCustomerReturnDialog(BuildContext context, OrderDetailModel order) {
   final selectedProduct = Rx<OrderItem?>(null);
   final qtyController = TextEditingController();
   final refundAmountController = TextEditingController();
+  final returnChargesController = TextEditingController();
   final reasonController = TextEditingController();
+  final remarksController = TextEditingController();
 
   final condition = Rx<CustomerReturnCondition?>(null);
+  final claimStatus = "NOT_CLAIMED".obs;
+  final approvalStatus = "APPROVED".obs;
+  final receiveDate = Rx<DateTime?>(DateTime.now());
+  final returnReason = "".obs;
   final conditions = [
     CustomerReturnCondition.safe,
     CustomerReturnCondition.damaged,
@@ -74,7 +79,8 @@ void showCustomerReturnDialog(BuildContext context, OrderDetailModel order) {
             const SizedBox(height: 20),
 
             // Product Selection Dropdown
-            Obx(() => DropdownButtonFormField<OrderItem>(
+            Obx(
+              () => DropdownButtonFormField<OrderItem>(
                 isExpanded: true,
                 value: selectedProduct.value,
                 decoration: Utils.inputDecoration(
@@ -98,7 +104,9 @@ void showCustomerReturnDialog(BuildContext context, OrderDetailModel order) {
                   qtyController.clear();
                   condition.value = null;
                   refundAmountController.text = "0";
+                  returnChargesController.clear();
                   reasonController.clear();
+                  remarksController.clear();
                 },
               ),
             ),
@@ -117,41 +125,167 @@ void showCustomerReturnDialog(BuildContext context, OrderDetailModel order) {
 
             // Condition Dropdown
             Obx(() => DropdownButtonFormField<CustomerReturnCondition>(
-              value: condition.value,
-              decoration: Utils.inputDecoration(
-                "Condition *",
-                Icons.info_outline,
-              ),
-              hint: const Text("Select condition"),
-              items: conditions.map((c) {
-                return DropdownMenuItem(
-                  value: c,
-                  child: Text(c.apiValue),
-                );
-              }).toList(),
-              onChanged: (val) {
-                condition.value = val;
-                refundAmountController.text="";
-              },
-            )),
+                  value: condition.value,
+                  decoration: Utils.inputDecoration(
+                    "Condition *",
+                    Icons.info_outline,
+                  ),
+                  hint: const Text("Select condition"),
+                  items: conditions.map((c) {
+                    return DropdownMenuItem(
+                      value: c,
+                      child: Text(c.apiValue),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    condition.value = val;
+                    refundAmountController.text = "";
+                    returnChargesController.clear();
+                    reasonController.clear();
+                    remarksController.clear();
+                  },
+                )),
+
+            const SizedBox(height: 16),
+
+            Obx(() => DropdownButtonFormField<String>(
+                  value: claimStatus.value,
+                  decoration: Utils.inputDecoration(
+                    "Claim Status *",
+                    Icons.verified_outlined,
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: "NOT_CLAIMED",
+                      child: Text("Not Claimed"),
+                    ),
+                    DropdownMenuItem(value: "CLAIMED", child: Text("Claimed")),
+                  ],
+                  onChanged: (val) {
+                    if (val == null) return;
+                    claimStatus.value = val;
+                    approvalStatus.value = "APPROVED";
+                  },
+                )),
+
+            Obx(() {
+              if (claimStatus.value != "CLAIMED") {
+                return const SizedBox.shrink();
+              }
+              return Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: DropdownButtonFormField<String>(
+                  value: approvalStatus.value,
+                  decoration: Utils.inputDecoration(
+                    "Approval Status *",
+                    Icons.assignment_turned_in_outlined,
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: "APPROVED",
+                      child: Text("Approved"),
+                    ),
+                    DropdownMenuItem(
+                      value: "NOT_APPROVED",
+                      child: Text("Not Approved"),
+                    ),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) approvalStatus.value = val;
+                  },
+                ),
+              );
+            }),
 
             const SizedBox(height: 16),
 
             // Refund Amount
             AppTextField(
               controller: refundAmountController,
-              hintText: "Refund Amount *",
+              hintText: "Return Amount",
               prefixIcon: Icons.currency_rupee,
               keyboardType: TextInputType.number,
             ),
 
             const SizedBox(height: 16),
 
+            AppTextField(
+              controller: returnChargesController,
+              hintText: "Return Charges",
+              prefixIcon: Icons.receipt_long_outlined,
+              keyboardType: TextInputType.number,
+            ),
+
+            const SizedBox(height: 16),
+
+            Obx(
+              () => InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: receiveDate.value ?? DateTime.now(),
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (picked != null) receiveDate.value = picked;
+                },
+                child: InputDecorator(
+                  decoration: Utils.inputDecoration(
+                    "Receive Date",
+                    Icons.calendar_today_outlined,
+                  ),
+                  child: Text(
+                    receiveDate.value == null
+                        ? "Select date"
+                        : "${receiveDate.value!.year.toString().padLeft(4, '0')}-${receiveDate.value!.month.toString().padLeft(2, '0')}-${receiveDate.value!.day.toString().padLeft(2, '0')}",
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            Obx(() => DropdownButtonFormField<String>(
+                  value: returnReason.value.isEmpty ? null : returnReason.value,
+                  decoration: Utils.inputDecoration(
+                    "Return Reason",
+                    Icons.report_problem_outlined,
+                  ),
+                  hint: const Text("Select Return Reason"),
+                  items: const [
+                    DropdownMenuItem(
+                      value: "AGENT_ERROR",
+                      child: Text("Agent Error"),
+                    ),
+                    DropdownMenuItem(
+                      value: "LACK_OF_STOCK",
+                      child: Text("Lack of Stock"),
+                    ),
+                    DropdownMenuItem(
+                      value: "CUSTOMER_ERROR",
+                      child: Text("Customer Error"),
+                    ),
+                  ],
+                  onChanged: (val) => returnReason.value = val ?? "",
+                )),
+
+            const SizedBox(height: 16),
+
             // Reason
             AppTextField(
               controller: reasonController,
-              hintText: "Reason for Return *",
+              hintText: "Optional reason details",
               prefixIcon: Icons.note_outlined,
+              maxLines: 3,
+            ),
+
+            const SizedBox(height: 16),
+
+            AppTextField(
+              controller: remarksController,
+              hintText: "Remarks",
+              prefixIcon: Icons.edit_note_outlined,
               maxLines: 3,
             ),
 
@@ -174,7 +308,9 @@ void showCustomerReturnDialog(BuildContext context, OrderDetailModel order) {
                   child: Row(
                     children: [
                       Icon(
-                        isSafe ? Icons.info_outline : Icons.warning_amber_rounded,
+                        isSafe
+                            ? Icons.info_outline
+                            : Icons.warning_amber_rounded,
                         color: isSafe
                             ? Colors.blue.shade700
                             : Colors.orange.shade700,
@@ -204,99 +340,114 @@ void showCustomerReturnDialog(BuildContext context, OrderDetailModel order) {
 
             // Submit Button
             Obx(() => SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1A1A4F),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1A1A4F),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: returnController.isLoading.value
+                        ? null
+                        : () async {
+                            // Validation
+                            if (selectedProduct.value == null) {
+                              AppAlerts.error("Please select a product");
+                              return;
+                            }
+
+                            final qty = int.tryParse(qtyController.text) ?? 0;
+                            if (qty <= 0) {
+                              AppAlerts.error("Please enter valid quantity");
+                              return;
+                            }
+
+                            if (condition.value == null) {
+                              AppAlerts.error("Please select condition");
+                              return;
+                            }
+
+                            // final refundAmount =
+                            //     double.tryParse(refundAmountController.text) ?? 0;
+                            final reasonText = reasonController.text.trim();
+                            final selectedReason = returnReason.value;
+                            final body = <String, dynamic>{
+                              "order_id": order.id,
+                              "product_id": selectedProduct.value!.productId,
+                              "quantity": qty,
+                              "condition": condition.value!.apiValue,
+                              "claim_status": claimStatus.value,
+                              if (claimStatus.value == "CLAIMED")
+                                "claim": approvalStatus.value
+                                    .toLowerCase()
+                                    .replaceAll("_", " "),
+                              if (refundAmountController.text.trim().isNotEmpty)
+                                "claim_amount": double.tryParse(
+                                      refundAmountController.text.trim(),
+                                    ) ??
+                                    0,
+                              if (returnChargesController.text
+                                  .trim()
+                                  .isNotEmpty)
+                                "return_charges": double.tryParse(
+                                      returnChargesController.text.trim(),
+                                    ) ??
+                                    0,
+                              if (receiveDate.value != null)
+                                "return_recive_date":
+                                    "${receiveDate.value!.year.toString().padLeft(4, '0')}-${receiveDate.value!.month.toString().padLeft(2, '0')}-${receiveDate.value!.day.toString().padLeft(2, '0')}",
+                              if (selectedReason == "AGENT_ERROR")
+                                "agent_error": reasonText.isEmpty
+                                    ? "Agent error"
+                                    : reasonText,
+                              if (selectedReason == "LACK_OF_STOCK")
+                                "lack_of_stock": reasonText.isEmpty
+                                    ? "Lack of stock"
+                                    : reasonText,
+                              if (selectedReason == "CUSTOMER_ERROR")
+                                "customer_error": reasonText.isEmpty
+                                    ? "Customer error"
+                                    : reasonText,
+                              if (remarksController.text.trim().isNotEmpty)
+                                "rmark": remarksController.text.trim(),
+                            };
+
+                            // ✅ Call ReturnController API with callback to refresh orders
+                            await returnController.customerReturnRaw(
+                              body: body,
+                              onSuccess: () {
+                                orderController.updateOrderStatus(
+                                  orderId: order.id,
+                                  status: 7,
+                                  note: "Customer Return",
+                                );
+                                // Refresh order list after success
+                                orderController.getOrderList();
+                                Get.toNamed(RouteName.returnScreen);
+                              },
+                            );
+                          },
+                    child: returnController.isLoading.value
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            "Submit Customer Return",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
-                ),
-                onPressed: returnController.isLoading.value
-                    ? null
-                    : () async {
-                  // Validation
-                  if (selectedProduct.value == null) {
-                    AppAlerts.error("Please select a product");
-                    return;
-                  }
-
-                  final qty = int.tryParse(qtyController.text) ?? 0;
-                  if (qty <= 0) {
-                    AppAlerts.error("Please enter valid quantity");
-                    return;
-                  }
-
-                  if (condition.value == null) {
-                    AppAlerts.error("Please select condition");
-                    return;
-                  }
-
-                  // final refundAmount =
-                  //     double.tryParse(refundAmountController.text) ?? 0;
-                  final refundText = refundAmountController.text.trim();
-                  if (refundText.isEmpty) {
-                    AppAlerts.error("Please enter refund amount");
-                    return;
-                  }
-                  final refundAmount = double.parse(refundText);
-
-                  if (refundAmount <= 0) {
-                    AppAlerts.error("Refund amount must be greater than 0");
-                    return;
-                  }
-
-                  if (reasonController.text.trim().isEmpty) {
-                    AppAlerts.error("Please provide reason for return");
-                    return;
-                  }
-
-                  // Create CustomerReturnRequest
-                  final request = CustomerReturnRequest(
-                    orderId: order.id,
-                    productId: selectedProduct.value!.productId,
-                    // channelId: order.channel,
-                    quantity: qty,
-                    condition: condition.value!,
-                    refundAmount: refundAmount,
-                    reason: reasonController.text.trim(),
-                  );
-
-                  // ✅ Call ReturnController API with callback to refresh orders
-                  await returnController.customerReturn(
-                    request: request,
-                    onSuccess: () {
-                      orderController.updateOrderStatus(
-                        orderId: order.id,
-                        status: 6,
-                        note: "Customer Return",
-                      );
-                      // Refresh order list after success
-                      orderController.getOrderList();
-                      Get.toNamed(RouteName.returnScreen);
-                    },
-                  );
-                },
-                child: returnController.isLoading.value
-                    ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
-                )
-                    : const Text(
-                  "Submit Customer Return",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            )),
+                )),
           ],
         ),
       ),

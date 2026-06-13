@@ -77,7 +77,6 @@ class StockScreen extends StatelessWidget {
                             ],
                           ),
                         ),
-
                         ElevatedButton.icon(
                           onPressed: () => showAddInventorySheet(context),
                           icon: Icon(Icons.add, size: 18),
@@ -255,14 +254,14 @@ class StockScreen extends StatelessWidget {
     Color statusColor = isOutOfStock
         ? Colors.red
         : isLowStock
-        ? Colors.orange
-        : Colors.green;
+            ? Colors.orange
+            : Colors.green;
 
     String statusText = isOutOfStock
         ? "OUT OF STOCK"
         : isLowStock
-        ? "LOW STOCK"
-        : "IN STOCK";
+            ? "LOW STOCK"
+            : "IN STOCK";
 
     return Container(
       margin: EdgeInsets.only(bottom: 12),
@@ -633,7 +632,7 @@ void showAdjustSheet(BuildContext context, String sku) {
   final deltaController = TextEditingController(text: "0");
   final noteController = TextEditingController();
   String? selectedReason;
-  final reasons = ["ORDER", "DAMAGED", "RETURN", "OTHER"];
+  final reasons = ["ORDER", "PURCHASE", "RETURN", "WPS", "ADJUST", "OTHER"];
 
   Get.bottomSheet(
     Container(

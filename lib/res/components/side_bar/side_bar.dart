@@ -1,8 +1,12 @@
 import 'package:dmj_stock_manager/res/assets/images_assets.dart';
 import 'package:dmj_stock_manager/res/routes/routes_names.dart';
 import 'package:dmj_stock_manager/view/billings/billing_screen.dart';
+import 'package:dmj_stock_manager/view/items/items_screen.dart';
+import 'package:dmj_stock_manager/view/orders/order_screen.dart';
+import 'package:dmj_stock_manager/view/orders/return_order_screen.dart';
 import 'package:dmj_stock_manager/view/orders/shipping_screen.dart';
 import 'package:dmj_stock_manager/view/purchase_screen/purchase_screen.dart';
+import 'package:dmj_stock_manager/view/vendors/vendor_screen.dart';
 import 'package:dmj_stock_manager/view_models/controller/dashboard_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -10,7 +14,8 @@ import '../../../view_models/controller/auth/auth_controller.dart';
 
 class Sidebar extends StatelessWidget {
   final Function(String) onItemTap;
-  final DashboardController dashboardController = Get.find<DashboardController>();
+  final DashboardController dashboardController =
+      Get.find<DashboardController>();
   final AuthController authController = Get.find<AuthController>();
 
   Sidebar({super.key, required this.onItemTap});
@@ -22,7 +27,8 @@ class Sidebar extends StatelessWidget {
     return Drawer(
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(topRight: Radius.circular(25), bottomRight: Radius.circular(25)),
+        borderRadius: BorderRadius.only(
+            topRight: Radius.circular(25), bottomRight: Radius.circular(25)),
       ),
       child: SafeArea(
         child: Column(
@@ -35,7 +41,8 @@ class Sidebar extends StatelessWidget {
               child: Image.asset(
                 ImageAssets.dmhLogo,
                 height: 70,
-                errorBuilder: (context, error, stackTrace) => const Icon(Icons.business, size: 50, color: primaryColor),
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.business, size: 50, color: primaryColor),
               ),
             ),
 
@@ -60,30 +67,54 @@ class Sidebar extends StatelessWidget {
                         Get.back();
                       },
                     ),
-                    _buildMenuItem(
-                      icon: Icons.inventory_2_outlined,
-                      title: "Inventory",
-                      onTap: () => Get.toNamed(RouteName.stockScreen),
-                    ),
-                    _buildMenuItem(
-                      icon: Icons.receipt_long_outlined,
-                      title: "Order Billings",
-                      onTap: () => Get.to( BillingScreen()),
-                    ),
-                    _buildMenuItem(
-                      icon: Icons.add_shopping_cart_rounded,
-                      title: "Purchase",
-                      onTap: () => Get.to(()=> PurchaseScreen()),
-                    ),
-
-                    // 🔒 History Button is now hidden (Commented out/Removed)
-
-                    _buildMenuItem(
-                      icon: Icons.local_shipping_outlined,
-                      title: "Shipping",
-                      onTap: () => Get.to(()=> ShippingScreen()),
-                    ),
-
+                    if (authController.canView("items"))
+                      _buildMenuItem(
+                        icon: Icons.grid_view_rounded,
+                        title: "Items",
+                        onTap: () => Get.to(() => ItemsScreen()),
+                      ),
+                    if (authController.canView("inventory"))
+                      _buildMenuItem(
+                        icon: Icons.inventory_2_outlined,
+                        title: "Inventory",
+                        onTap: () => Get.toNamed(RouteName.stockScreen),
+                      ),
+                    if (authController.canView("vendors"))
+                      _buildMenuItem(
+                        icon: Icons.people_alt_outlined,
+                        title: "Vendors",
+                        onTap: () => Get.to(() => VendorScreen()),
+                      ),
+                    if (authController.canView("orders"))
+                      _buildMenuItem(
+                        icon: Icons.shopping_cart_outlined,
+                        title: "Orders",
+                        onTap: () => Get.to(() => OrderScreen()),
+                      ),
+                    if (authController.canView("billing"))
+                      _buildMenuItem(
+                        icon: Icons.receipt_long_outlined,
+                        title: "Order Billings",
+                        onTap: () => Get.to(BillingScreen()),
+                      ),
+                    if (authController.canView("purchase"))
+                      _buildMenuItem(
+                        icon: Icons.add_shopping_cart_rounded,
+                        title: "Purchase",
+                        onTap: () => Get.to(() => PurchaseScreen()),
+                      ),
+                    if (authController.canView("orders"))
+                      _buildMenuItem(
+                        icon: Icons.local_shipping_outlined,
+                        title: "Shipping",
+                        onTap: () => Get.to(() => ShippingScreen()),
+                      ),
+                    if (authController.canView("orders"))
+                      _buildMenuItem(
+                        icon: Icons.assignment_return_outlined,
+                        title: "Returns",
+                        onTap: () => Get.to(() => ReturnOrderHistoryScreen()),
+                      ),
                     _buildMenuItem(
                       icon: Icons.settings_outlined,
                       title: "Setting",

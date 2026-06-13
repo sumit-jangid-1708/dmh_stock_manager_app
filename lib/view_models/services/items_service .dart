@@ -10,9 +10,6 @@ import 'package:http/http.dart' as http;
 class ItemService {
   final NetworkApiServices _apiServices = NetworkApiServices();
 
-  // ✅ Base URL — relative paths ko full URL banane ke liye
-  static const String _baseUrl = "https://traders.testwebs.in";
-
   Future<dynamic> showProducts() async {
     dynamic response = await _apiServices.getApi(AppUrl.product);
     return response;
@@ -77,8 +74,7 @@ class ItemService {
   //    already full URL → unchanged
   // ─────────────────────────────────────────────────────────────────────────
   static String toFullUrl(String path) {
-    if (path.startsWith('http')) return path;
-    return '$_baseUrl$path';
+    return AppUrl.mediaUrl(path);
   }
 
   // ─────────────────────────────────────────────────────────────────────────

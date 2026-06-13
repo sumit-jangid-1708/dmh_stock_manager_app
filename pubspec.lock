@@ -800,14 +800,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.5.0"
-  printer:
-    dependency: "direct main"
-    description:
-      name: printer
-      sha256: "468fd6dafafef65a22285bdf534810a9e9835211d65292018a248b004a4ba9b4"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.0.5"
   printing:
     dependency: "direct main"
     description:

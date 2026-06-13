@@ -4,6 +4,7 @@ import '../../data/network/network_api_service.dart';
 import '../../model/courier_return/courier_return_response.dart';
 import '../../model/customer_return/customer_return_response.dart';
 import '../../res/app_url/app_url.dart';
+import '../../utils/response_list.dart';
 
 class ReturnService {
   final NetworkApiServices _apiServices = NetworkApiServices();
@@ -39,14 +40,13 @@ class ReturnService {
       queryParams['claim_result'] = claimResult;
     }
     if (queryParams.isNotEmpty) {
-      final queryString = queryParams.entries
-          .map((e) => '${e.key}=${e.value}')
-          .join('&');
+      final queryString =
+          queryParams.entries.map((e) => '${e.key}=${e.value}').join('&');
 
       url = '$url?$queryString';
     }
     final response = await _apiServices.getApi(url);
-    return response as List<dynamic>;
+    return responseList(response);
   }
 
   Future<List<dynamic>> customerReturnList({
@@ -66,15 +66,13 @@ class ReturnService {
     }
 
     if (queryParams.isNotEmpty) {
-      final queryString = queryParams.entries
-          .map((e) => "${e.key}=${e.value}")
-          .join("&");
+      final queryString =
+          queryParams.entries.map((e) => "${e.key}=${e.value}").join("&");
       url = "$url?$queryString";
     }
     final response = await _apiServices.getApi(url);
-    return response;
+    return responseList(response);
   }
-
 
   Future<Map<String, dynamic>> getReturnReport() async {
     final response = await _apiServices.getApi(AppUrl.returnReport);

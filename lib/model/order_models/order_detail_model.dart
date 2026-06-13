@@ -93,60 +93,42 @@ class OrderDetailsModel {
       id: _toInt(json['id']),
       orderId: _toInt(json['order_id']),
       date: json['date'] ?? '',
-
       channel: json['channel'] ?? '',
       channelName: json['channel_name'] ?? '',
       channelOrderId: json['channel_order_id'] ?? '',
       channelId: json['channel_id'] ?? '',
-
       customerName: json['customer_name'] ?? '',
       customerEmail: json['customer_email'] ?? '',
-
       mobile: json['mobile'] ?? '',
       countryCode: json['country_code'] ?? '',
-
       orderStatus: _toInt(json['order_status']),
       status: json['status'] ?? '',
       statusDate: json['status_date'] ?? '',
       statusTimestamp: json['status_timestamp'] ?? '',
-
       remarks: (json['remarks'] as List? ?? [])
           .map((e) => OrderRemark.fromJson(e))
           .toList(),
-
-      createdAt:
-          DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
           DateTime.now(),
-
       paidStatus: json['paid_status'] ?? '',
       paidAmount: _toDouble(json['paid_amount']),
       remainingAmount: _toDouble(json['remaining_amount']),
-
       paymentMethod: json['payment_method']?.toString(),
-
       paymentDate: json['payment_date'] != null
           ? DateTime.tryParse(json['payment_date'].toString())
           : null,
-
       transactionId: json['transaction_id']?.toString(),
-
       billGenerated: json['bill_generated'] ?? false,
-
       totalItems: _toInt(json['total_items']),
       totalAmount: _toDouble(json['total_amount']),
-
       packageExpence: _toDouble(json['package_expence']),
       buyerShipmentCharger: _toDouble(json['buyer_shipment_charger']),
       buyerTaxAmount: _toDouble(json['buyer_tax_amount']),
-
       items: (json['items'] as List? ?? [])
           .map((e) => OrderItemModel.fromJson(e))
           .toList(),
-
       billBreakdown: BillBreakdownModel.fromJson(json['bill_breakdown'] ?? {}),
-
       package: PackageModel.fromJson(json['package'] ?? {}),
-
       shipment: OrderShipmentModel.fromJson(json['shipment'] ?? {}),
     );
   }
@@ -162,10 +144,12 @@ class OrderDetailsModel {
       case 4:
         return "Delivered";
       case 5:
-        return "Courier Return";
+        return "Cancelled";
       case 6:
-        return "Customer Return";
+        return "Courier Return";
       case 7:
+        return "Customer Return";
+      case 8:
         return "Return Received";
       default:
         return status;
@@ -187,6 +171,8 @@ class OrderDetailsModel {
       case 6:
         return const Color(0xFFFF5722);
       case 7:
+        return const Color(0xFF673AB7);
+      case 8:
         return const Color(0xFF00897B);
       default:
         return Colors.grey;
@@ -256,37 +242,26 @@ class OrderItemModel {
     return OrderItemModel(
       id: _toInt(json['id']),
       productId: _toInt(json['product_id']),
-
       name: json['name'] ?? '',
       productName: json['product_name'] ?? '',
-
       sku: json['sku'] ?? '',
       productSku: json['product_sku'] ?? '',
-
       productBarcode: json['product_barcode'] ?? '',
       productBarcodeImage: json['product_barcode_image']?.toString(),
-
       image: json['image']?.toString(),
       productImage: json['product_image']?.toString(),
-
       productImageVariants: (json['product_image_variants'] as List? ?? [])
           .map((e) => e.toString())
           .toList(),
-
       vendorId: _toInt(json['vendor_id']),
       vendorName: json['vendor_name'] ?? '',
-
       quantity: _toInt(json['quantity']),
       orderedQuantity: _toInt(json['ordered_quantity']),
-
       unitPrice: _toDouble(json['unit_price']),
       subtotal: _toDouble(json['subtotal']),
       totalPrice: _toDouble(json['total_price']),
-
       stockLeft: _toInt(json['stock_left']),
-
       serial: json['serial'] ?? '',
-
       serials: (json['serials'] as List? ?? [])
           .map((e) => SerialModel.fromJson(e))
           .toList(),

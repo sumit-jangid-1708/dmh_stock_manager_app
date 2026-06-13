@@ -9,7 +9,7 @@ import 'package:get/get.dart';
 
 import '../../model/vendor_model/vender_overview_model.dart';
 
-class VendorController extends GetxController with BaseController{
+class VendorController extends GetxController with BaseController {
   var expandedList = <bool>[].obs;
   final vendors = <VendorModel>[].obs; // Store vendors
   var filteredVendors = <VendorModel>[].obs;
@@ -60,8 +60,8 @@ class VendorController extends GetxController with BaseController{
       } else {
         filteredVendors.assignAll(
           vendors.where(
-                (vendor) =>
-            vendor.vendorName.toLowerCase().contains(query) ||
+            (vendor) =>
+                vendor.vendorName.toLowerCase().contains(query) ||
                 vendor.city.toLowerCase().contains(query) ||
                 vendor.state.toLowerCase().contains(query),
           ),
@@ -70,17 +70,18 @@ class VendorController extends GetxController with BaseController{
     });
   }
 
-  void validateGST(String value){
-    if (value.isEmpty){
+  void validateGST(String value) {
+    if (value.isEmpty) {
       gstError.value = '';
-    }else if(value.length < 15){
+    } else if (value.length < 15) {
       gstError.value = 'GST must be 15 Character';
-    }else if(!Utils.isValidGST(value)){
+    } else if (!Utils.isValidGST(value)) {
       gstError.value = 'Invalid GST format';
-    }else{
+    } else {
       gstError.value = '';
     }
   }
+
   bool get isGSTValid => gstError.value.isEmpty;
 
   void clearForm() {
@@ -140,7 +141,6 @@ class VendorController extends GetxController with BaseController{
       filteredVendors.assignAll(vendors);
       expandedList.value = List.generate(vendors.length, (_) => false);
       print("✅ Vendors fetched: ${vendors.length}");
-
     } catch (e, s) {
       if (kDebugMode) {
         print("🚩Vendor Error ❌ Exception Details: $e $s");
@@ -158,14 +158,11 @@ class VendorController extends GetxController with BaseController{
     }
   }
 
-
   //Helper: to get the vendor name by id
   String getVendorNameById(int id) {
     final vendor = vendors.firstWhereOrNull((v) => v.id == id);
     return vendor?.vendorName ?? "Unknown Vendor";
   }
-
-
 
   //Api to add vendor
   Future<void> addVendor() async {
@@ -187,7 +184,7 @@ class VendorController extends GetxController with BaseController{
     try {
       isLoading.value = true;
       final response = await _vendorService.addNewVendor(data);
-      final vendor = VendorModel.fromJson(response);
+      final vendor = VendorModel.fromJson(_vendorJson(response));
       vendors.add(vendor);
 
       Get.back();
@@ -203,12 +200,13 @@ class VendorController extends GetxController with BaseController{
 
       clearForm();
       getVendors();
-    }on AppExceptions catch (e) {
+    } on AppExceptions catch (e) {
       if (kDebugMode) {
         print("❌ Exception Details: $e"); // full stack ya raw details
       }
       Get.snackbar(
-        "Error", e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
+        "Error",
+        e.toString().replaceAll(RegExp(r"<[^>]*>"), ""),
         duration: const Duration(seconds: 1),
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red,
@@ -248,10 +246,11 @@ class VendorController extends GetxController with BaseController{
 
     try {
       isLoading.value = true;
-      final response = await _vendorService.updateVendor(editingVendorId.value, data);
+      final response =
+          await _vendorService.updateVendor(editingVendorId.value, data);
 
       // Update the vendor in the list
-      final updatedVendor = VendorModel.fromJson(response);
+      final updatedVendor = VendorModel.fromJson(_vendorJson(response));
       final index = vendors.indexWhere((v) => v.id == editingVendorId.value);
       if (index != -1) {
         vendors[index] = updatedVendor;
@@ -307,6 +306,16 @@ class VendorController extends GetxController with BaseController{
     }
   }
 
+  Map<String, dynamic> _vendorJson(dynamic response) {
+    if (response is Map) {
+      final vendor = response["vendor"] ?? response["data"];
+      if (vendor is Map) {
+        return Map<String, dynamic>.from(vendor);
+      }
+      return Map<String, dynamic>.from(response);
+    }
+    return <String, dynamic>{};
+  }
 
   Future<void> getVendorDetails(int vendorId) async {
     try {
@@ -320,7 +329,8 @@ class VendorController extends GetxController with BaseController{
       if (kDebugMode) {
         print("✅ Vendor details fetched for ID: $vendorId");
         print("Vendor: ${vendorOverview.value?.vendor.name}");
-        print("Supplied Products: ${vendorOverview.value?.suppliedProducts.length}");
+        print(
+            "Supplied Products: ${vendorOverview.value?.suppliedProducts.length}");
         print("Past Orders: ${vendorOverview.value?.pastOrders.length}");
       }
     } on AppExceptions catch (e) {
@@ -351,6 +361,4 @@ class VendorController extends GetxController with BaseController{
       isLoading.value = false;
     }
   }
-
-
 }

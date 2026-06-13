@@ -1,8 +1,7 @@
 import 'package:dmj_stock_manager/data/network/network_api_service.dart';
 import 'package:dmj_stock_manager/res/app_url/app_url.dart';
+import 'package:dmj_stock_manager/utils/response_list.dart';
 
-import '../../model/courier_return/courier_return_response.dart';
-import '../../model/customer_return/customer_return_response.dart';
 import '../../model/order_models/courier_partner_model.dart';
 import '../../model/order_models/order_detail_by_id_model.dart';
 import '../../model/order_models/order_detail_model.dart';
@@ -74,12 +73,19 @@ class OrderService {
 
   Future<List<CourierPartnerDetailModel>> getCourierPartners() async {
     final response = await _apiServices.getApi(AppUrl.courierList);
-    final List<dynamic> data = response as List<dynamic>;
+    final data = responseList(response);
     return data.map((e) => CourierPartnerDetailModel.fromJson(e)).toList();
   }
 
-  Future<dynamic>createShipment(Map<String, dynamic> data, int orderId) async{
-    final response = await _apiServices.postApi(data, "${AppUrl.createShipment}/$orderId/create-shipment/");
+  Future<dynamic> createShipment(Map<String, dynamic> data, int orderId) async {
+    final response = await _apiServices.postApi(
+        data, "${AppUrl.createShipment}/$orderId/create-shipment/");
+    return response;
+  }
+
+  Future<dynamic> packOrder(Map<String, dynamic> data, int orderId) async {
+    final response =
+        await _apiServices.postApi(data, "${AppUrl.packOrder}/$orderId/");
     return response;
   }
 
@@ -88,20 +94,17 @@ class OrderService {
       AppUrl.shipmentList,
     );
 
-    if (response is Map<String, dynamic>) {
-      return response['data'] as List<dynamic>? ?? [];
-    }
-
-    return [];
+    return responseList(response);
   }
 
-  Future<dynamic> updateOrderStatus(Map<String, dynamic>data) async{
+  Future<dynamic> updateOrderStatus(Map<String, dynamic> data) async {
     final response = await _apiServices.postApi(data, AppUrl.orderStatus);
     return response;
   }
 
-  Future<dynamic> getAllOrderStatus(int orderId)async{
-    final response = await _apiServices.getApi("${AppUrl.orderStatus}?order_id=$orderId");
+  Future<dynamic> getAllOrderStatus(int orderId) async {
+    final response =
+        await _apiServices.getApi("${AppUrl.orderStatus}?order_id=$orderId");
     return response;
   }
 }
