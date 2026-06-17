@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../model/order_models/shipment_model.dart';
 import '../../../view_models/controller/order_controller.dart';
 
@@ -19,15 +20,41 @@ class ShippingInfoCard extends StatelessWidget {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: shipments.map((s) => _ShipCard(shipment: s, ctrl: ctrl)).toList(),
+      children: shipments.map((s) => _ShipCard(shipment: s, ctrl: ctrl, orderId: orderId)).toList(),
     );
   }
 }
 
 class _ShipCard extends StatelessWidget {
-  const _ShipCard({required this.shipment, required this.ctrl});
+  const _ShipCard({required this.shipment, required this.ctrl, required this.orderId});
   final ShipmentModel shipment;
   final OrderController ctrl;
+  final int orderId;
+
+  void _shareShipmentDetails(String courierTitle, String mediatorTitle, String formattedDate) {
+    String text = "🚚 *Shipment Details: Order #$orderId*\n\n";
+    text += "Courier: $courierTitle\n";
+    if (mediatorTitle != "—" && mediatorTitle.isNotEmpty) {
+      text += "Mediator: $mediatorTitle\n";
+    }
+    if (shipment.trackingId.isNotEmpty) {
+      text += "Tracking ID: ${shipment.trackingId}\n";
+    }
+    if (shipment.shippingDate.isNotEmpty) {
+      text += "Ship Date: $formattedDate\n";
+    }
+
+    final shippingExp = double.tryParse(shipment.shippingExpense) ?? 0.0;
+    if (shippingExp > 0) {
+      text += "Shipping Exp: ₹${shippingExp.toStringAsFixed(2)}\n";
+    }
+
+    if (shipment.trackingUrl.isNotEmpty) {
+      text += "\nTrack here: ${shipment.trackingUrl}";
+    }
+
+    Share.share(text);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +71,9 @@ class _ShipCard extends StatelessWidget {
       formattedDate = DateFormat('dd MMM yyyy')
           .format(DateTime.parse(shipment.shippingDate));
     } catch (_) {}
+
+    final courierTitle = courier?.title ?? '—';
+    final mediatorTitle = mediator?.title ?? '—';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -62,14 +92,21 @@ class _ShipCard extends StatelessWidget {
               const SizedBox(width: 6),
               const Text('Shipment Details',
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1A1A4F))),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.share_outlined, size: 16, color: Color(0xFF1A1A4F)),
+                onPressed: () => _shareShipmentDetails(courierTitle, mediatorTitle, formattedDate),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
             ],
           ),
           const SizedBox(height: 10),
           const Divider(height: 1),
           const SizedBox(height: 10),
 
-          _Row('Courier', courier?.title ?? '—'),
-          _Row('Mediator', mediator?.title ?? '—'),
+          _Row('Courier', courierTitle),
+          _Row('Mediator', mediatorTitle),
           if (shipment.trackingId.isNotEmpty) _Row('Tracking ID', shipment.trackingId),
           if (shipment.shippingDate.isNotEmpty) _Row('Ship Date', formattedDate),
           if (shippingExp > 0) _Row('Shipping Exp.', '₹${shippingExp.toStringAsFixed(2)}'),

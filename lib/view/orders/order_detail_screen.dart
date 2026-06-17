@@ -1,10 +1,11 @@
-import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
+import 'package:dmj_stock_manager/res/components/widgets/app_gradient _button.dart';
 import 'package:dmj_stock_manager/view/orders/shipping_detail_form.dart';
 import 'package:dmj_stock_manager/view_models/controller/order_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/billing_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../model/order_models/order_detail_model.dart';
 import '../../res/components/sku_qr_widget.dart';
 import '../../res/components/widgets/courier_return_bottom_sheet.dart';
@@ -32,6 +33,78 @@ class OrderDetailScreen extends StatelessWidget {
       ),
     ],
   );
+
+  void _shareOrderDetails(OrderDetailsModel order) {
+    // 1. Format Items with Serials
+    String itemsText = order.items.map((item) {
+      String serials = item.serials.isNotEmpty 
+          ? "\n   Serials: ${item.serials.map((s) => s.serialNumber).join(", ")}" 
+          : "";
+      return "- ${item.productName}\n   SKU: ${item.productSku}\n   Qty: ${item.orderedQuantity} x ₹${item.unitPrice.toStringAsFixed(2)}$serials";
+    }).join("\n\n");
+
+    // 2. Format Status Details (Package & Shipping)
+    String statusDetails = "\n📈 *Order Status:* ${order.orderStatusText}";
+    if (order.statusDate.isNotEmpty) statusDetails += " (${order.statusDate})";
+    
+    // Package Details
+    if (order.orderStatus >= 2) { 
+      statusDetails += "\n\n📦 *Package Details:*";
+      if (order.package.length.isNotEmpty) {
+        statusDetails += "\n- Dimensions: ${order.package.length}x${order.package.width}x${order.package.height} cm";
+      }
+      if (order.package.deadWeight.isNotEmpty) statusDetails += "\n- Dead Weight: ${order.package.deadWeight}g";
+      if (order.package.volWeight.isNotEmpty) statusDetails += "\n- Vol. Weight: ${order.package.volWeight}g";
+      if (order.package.billedWeight.isNotEmpty) statusDetails += "\n- Billed Weight: ${order.package.billedWeight}g";
+    }
+
+    // Shipping Details
+    if (order.orderStatus >= 3) {
+      statusDetails += "\n\n🚚 *Shipping Details:*";
+      if (order.shipment.courier.isNotEmpty) statusDetails += "\n- Courier: ${order.shipment.courier}";
+      if (order.shipment.mediator.isNotEmpty) statusDetails += "\n- Mediator: ${order.shipment.mediator}";
+      if (order.shipment.trackingId.isNotEmpty) statusDetails += "\n- Tracking ID: ${order.shipment.trackingId}";
+      if (order.shipment.shipDate.isNotEmpty) statusDetails += "\n- Ship Date: ${order.shipment.shipDate}";
+      if (order.shipment.trackingUrl.isNotEmpty) statusDetails += "\n- Track: ${order.shipment.trackingUrl}";
+    }
+
+    // 3. Remarks History
+    String remarksText = order.remarks.isNotEmpty
+        ? "\n\n💬 *Remarks:*\n" + order.remarks.map((r) => 
+            "• ${r.remark} (${DateFormat('dd MMM, hh:mm a').format(r.createdAt.toLocal())})"
+          ).join("\n")
+        : "";
+
+    // 4. Combine everything into a clean message
+    String shareText = """
+📦 *ORDER SUMMARY: #${order.orderId}*
+📅 Date: ${order.date}
+🏢 Channel: ${order.channelName}
+$statusDetails
+
+👤 *Customer Details:*
+Name: ${order.customerName}
+Phone: ${order.countryCode}${order.mobile}
+Email: ${order.customerEmail.isEmpty ? 'N/A' : order.customerEmail}
+
+🛒 *Ordered Items:*
+$itemsText
+
+💰 *Payment Breakdown:*
+Items Total: ₹${order.billBreakdown.itemsTotal.toStringAsFixed(2)}
+Tax: ₹${order.billBreakdown.productTax.toStringAsFixed(2)}
+Shipping: ₹${order.billBreakdown.buyerShipmentCharger.toStringAsFixed(2)}
+----------------------------
+*Grand Total: ₹${order.totalAmount.toStringAsFixed(2)}*
+Payment: ${order.paidStatus.toUpperCase()}
+$remarksText
+
+----------------------------
+Shared via DMJ Stock Manager
+""";
+
+    Share.share(shareText);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,18 +151,41 @@ class OrderDetailScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_back, size: 20),
-                          onPressed: () => Get.back(),
-                          padding: EdgeInsets.zero,
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: IconButton(
+                              icon: const Icon(Icons.arrow_back, size: 20),
+                              onPressed: () => Get.back(),
+                              padding: EdgeInsets.zero,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // ✅ Share Button Added Here
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1A1A4F).withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: IconButton(
+                              icon: const Icon(Icons.share_outlined, 
+                                size: 20, 
+                                color: Color(0xFF1A1A4F)
+                              ),
+                              onPressed: () => _shareOrderDetails(order),
+                              padding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ],
                       ),
                       if (showCreateBillButton)
                         AppGradientButton(
@@ -283,135 +379,6 @@ class OrderDetailScreen extends StatelessWidget {
                   ],
 
                   OrderStatusSection(order: order, orderId: orderId),
-
-                  // if (order.orderStatus == 1) ...[
-                  //   AppGradientButton(
-                  //     onPressed: () =>
-                  //         PackOrderBottomSheet.show(context, orderId: orderId),
-                  //     text: 'Pack the Order',
-                  //     icon: Icons.inventory_2_outlined,
-                  //     width: double.infinity,
-                  //     height: 50,
-                  //   ),
-                  //   const SizedBox(height: 12),
-                  // ],
-                  //
-                  // // ── Action Buttons ────────────────────────────────────────
-                  // AppGradientButton(
-                  //   onPressed: () =>
-                  //       showShippingDetailsBottomSheet(context, orderId),
-                  //   text: 'Create Shipment',
-                  //   icon: Icons.local_shipping_outlined,
-                  //   width: double.infinity,
-                  //   height: 50,
-                  // ),
-                  // const SizedBox(height: 12),
-                  //
-                  // Row(
-                  //   children: [
-                  //     Expanded(
-                  //       child: AppGradientButton(
-                  //         onPressed: () {
-                  //           final oldOrder = orderController.orders
-                  //               .firstWhereOrNull((o) => o.id == orderId);
-                  //           if (oldOrder != null) {
-                  //             showCourierReturnDialog(context, oldOrder);
-                  //           }
-                  //         },
-                  //         text: 'Courier Return',
-                  //         height: 50,
-                  //       ),
-                  //     ),
-                  //     const SizedBox(width: 12),
-                  //     Expanded(
-                  //       child: AppGradientButton(
-                  //         onPressed: () {
-                  //           final oldOrder = orderController.orders
-                  //               .firstWhereOrNull((o) => o.id == orderId);
-                  //           if (oldOrder != null) {
-                  //             showCustomerReturnDialog(context, oldOrder);
-                  //           }
-                  //         },
-                  //         text: 'Customer Return',
-                  //         height: 50,
-                  //       ),
-                  //     ),
-                  //   ],
-                  // ),
-                  const SizedBox(height: 12),
-
-                  // ── Cancel Button ─────────────────────────────────────────
-                  Obx(() {
-                    if (orderController.orders.isEmpty) {
-                      return const SizedBox();
-                    }
-
-                    final order = orderController.orders.firstWhereOrNull(
-                      (e) => e.id == orderId,
-                    );
-
-                    if (order == null) {
-                      return const SizedBox();
-                    }
-
-                    final status =
-                        int.tryParse(
-                          order.latestStatus?.status?.toString() ?? '0',
-                        ) ??
-                        0;
-
-                    print("Current Status: $status");
-
-                    // hide after 3
-                    if (status >= 3) {
-                      return const SizedBox();
-                    }
-
-                    return SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: OutlinedButton.icon(
-                        onPressed: orderController.isCancellingOrder.value
-                            ? null
-                            : () => _showCancelConfirmDialog(
-                                context,
-                                orderId,
-                                orderController,
-                              ),
-                        icon: orderController.isCancellingOrder.value
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.red,
-                                ),
-                              )
-                            : const Icon(
-                                Icons.cancel_outlined,
-                                color: Colors.red,
-                                size: 20,
-                              ),
-                        label: Text(
-                          orderController.isCancellingOrder.value
-                              ? 'Cancelling...'
-                              : 'Cancel Order',
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.red, width: 1.5),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    );
-                  }),
-
                   const SizedBox(height: 20),
                 ],
               ),
@@ -558,10 +525,6 @@ class OrderDetailScreen extends StatelessWidget {
   }
 
   // ── Add Remark Dialog ─────────────────────────────────────────────────────
-  // ✅ TextField → AppTextField (consistent app styling, no manual border/fill)
-  // ✅ Obx(ElevatedButton) → AppGradientButton(isLoading:)
-  //    AppGradientButton handles: gradient disable, spinner, null onPressed
-  //    Outer Obx on actions list reads isAddingRemark reactively once
   void _showAddRemarkDialog(
     BuildContext context,
     int orderId,
@@ -587,16 +550,12 @@ class OrderDetailScreen extends StatelessWidget {
             ),
           ],
         ),
-        // ✅ AppTextField replaces the manual TextField with all its
-        //    border/fill/hint declarations — same look, much less code
         content: AppTextField(
           controller: remarkCtrl,
           hintText: 'Enter your remark...',
           prefixIcon: Icons.comment_outlined,
           maxLines: 3,
         ),
-        // ✅ Single Obx wraps the entire actions list so isAddingRemark
-        //    is read reactively; AppGradientButton gets a plain bool
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -731,38 +690,13 @@ class OrderDetailScreen extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Private widgets (unchanged from previous round)
+// Private widgets
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _OrderItemCard extends StatelessWidget {
   const _OrderItemCard({required this.item});
 
   final OrderItemModel item;
-
-  static Widget buildBarcodeImage(String url) {
-    return Center(
-      child: Image.network(
-        url,
-        height: 60,
-        fit: BoxFit.contain,
-        loadingBuilder: (_, child, p) => p == null
-            ? child
-            : const SizedBox(
-                height: 60,
-                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-              ),
-        errorBuilder: (_, __, ___) => const SizedBox(
-          height: 40,
-          child: Center(
-            child: Text(
-              'Image not available',
-              style: TextStyle(fontSize: 10, color: Colors.grey),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -984,50 +918,6 @@ class _SerialItem extends StatelessWidget {
   }
 }
 
-// class _SerialItem extends StatelessWidget {
-//   const _SerialItem({required this.serial});
-//
-//   final SerialModel serial;
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       margin: const EdgeInsets.only(bottom: 10),
-//       padding: const EdgeInsets.all(10),
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         borderRadius: BorderRadius.circular(8),
-//         border: Border.all(color: Colors.blue.shade200),
-//       ),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Container(
-//             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-//             decoration: BoxDecoration(
-//               color: Colors.blue.shade50,
-//               borderRadius: BorderRadius.circular(4),
-//             ),
-//             child: Text(
-//               serial.serialNumber,
-//               style: TextStyle(
-//                 fontSize: 11,
-//                 fontWeight: FontWeight.w600,
-//                 fontFamily: 'monospace',
-//                 color: Colors.blue.shade700,
-//               ),
-//             ),
-//           ),
-//           if (serial.barcodeImage.isNotEmpty) ...[
-//             const SizedBox(height: 8),
-//             _OrderItemCard.buildBarcodeImage(serial.barcodeImage),
-//           ],
-//         ],
-//       ),
-//     );
-//   }
-// }
-
 class _InfoBox extends StatelessWidget {
   const _InfoBox({
     required this.icon,
@@ -1187,10 +1077,6 @@ class _BarcodePdfCard extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: () =>
                       ThermalPrintService.printOrderLabels(context, order),
-                  // onPressed: () => _handleAction(
-                  //   context,
-                  //   () => BarcodePdfService.printBarcodePdf(context, order),
-                  // ),
                   icon: const Icon(Icons.print_outlined, size: 18),
                   label: const Text('Print'),
                   style: OutlinedButton.styleFrom(

@@ -2,6 +2,7 @@ import 'package:dmj_stock_manager/res/components/widgets/shipping_info__card.dar
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../../model/order_models/order_detail_model.dart';
 import '../../../model/order_models/order_status_log_model.dart';
 import '../../../view/orders/shipping_detail_form.dart';
@@ -73,8 +74,6 @@ class OrderStatusSection extends StatelessWidget {
   Color _textColor(int s) => _statusTextColors[s] ?? Colors.grey.shade700;
   IconData _icon(int s) => _statusIcons[s] ?? Icons.info_outline;
 
-  // ── ✅ KEY: Derive current status from logs API, not from order model ──────
-  // Latest log by createdAt = current status
   int _currentStatusFromLogs(List<OrderStatusLog> logs) {
     if (logs.isEmpty) return order.orderStatus; // fallback to model
     final latest = logs.reduce(
@@ -83,7 +82,6 @@ class OrderStatusSection extends StatelessWidget {
     return latest.status;
   }
 
-  // Find log for a specific status step
   OrderStatusLog? _logFor(List<OrderStatusLog> logs, int status) =>
       logs.firstWhereOrNull((l) => l.status == status);
 
@@ -95,7 +93,6 @@ class OrderStatusSection extends StatelessWidget {
   String _formatDate(DateTime dt) =>
       DateFormat('dd/MM/yyyy - HH:mm').format(dt.toLocal());
 
-  // ── Timeline builder — uses real log timestamps ───────────────────────────
   List<_TimelineStep> _buildTimeline(
     int currentStatus,
     DateTime createdAt,
@@ -103,7 +100,6 @@ class OrderStatusSection extends StatelessWidget {
   ) {
     final steps = <_TimelineStep>[];
 
-    // Step 0: Order Created
     steps.add(_TimelineStep(
       icon: Icons.add_circle_outline,
       title: 'Order Created',
@@ -122,7 +118,6 @@ class OrderStatusSection extends StatelessWidget {
       return steps;
     }
 
-    // Packed
     if (currentStatus >= 2) {
       final log = _logFor(logs, 2);
       steps.add(_TimelineStep(
@@ -133,7 +128,6 @@ class OrderStatusSection extends StatelessWidget {
       ));
     }
 
-    // In Transit
     if (currentStatus >= 3) {
       final log = _logFor(logs, 3);
       steps.add(_TimelineStep(
@@ -144,7 +138,6 @@ class OrderStatusSection extends StatelessWidget {
       ));
     }
 
-    // ✅ Delivered — status 4 pe terminal, baaki statuses pe bhi dikhao agar log hai
     if (currentStatus == 4) {
       final log = _logFor(logs, 4);
       steps.add(_TimelineStep(
@@ -154,10 +147,9 @@ class OrderStatusSection extends StatelessWidget {
         isDone: true,
         isLast: true,
       ));
-      return steps; // terminal — aage kuch nahi
+      return steps;
     }
 
-    // Return statuses ke liye delivered log exist kare to dikhao.
     final deliveredLog = _logFor(logs, 4);
     final isReturnPath = currentStatus == 6 ||
         currentStatus == 7 ||
@@ -177,7 +169,6 @@ class OrderStatusSection extends StatelessWidget {
       ));
     }
 
-    // ✅ Courier Return
     final courierReturnLog = _logFor(logs, 6);
     if (courierReturnLog != null || currentStatus == 6) {
       steps.add(_TimelineStep(
@@ -189,7 +180,6 @@ class OrderStatusSection extends StatelessWidget {
         isLast: currentStatus == 6,
       ));
       if (currentStatus == 6) {
-        // pending step
         steps.add(_TimelineStep(
           icon: Icons.inventory_2_outlined,
           title: 'Mark Return Received',
@@ -201,7 +191,6 @@ class OrderStatusSection extends StatelessWidget {
       }
     }
 
-    // ✅ Customer Return
     final customerReturnLog = _logFor(logs, 7);
     if (customerReturnLog != null || currentStatus == 7) {
       steps.add(_TimelineStep(
@@ -224,7 +213,6 @@ class OrderStatusSection extends StatelessWidget {
       }
     }
 
-    // ✅ Return Received
     if (currentStatus == 8) {
       final log = _logFor(logs, 8);
       steps.add(_TimelineStep(
@@ -237,7 +225,6 @@ class OrderStatusSection extends StatelessWidget {
       return steps;
     }
 
-    // Pending steps for status 1, 2, 3
     if (currentStatus == 1) {
       steps.add(_TimelineStep(
         icon: Icons.inventory_2_outlined,
@@ -266,12 +253,9 @@ class OrderStatusSection extends StatelessWidget {
     return steps;
   }
 
-  // ── Timeline bottom sheet ─────────────────────────────────────────────────
-
   void _showTimeline(BuildContext context) {
     final ctrl = Get.find<OrderController>();
     final logs = ctrl.orderStatusLogs.toList();
-    // ✅ Status derived from logs at tap time
     final currentStatus = _currentStatusFromLogs(logs);
     final createdAt = ctrl.orderDetail.value?.createdAt ?? order.createdAt;
     final steps = _buildTimeline(currentStatus, createdAt, logs);
@@ -288,7 +272,6 @@ class OrderStatusSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Drag handle
             Center(
               child: Container(
                 margin: const EdgeInsets.only(top: 12, bottom: 16),
@@ -318,7 +301,6 @@ class OrderStatusSection extends StatelessWidget {
             const SizedBox(height: 16),
             Expanded(
               child: logs.isEmpty
-                  // ✅ Show empty state if no logs yet
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -353,8 +335,6 @@ class OrderStatusSection extends StatelessWidget {
       backgroundColor: Colors.transparent,
     );
   }
-
-  // ── Next step buttons — driven by log-derived status ─────────────────────
 
   Widget _buildNextStepButtons(BuildContext context, int currentStatus) {
     final ctrl = Get.find<OrderController>();
@@ -453,17 +433,14 @@ class OrderStatusSection extends StatelessWidget {
     }
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final ctrl = Get.find<OrderController>();
 
     return Obx(() {
-      final logs = ctrl.orderStatusLogs; // ✅ reactive list from logs API
+      final logs = ctrl.orderStatusLogs; 
       final isLoadingLogs = ctrl.isLoadingStatusLogs.value;
 
-      // ✅ Derive EVERYTHING from logs — not from order.orderStatus
       final currentStatus = _currentStatusFromLogs(logs.toList());
       final createdAt = ctrl.orderDetail.value?.createdAt ?? order.createdAt;
 
@@ -488,7 +465,6 @@ class OrderStatusSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Section header ──
             Row(
               children: [
                 Icon(statusIcon, size: 18, color: Colors.grey.shade700),
@@ -498,7 +474,6 @@ class OrderStatusSection extends StatelessWidget {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 const Spacer(),
-                // ✅ Small loading indicator while logs refresh
                 if (isLoadingLogs)
                   const SizedBox(
                     width: 14,
@@ -512,7 +487,6 @@ class OrderStatusSection extends StatelessWidget {
             ),
             const SizedBox(height: 14),
 
-            // ── Status pill (tap → timeline) ──
             GestureDetector(
               onTap: () => _showTimeline(context),
               child: Container(
@@ -570,7 +544,6 @@ class OrderStatusSection extends StatelessWidget {
               ),
             ),
 
-            // ── Packed dimensions card (shown when status >= 2) ───────────
             if (currentStatus >= 2 && currentStatus != 5) ...[
               const SizedBox(height: 12),
               Builder(
@@ -583,30 +556,16 @@ class OrderStatusSection extends StatelessWidget {
                           extra.packageImages!.isEmpty)) {
                     return const SizedBox.shrink();
                   }
-                  return _PackedInfoCard(extra: extra);
+                  return _PackedInfoCard(extra: extra, orderId: orderId);
                 },
               ),
             ],
-            // ── Shipping details (status >= 3) ──
             if (currentStatus >= 3 && currentStatus != 5) ...[
               const SizedBox(height: 12),
               ShippingInfoCard(orderId: orderId),
             ],
             const SizedBox(height: 16),
 
-            // ── Next step or terminal message ─────────────────────────────
-            // if (currentStatus < 5 || currentStatus == 7) ...[
-            //   Text(
-            //     'Next Step',
-            //     style: TextStyle(
-            //       fontSize: 13,
-            //       fontWeight: FontWeight.w600,
-            //       color: Colors.grey.shade600,
-            //     ),
-            //   ),
-            // ],
-            // const SizedBox(height: 10),
-            // ✅ Passes log-derived status — buttons now match API truth
             if (currentStatus < 8 && currentStatus != 5) ...[
               Text(
                 'Next Step',
@@ -657,8 +616,21 @@ class OrderStatusSection extends StatelessWidget {
 
 // ── Packed Info Card ──────────────────────────────────────────────────────────
 class _PackedInfoCard extends StatelessWidget {
-  const _PackedInfoCard({required this.extra});
+  const _PackedInfoCard({required this.extra, required this.orderId});
   final OrderStatusExtraData extra;
+  final int orderId;
+
+  void _sharePackageDetails() {
+    String text = "📦 *Package Details: Order #$orderId*\n";
+    if (extra.height?.isNotEmpty == true) text += "Height: ${extra.height} cm\n";
+    if (extra.width?.isNotEmpty == true) text += "Width: ${extra.width} cm\n";
+    if (extra.length?.isNotEmpty == true) text += "Length: ${extra.length} cm\n";
+    if (extra.weight?.isNotEmpty == true) text += "Dead Weight: ${extra.weight} g\n";
+    if (extra.volumetricWeight?.isNotEmpty == true) text += "Vol. Weight: ${extra.volumetricWeight} g\n";
+    if (extra.billedWeight?.isNotEmpty == true) text += "Billed Weight: ${extra.billedWeight} g";
+
+    Share.share(text);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -688,6 +660,14 @@ class _PackedInfoCard extends StatelessWidget {
                   color: Color(0xFF1A1A4F),
                 ),
               ),
+              const Spacer(),
+              // ✅ Share Button for Package
+              IconButton(
+                icon: const Icon(Icons.share_outlined, size: 16, color: Color(0xFF1A1A4F)),
+                onPressed: _sharePackageDetails,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -697,21 +677,9 @@ class _PackedInfoCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Left: image ──
-              // if (extra.packageImages?.isNotEmpty == true)
-              //   ClipRRect(
-              //     borderRadius: BorderRadius.circular(8),
-              //     child: Image.network(
-              //       extra.packageImages!.first,
-              //       height: 80,
-              //       width: 80,
-              //       fit: BoxFit.cover,
-              //     ),
-              //   ),
               if (extra.packageImages?.isNotEmpty == true)
                 const SizedBox(width: 14),
 
-              // ── Right: dimensions ──
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -733,29 +701,6 @@ class _PackedInfoCard extends StatelessWidget {
               ),
             ],
           ),
-
-          // ── Extra images if more than one ──
-          // if ((extra.packageImages?.length ?? 0) > 1) ...[
-          //   const SizedBox(height: 10),
-          //   Wrap(
-          //     spacing: 6,
-          //     runSpacing: 6,
-          //     children: extra.packageImages!
-          //         .skip(1)
-          //         .map(
-          //           (url) => ClipRRect(
-          //             borderRadius: BorderRadius.circular(6),
-          //             child: Image.network(
-          //               url,
-          //               height: 70,
-          //               width: 70,
-          //               fit: BoxFit.cover,
-          //             ),
-          //           ),
-          //         )
-          //         .toList(),
-          //   ),
-          // ],
         ],
       ),
     );
@@ -792,8 +737,6 @@ class _DimRow extends StatelessWidget {
     );
   }
 }
-
-// ── Timeline ──────────────────────────────────────────────────────────────────
 
 class _TimelineStep {
   final IconData icon;
@@ -914,7 +857,6 @@ class _TimelineItemWidget extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Dot + line ──
           SizedBox(
             width: 28,
             child: Column(
@@ -946,7 +888,6 @@ class _TimelineItemWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // ── Text ──
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(top: 4, bottom: 18),
