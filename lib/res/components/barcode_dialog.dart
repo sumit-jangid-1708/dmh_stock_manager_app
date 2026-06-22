@@ -5,14 +5,16 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:dmj_stock_manager/res/components/sku_qr_widget.dart';
-import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
+import 'package:dmj_stock_manager/res/components/widgets/app_gradient _button.dart';
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
 
+import '../../model/order_models/order_detail_model.dart';
 import '../../view_models/services/other_services/thermal_label_service.dart';
 
 void showBarcodeDialog(BuildContext context, String sku, String name) {
   final qtyController = TextEditingController(text: "1");
   const Color primaryColor = Color(0xFF1A1A4F);
+  final selectedMode = "Thermal Label".obs;
 
   showDialog(
     context: context,
@@ -64,6 +66,33 @@ void showBarcodeDialog(BuildContext context, String sku, String name) {
             ),
             const SizedBox(height: 20),
 
+            // Print Mode Dropdown
+            const Text(
+              "Print Mode:",
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Obx(() => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: selectedMode.value,
+                      isExpanded: true,
+                      items: ["Thermal Label", "A4 Sheet"]
+                          .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) selectedMode.value = val;
+                      },
+                    ),
+                  ),
+                )),
+            const SizedBox(height: 16),
+
             // Quantity Input
             Row(
               children: [
@@ -103,13 +132,17 @@ void showBarcodeDialog(BuildContext context, String sku, String name) {
                   AppAlerts.error("Please enter a valid quantity");
                   return;
                 }
-                await ThermalPrintService.printSkuLabels(
-                  context,
-                  sku,
-                  name,
-                  qty,
-                );
-                // await printSkuLabels(sku, qty);
+
+                if (selectedMode.value == "Thermal Label") {
+                  await ThermalPrintService.printSkuLabels(
+                    context,
+                    sku,
+                    name,
+                    qty,
+                  );
+                } else {
+                  await printA4SkuLabels(sku, name, qty);
+                }
               },
             ),
           ],
@@ -119,9 +152,9 @@ void showBarcodeDialog(BuildContext context, String sku, String name) {
   );
 }
 
-// ── Print Logic (Aligned with BarcodePdfService) ──────────────────────────
+// ── Print Logic (A4 Sheet with grid and borders) ──────────────────────────
 
-Future<void> printSkuLabels(String sku, int qty) async {
+Future<void> printA4SkuLabels(String sku, String name, int qty) async {
   try {
     // Show Loading
     Get.dialog(
@@ -130,620 +163,324 @@ Future<void> printSkuLabels(String sku, int qty) async {
     );
 
     final pdf = pw.Document();
-
-    // BarcodePdfService ki tarah Page Format (58mm width)
-    const pageFormat = PdfPageFormat(
-      58 * PdfPageFormat.mm,
-      210 * PdfPageFormat.mm, // Continuous roll style
-      marginAll: 3 * PdfPageFormat.mm,
-    );
-
-    // QR Image generate karna
     final Uint8List qrBytes = await SkuQrWidget.toImageBytes(sku, size: 300);
 
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: pageFormat,
-        build: (context) {
-          return List.generate(qty, (index) {
-            return pw.Column(
-              crossAxisAlignment: pw.CrossAxisAlignment.center,
-              children: [
-                pw.Center(
-                  child: pw.Image(
-                    pw.MemoryImage(qrBytes),
-                    width: 40 * PdfPageFormat.mm,
-                    height: 40 * PdfPageFormat.mm,
-                    fit: pw.BoxFit.contain,
+    // Grid configuration for A4
+    const int columns = 4;
+    const int rowsPerPage = 7;
+    const int itemsPerPage = columns * rowsPerPage;
+
+    final int pageCount = (qty / itemsPerPage).ceil();
+
+    for (int p = 0; p < pageCount; p++) {
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(8 * PdfPageFormat.mm),
+          build: (context) {
+            final int startIdx = p * itemsPerPage;
+            final int endIdx = (startIdx + itemsPerPage < qty)
+                ? (startIdx + itemsPerPage)
+                : qty;
+            final int pageQty = endIdx - startIdx;
+
+            return pw.GridView(
+              crossAxisCount: columns,
+              childAspectRatio: 0.8,
+              children: List.generate(pageQty, (index) {
+                return pw.Container(
+                  padding: const pw.EdgeInsets.all(5),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.grey400, width: 0.5),
                   ),
-                ),
-                pw.SizedBox(height: 1.5 * PdfPageFormat.mm),
-                pw.Text(
-                  sku,
-                  textAlign: pw.TextAlign.center,
-                  style: pw.TextStyle(
-                    fontSize: 7,
-                    fontWeight: pw.FontWeight.bold,
+                  child: pw.Column(
+                    mainAxisAlignment: pw.MainAxisAlignment.center,
+                    children: [
+                      pw.Image(
+                        pw.MemoryImage(qrBytes),
+                        width: 32 * PdfPageFormat.mm,
+                        height: 32 * PdfPageFormat.mm,
+                      ),
+                      pw.SizedBox(height: 3),
+                      pw.Text(
+                        name,
+                        textAlign: pw.TextAlign.center,
+                        maxLines: 2,
+                        style: pw.TextStyle(
+                          fontSize: 7.5,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.Text(
+                        sku,
+                        style: const pw.TextStyle(
+                          fontSize: 6.5,
+                          color: PdfColors.grey700,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                // Agar last item nahi hai toh divider add karein (Service style)
-                if (index < qty - 1) ...[
-                  pw.SizedBox(height: 2 * PdfPageFormat.mm),
-                  pw.Divider(color: PdfColors.grey300, thickness: 0.5),
-                  pw.SizedBox(height: 2 * PdfPageFormat.mm),
-                ],
-              ],
+                );
+              }),
             );
-          });
-        },
-      ),
-    );
+          },
+        ),
+      );
+    }
 
     Get.back(); // Close loading
     await Printing.layoutPdf(
       onLayout: (format) async => pdf.save(),
-      name: "SKU_$sku",
-      format: pageFormat,
+      name: "A4_Labels_$sku",
+      format: PdfPageFormat.a4,
     );
   } catch (e) {
-    Get.back(); // Close loading
+    if (Get.isDialogOpen ?? false) Get.back(); // Close loading
     AppAlerts.error("Printing failed: $e");
   }
 }
 
-// // lib/res/components/widgets/barcode_dialog.dart
-//
-// import 'dart:typed_data';
-// import 'package:dmj_stock_manager/res/components/sku_qr_widget.dart';
-// import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
-// import 'package:dmj_stock_manager/utils/app_alerts.dart';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
-// import 'package:dmj_stock_manager/view_models/controller/util_controller.dart';
-//
-// void showBarcodeDialog(
-//     BuildContext context,
-//     int productId,
-//     String sku,
-//     String barcodeImageUrl,
-//     ) {
-//   final qtyController = TextEditingController(text: "1");
-//   const Color primaryColor = Color(0xFF1A1A4F);
-//
-//   showDialog(
-//     context: context,
-//     builder: (context) => Dialog(
-//       backgroundColor: Colors.white,
-//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-//       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-//       child: Container(
-//         height: 500,
-//         padding: const EdgeInsets.all(20),
-//         constraints: BoxConstraints(
-//           maxHeight: MediaQuery.of(context).size.height * 0.85,
-//         ),
-//         child: Column(
-//           mainAxisSize: MainAxisSize.min,
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Expanded(
-//               child: SingleChildScrollView(
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-//                     // ── Header ───────────────────────────────────────────
-//                     Row(
-//                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                       children: [
-//                         const Text(
-//                           "Product Barcode",
-//                           style: TextStyle(
-//                             fontSize: 18,
-//                             fontWeight: FontWeight.bold,
-//                             color: primaryColor,
-//                           ),
-//                         ),
-//                         IconButton(
-//                           onPressed: () => Get.back(),
-//                           icon: const Icon(
-//                             Icons.close_rounded,
-//                             color: Colors.grey,
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                     const Divider(),
-//                     const SizedBox(height: 10),
-//
-//                     // ── SKU Badge ─────────────────────────────────────────
-//                     Container(
-//                       padding: const EdgeInsets.symmetric(
-//                         horizontal: 12,
-//                         vertical: 6,
-//                       ),
-//                       decoration: BoxDecoration(
-//                         color: primaryColor.withOpacity(0.1),
-//                         borderRadius: BorderRadius.circular(8),
-//                       ),
-//                       child: Text(
-//                         sku,
-//                         style: const TextStyle(
-//                           fontWeight: FontWeight.bold,
-//                           color: primaryColor,
-//                         ),
-//                       ),
-//                     ),
-//                     const SizedBox(height: 16),
-//
-//                     // ── QR Widget preview ────────────────────────────────
-//                     Container(
-//                       padding: const EdgeInsets.all(12),
-//                       decoration: BoxDecoration(
-//                         color: Colors.grey[50],
-//                         borderRadius: BorderRadius.circular(16),
-//                         border: Border.all(color: Colors.grey[200]!),
-//                       ),
-//                       child: SkuQrWidget(sku: sku, size: 100, showLabel: false),
-//                     ),
-//                     const SizedBox(height: 16),
-//
-//                     // ── Quantity Input ────────────────────────────────────
-//                     Row(
-//                       children: [
-//                         const Text(
-//                           "Quantity:",
-//                           style: TextStyle(fontWeight: FontWeight.w600),
-//                         ),
-//                         const Spacer(),
-//                         SizedBox(
-//                           width: 80,
-//                           child: TextField(
-//                             controller: qtyController,
-//                             keyboardType: TextInputType.number,
-//                             textAlign: TextAlign.center,
-//                             decoration: InputDecoration(
-//                               filled: true,
-//                               fillColor: Colors.grey[100],
-//                               contentPadding: const EdgeInsets.symmetric(
-//                                 vertical: 8,
-//                               ),
-//                               border: OutlineInputBorder(
-//                                 borderRadius: BorderRadius.circular(12),
-//                                 borderSide: BorderSide.none,
-//                               ),
-//                             ),
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                     const SizedBox(height: 16),
-//
-//                     // ── Generate Button ───────────────────────────────────
-//                     AppGradientButton(
-//                       width: double.infinity,
-//                       icon: Icons.generating_tokens_outlined,
-//                       text: "Generate Serials",
-//                       onPressed: () async {
-//                         final utilController = Get.find<UtilController>();
-//                         final qty = int.tryParse(qtyController.text) ?? 1;
-//
-//                         if (qty <= 0) {
-//                           AppAlerts.error("Quantity must be greater than 0");
-//                           return;
-//                         }
-//
-//                         try {
-//                           utilController.progress.value = 0;
-//                           utilController.progressText.value =
-//                           "Generating serials...";
-//                           _showProgressDialog();
-//
-//                           await utilController.generateBarcode(productId, qty);
-//
-//                           if (Get.isDialogOpen ?? false) Get.back();
-//
-//                           final result = utilController.generatedBarcodes.value;
-//                           if (result == null || result.serials.isEmpty) {
-//                             AppAlerts.error("No serials generated");
-//                             return;
-//                           }
-//
-//                           _showSerialsResultDialog(context, result);
-//                         } catch (e) {
-//                           if (Get.isDialogOpen ?? false) Get.back();
-//                           debugPrint("Generate error: $e");
-//                         }
-//                       },
-//                     ),
-//
-//                     const SizedBox(height: 10),
-//
-//                     // ── Print Button ──────────────────────────────────────
-//                     AppGradientButton(
-//                       width: double.infinity,
-//                       icon: Icons.print,
-//                       text: "Print",
-//                       onPressed: () async {
-//                         final utilController = Get.find<UtilController>();
-//                         try {
-//                           final qty = int.tryParse(qtyController.text) ?? 1;
-//                           if (qty <= 0) {
-//                             AppAlerts.error("Quantity must be greater than 0");
-//                             return;
-//                           }
-//
-//                           utilController.progress.value = 0;
-//                           utilController.progressText.value =
-//                           "Generating serials...";
-//                           _showProgressDialog();
-//
-//                           await utilController.generateBarcode(productId, qty);
-//
-//                           final result = utilController.generatedBarcodes.value;
-//                           if (result == null || result.serials.isEmpty) {
-//                             if (Get.isDialogOpen ?? false) Get.back();
-//                             AppAlerts.error("No serials generated");
-//                             return;
-//                           }
-//
-//                           // ✅ QR bytes locally — no network download
-//                           utilController.progressText.value =
-//                           "Generating QR codes...";
-//                           final serials = result.serials;
-//                           final total = serials.length;
-//
-//                           final List<Uint8List> qrImages = [];
-//                           for (int i = 0; i < total; i++) {
-//                             final qrBytes = await SkuQrWidget.toImageBytes(
-//                               serials[i].serialNumber,
-//                               size: 300,
-//                             );
-//                             qrImages.add(qrBytes);
-//                             utilController.progress.value =
-//                                 (((i + 1) / total) * 100).toInt();
-//                           }
-//
-//                           if (qrImages.isEmpty) {
-//                             if (Get.isDialogOpen ?? false) Get.back();
-//                             AppAlerts.error("Failed to generate QR codes");
-//                             return;
-//                           }
-//
-//                           utilController.progressText.value =
-//                           "Sending to printer...";
-//                           utilController.progress.value = 100;
-//
-//                           final itemController = Get.find<ItemController>();
-//                           await itemController.printMultipleBarcodes(qrImages);
-//
-//                           if (Get.isDialogOpen ?? false) Get.back(); // progress
-//                           Get.back(); // barcode dialog
-//
-//                           AppAlerts.success(
-//                             "Printed ${qrImages.length} QR label(s)",
-//                           );
-//                         } catch (e) {
-//                           if (Get.isDialogOpen ?? false) Get.back();
-//                           debugPrint("Print error: $e");
-//                           AppAlerts.error("Failed to print");
-//                         }
-//                       },
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     ),
-//   );
-// }
-//
-// // ── Serials Result Dialog ──────────────────────────────────────────────────
-// void _showSerialsResultDialog(BuildContext context, result) {
-//   const Color primaryColor = Color(0xFF1A1A4F);
-//
-//   showDialog(
-//     context: context,
-//     builder: (context) => Dialog(
-//       backgroundColor: Colors.white,
-//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-//       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-//       child: Container(
-//         padding: const EdgeInsets.all(20),
-//         constraints: BoxConstraints(
-//           maxHeight: MediaQuery.of(context).size.height * 0.85,
-//         ),
-//         child: Column(
-//           mainAxisSize: MainAxisSize.min,
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             // ── Header ─────────────────────────────────────────
-//             Row(
-//               children: [
-//                 Expanded(
-//                   child: Column(
-//                     crossAxisAlignment: CrossAxisAlignment.start,
-//                     children: [
-//                       Text(
-//                         result.productName,
-//                         style: const TextStyle(
-//                           fontSize: 16,
-//                           fontWeight: FontWeight.bold,
-//                           color: primaryColor,
-//                         ),
-//                         maxLines: 1,
-//                         overflow: TextOverflow.ellipsis,
-//                       ),
-//                       const SizedBox(height: 4),
-//                       Text(
-//                         result.productSku,
-//                         style: TextStyle(
-//                           fontSize: 11,
-//                           color: Colors.grey.shade600,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
-//                 IconButton(
-//                   onPressed: () => Get.back(),
-//                   icon: const Icon(Icons.close_rounded, color: Colors.grey),
-//                 ),
-//               ],
-//             ),
-//
-//             // ── Stock Info Bar ──────────────────────────────────
-//             Container(
-//               margin: const EdgeInsets.symmetric(vertical: 10),
-//               padding:
-//               const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-//               decoration: BoxDecoration(
-//                 color: primaryColor.withOpacity(0.06),
-//                 borderRadius: BorderRadius.circular(10),
-//               ),
-//               child: Row(
-//                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-//                 children: [
-//                   _stockStat(
-//                       "Available", "${result.totalAvailable}", Colors.blue),
-//                   _vDivider(),
-//                   _stockStat(
-//                       "Returned", "${result.returnedCount}", Colors.orange),
-//                   _vDivider(),
-//                   _stockStat(
-//                       "Remaining", "${result.remainingStock}", Colors.green),
-//                   _vDivider(),
-//                   _stockStat(
-//                       "Generated", "${result.serials.length}", primaryColor),
-//                 ],
-//               ),
-//             ),
-//
-//             const Divider(),
-//             Padding(
-//               padding: const EdgeInsets.only(bottom: 8),
-//               child: Text(
-//                 "Serials (${result.serials.length})",
-//                 style: const TextStyle(
-//                   fontSize: 14,
-//                   fontWeight: FontWeight.bold,
-//                   color: primaryColor,
-//                 ),
-//               ),
-//             ),
-//
-//             // ── Serials Scrollable List ─────────────────────────
-//             Flexible(
-//               child: ListView.builder(
-//                 shrinkWrap: true,
-//                 itemCount: result.serials.length,
-//                 itemBuilder: (context, index) {
-//                   final serial = result.serials[index];
-//                   return Container(
-//                     margin: const EdgeInsets.only(bottom: 10),
-//                     padding: const EdgeInsets.all(10),
-//                     decoration: BoxDecoration(
-//                       color: Colors.white,
-//                       borderRadius: BorderRadius.circular(10),
-//                       border: Border.all(color: Colors.blue.shade100),
-//                       boxShadow: [
-//                         BoxShadow(
-//                           color: Colors.black.withOpacity(0.03),
-//                           blurRadius: 4,
-//                           offset: const Offset(0, 2),
-//                         ),
-//                       ],
-//                     ),
-//                     child: Row(
-//                       children: [
-//                         // ✅ QR preview instead of network barcode image
-//                         ClipRRect(
-//                           borderRadius: BorderRadius.circular(6),
-//                           child: SkuQrWidget(
-//                             sku: serial.serialNumber,
-//                             size: 50,
-//                             showLabel: false,
-//                           ),
-//                         ),
-//                         const SizedBox(width: 10),
-//
-//                         // Serial Number
-//                         Expanded(
-//                           child: Column(
-//                             crossAxisAlignment: CrossAxisAlignment.start,
-//                             children: [
-//                               Text(
-//                                 "Serial #${index + 1}",
-//                                 style: TextStyle(
-//                                   fontSize: 10,
-//                                   color: Colors.grey.shade500,
-//                                 ),
-//                               ),
-//                               const SizedBox(height: 2),
-//                               Text(
-//                                 serial.serialNumber,
-//                                 style: const TextStyle(
-//                                   fontSize: 11,
-//                                   fontWeight: FontWeight.bold,
-//                                   fontFamily: 'monospace',
-//                                   color: primaryColor,
-//                                 ),
-//                               ),
-//                             ],
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   );
-//                 },
-//               ),
-//             ),
-//
-//             const SizedBox(height: 12),
-//
-//             // ── Print All Button ────────────────────────────────
-//             AppGradientButton(
-//               width: double.infinity,
-//               icon: Icons.print,
-//               text: "Print All ${result.serials.length} Serials",
-//               onPressed: () async {
-//                 final utilController = Get.find<UtilController>();
-//
-//                 utilController.progress.value = 0;
-//                 utilController.progressText.value = "Generating QR codes...";
-//                 Get.back(); // close serials dialog
-//                 _showProgressDialog();
-//
-//                 try {
-//                   final serials = result.serials;
-//                   final total = serials.length;
-//
-//                   // ✅ QR bytes locally — no network download
-//                   final List<Uint8List> qrImages = [];
-//                   for (int i = 0; i < total; i++) {
-//                     final qrBytes = await SkuQrWidget.toImageBytes(
-//                       serials[i].serialNumber,
-//                       size: 300,
-//                     );
-//                     qrImages.add(qrBytes);
-//                     utilController.progress.value =
-//                         (((i + 1) / total) * 100).toInt();
-//                   }
-//
-//                   if (qrImages.isEmpty) {
-//                     if (Get.isDialogOpen ?? false) Get.back();
-//                     AppAlerts.error("Failed to generate QR codes");
-//                     return;
-//                   }
-//
-//                   utilController.progressText.value = "Sending to printer...";
-//                   utilController.progress.value = 100;
-//
-//                   final itemController = Get.find<ItemController>();
-//                   await itemController.printMultipleBarcodes(qrImages);
-//
-//                   if (Get.isDialogOpen ?? false) Get.back(); // progress
-//                   if (Get.isDialogOpen ?? false) Get.back(); // barcode dialog
-//
-//                   AppAlerts.success(
-//                     "Printed ${qrImages.length} QR label(s)",
-//                   );
-//                 } catch (e) {
-//                   if (Get.isDialogOpen ?? false) Get.back();
-//                   AppAlerts.error("Print failed");
-//                 }
-//               },
-//             ),
-//           ],
-//         ),
-//       ),
-//     ),
-//   );
-// }
-//
-// // ── Progress Dialog ────────────────────────────────────────────────────────
-// void _showProgressDialog() {
-//   Get.dialog(
-//     WillPopScope(
-//       onWillPop: () async => false,
-//       child: Dialog(
-//         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-//         child: Obx(() {
-//           final utilController = Get.find<UtilController>();
-//           return Container(
-//             padding: const EdgeInsets.all(24),
-//             child: Column(
-//               mainAxisSize: MainAxisSize.min,
-//               children: [
-//                 Stack(
-//                   alignment: Alignment.center,
-//                   children: [
-//                     SizedBox(
-//                       width: 80,
-//                       height: 80,
-//                       child: CircularProgressIndicator(
-//                         value: utilController.progress.value / 100,
-//                         strokeWidth: 6,
-//                         backgroundColor: Colors.grey[200],
-//                         valueColor: const AlwaysStoppedAnimation<Color>(
-//                           Color(0xFF1A1A4F),
-//                         ),
-//                       ),
-//                     ),
-//                     Text(
-//                       "${utilController.progress.value}%",
-//                       style: const TextStyle(
-//                         fontSize: 18,
-//                         fontWeight: FontWeight.bold,
-//                         color: Color(0xFF1A1A4F),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//                 const SizedBox(height: 20),
-//                 Text(
-//                   utilController.progressText.value,
-//                   style: const TextStyle(
-//                     fontSize: 16,
-//                     fontWeight: FontWeight.w600,
-//                   ),
-//                   textAlign: TextAlign.center,
-//                 ),
-//                 const SizedBox(height: 8),
-//                 Text(
-//                   "Please wait...",
-//                   style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-//                 ),
-//               ],
-//             ),
-//           );
-//         }),
-//       ),
-//     ),
-//     barrierDismissible: false,
-//   );
-// }
-//
-// // ── Helpers ────────────────────────────────────────────────────────────────
-// Widget _stockStat(String label, String value, Color color) {
-//   return Column(
-//     children: [
-//       Text(
-//         value,
-//         style: TextStyle(
-//           fontSize: 16,
-//           fontWeight: FontWeight.bold,
-//           color: color,
-//         ),
-//       ),
-//       const SizedBox(height: 2),
-//       Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-//     ],
-//   );
-// }
-//
-// Widget _vDivider() =>
-//     Container(height: 30, width: 1, color: Colors.grey.shade300);
+// ── Order QR Printing Dialog ──────────────────────────────────────────────
+
+void showOrderBarcodeDialog(BuildContext context, OrderDetailsModel order) {
+  final qtyController = TextEditingController(text: "1");
+  const Color primaryColor = Color(0xFF1A1A4F);
+  final selectedMode = "Thermal Label".obs;
+
+  // Calculate total serials
+  int totalSerials = 0;
+  for (var item in order.items) {
+    totalSerials += item.serials.length;
+  }
+
+  showDialog(
+    context: context,
+    builder: (context) => Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Print Order Serials",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: primaryColor,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Get.back(),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+            const Divider(),
+            const SizedBox(height: 10),
+
+            Text(
+              "Order ID: #${order.orderId}",
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            Text(
+              "Total Serials to print: $totalSerials",
+              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            ),
+
+            const SizedBox(height: 20),
+            const Text(
+              "Print Mode:",
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Obx(() => Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: selectedMode.value,
+                      isExpanded: true,
+                      items: ["Thermal Label", "A4 Sheet"]
+                          .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) selectedMode.value = val;
+                      },
+                    ),
+                  ),
+                )),
+
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                const Text(
+                  "Copies (per serial):",
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const Spacer(),
+                SizedBox(
+                  width: 80,
+                  child: TextField(
+                    controller: qtyController,
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            AppGradientButton(
+              width: double.infinity,
+              icon: Icons.print,
+              text: "Start Printing",
+              onPressed: () async {
+                final qty = int.tryParse(qtyController.text) ?? 1;
+                if (qty <= 0) {
+                  AppAlerts.error("Please enter a valid quantity");
+                  return;
+                }
+
+                if (selectedMode.value == "Thermal Label") {
+                  await ThermalPrintService.printOrderLabels(context, order);
+                } else {
+                  await printA4OrderSerials(order, qty);
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+Future<void> printA4OrderSerials(OrderDetailsModel order, int copies) async {
+  try {
+    Get.dialog(
+      const Center(child: CircularProgressIndicator()),
+      barrierDismissible: false,
+    );
+
+    final pdf = pw.Document();
+
+    final List<Map<String, dynamic>> entries = [];
+    for (var item in order.items) {
+      if (item.serials.isNotEmpty) {
+        final Uint8List qrBytes = await SkuQrWidget.toImageBytes(
+          item.serials.first.serialNumber, // Fallback logic or loop serials
+          size: 300,
+        );
+        
+        for (var serial in item.serials) {
+           final Uint8List currentQrBytes = await SkuQrWidget.toImageBytes(
+            serial.serialNumber,
+            size: 300,
+          );
+          for (int i = 0; i < copies; i++) {
+            entries.add({
+              'sku': serial.serialNumber,
+              'name': item.productName,
+              'qr': currentQrBytes,
+            });
+          }
+        }
+      }
+    }
+
+    if (entries.isEmpty) {
+      Get.back();
+      AppAlerts.error("No serials found to print");
+      return;
+    }
+
+    const int columns = 4;
+    const int rowsPerPage = 7;
+    const int itemsPerPage = columns * rowsPerPage;
+    final int pageCount = (entries.length / itemsPerPage).ceil();
+
+    for (int p = 0; p < pageCount; p++) {
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(8 * PdfPageFormat.mm),
+          build: (context) {
+            final int startIdx = p * itemsPerPage;
+            final int endIdx = (startIdx + itemsPerPage < entries.length)
+                ? (startIdx + itemsPerPage)
+                : entries.length;
+
+            return pw.GridView(
+              crossAxisCount: columns,
+              childAspectRatio: 0.8,
+              children: List.generate(endIdx - startIdx, (index) {
+                final entry = entries[startIdx + index];
+                return pw.Container(
+                  padding: const pw.EdgeInsets.all(4),
+                  margin: const pw.EdgeInsets.all(2),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.grey400, width: 0.5),
+                  ),
+                  child: pw.Column(
+                    mainAxisAlignment: pw.MainAxisAlignment.center,
+                    children: [
+                      pw.Image(
+                        pw.MemoryImage(entry['qr']),
+                        width: 32 * PdfPageFormat.mm,
+                        height: 32 * PdfPageFormat.mm,
+                      ),
+                      pw.SizedBox(height: 3),
+                      pw.Text(
+                        entry['name'],
+                        textAlign: pw.TextAlign.center,
+                        maxLines: 2,
+                        style: pw.TextStyle(
+                          fontSize: 7.5,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.Text(
+                        entry['sku'],
+                        style: const pw.TextStyle(
+                          fontSize: 6.5,
+                          color: PdfColors.grey700,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            );
+          },
+        ),
+      );
+    }
+
+    Get.back();
+    await Printing.layoutPdf(
+      onLayout: (format) async => pdf.save(),
+      name: "Order_${order.orderId}_A4_Serials",
+      format: PdfPageFormat.a4,
+    );
+  } catch (e) {
+    if (Get.isDialogOpen ?? false) Get.back();
+    AppAlerts.error("Printing failed: $e");
+  }
+}

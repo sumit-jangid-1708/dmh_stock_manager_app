@@ -1,3 +1,4 @@
+import 'package:dmj_stock_manager/res/components/barcode_dialog.dart';
 import 'package:dmj_stock_manager/res/components/widgets/app_gradient _button.dart';
 import 'package:dmj_stock_manager/view/orders/shipping_detail_form.dart';
 import 'package:dmj_stock_manager/view_models/controller/order_controller.dart';
@@ -805,7 +806,7 @@ class _OrderItemCard extends StatelessWidget {
             if (item.productBarcode.isNotEmpty) ...[
               const SizedBox(height: 12),
               GestureDetector(
-                onTap: () => _showBarcodeDialog(context, item.productBarcode),
+                onTap: () => showBarcodeDialog(context, item.productBarcode, item.productName),
                 child: _InfoBox(
                   icon: Icons.qr_code,
                   title: 'Product Barcode',
@@ -829,7 +830,7 @@ class _OrderItemCard extends StatelessWidget {
                 title: 'Serials (${item.serials.length})',
                 child: Column(
                   children: item.serials
-                      .map((s) => _SerialItem(serial: s))
+                      .map((s) => _SerialItem(serial: s, productName: item.productName))
                       .toList(),
                 ),
               ),
@@ -841,78 +842,60 @@ class _OrderItemCard extends StatelessWidget {
   }
 }
 
-void _showBarcodeDialog(BuildContext context, String sku) {
-  showDialog(
-    context: context,
-    builder: (_) => Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              "Product QR Code",
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-
-            /// 🔥 Big QR for print
-            SkuQrWidget(sku: sku, size: 250, showLabel: true),
-
-            const SizedBox(height: 20),
-
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Close"),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-// ── _SerialItem — backend image hatao, QR widget lagao ──
+// ── _SerialItem — clickable for individual print ──
 class _SerialItem extends StatelessWidget {
-  const _SerialItem({required this.serial});
+  const _SerialItem({required this.serial, required this.productName});
   final SerialModel serial;
+  final String productName;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.blue.shade100),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // ✅ QR — frontend generated, no backend call
-          SkuQrWidget(sku: serial.serialNumber, size: 100, showLabel: false),
-          const SizedBox(height: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(6),
+    return GestureDetector(
+      onTap: () => showBarcodeDialog(context, serial.serialNumber, productName),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.blue.shade100),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-            child: Text(
-              serial.serialNumber,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'monospace',
-                color: Colors.blue.shade700,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SkuQrWidget(sku: serial.serialNumber, size: 100, showLabel: false),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                serial.serialNumber,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'monospace',
+                  color: Colors.blue.shade700,
+                ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            const Text(
+              "Tap to print",
+              style: TextStyle(fontSize: 9, color: Colors.grey),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1075,8 +1058,7 @@ class _BarcodePdfCard extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () =>
-                      ThermalPrintService.printOrderLabels(context, order),
+                  onPressed: () => showOrderBarcodeDialog(context, order),
                   icon: const Icon(Icons.print_outlined, size: 18),
                   label: const Text('Print'),
                   style: OutlinedButton.styleFrom(
