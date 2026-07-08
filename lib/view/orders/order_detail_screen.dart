@@ -694,13 +694,21 @@ Shared via DMJ Stock Manager
 // Private widgets
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _OrderItemCard extends StatelessWidget {
+class _OrderItemCard extends StatefulWidget {
   const _OrderItemCard({required this.item});
 
   final OrderItemModel item;
 
   @override
+  State<_OrderItemCard> createState() => _OrderItemCardState();
+}
+
+class _OrderItemCardState extends State<_OrderItemCard> {
+  bool _showAllSerials = false;
+
+  @override
   Widget build(BuildContext context) {
+    final item = widget.item;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -829,9 +837,29 @@ class _OrderItemCard extends StatelessWidget {
                 icon: Icons.numbers,
                 title: 'Serials (${item.serials.length})',
                 child: Column(
-                  children: item.serials
-                      .map((s) => _SerialItem(serial: s, productName: item.productName))
-                      .toList(),
+                  children: [
+                    ...(_showAllSerials ? item.serials : item.serials.take(3))
+                        .map((s) => _SerialItem(serial: s, productName: item.productName))
+                        .toList(),
+                    if (item.serials.length > 3)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _showAllSerials = !_showAllSerials;
+                            });
+                          },
+                          child: Text(
+                            _showAllSerials ? 'Show Less' : 'View All',
+                            style: const TextStyle(
+                              color: Color(0xFF1A1A4F),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ],

@@ -550,13 +550,19 @@ class OrderStatusSection extends StatelessWidget {
                 builder: (_) {
                   final packedLog = logs.firstWhereOrNull((l) => l.status == 2);
                   final extra = packedLog?.extraData;
-                  if (extra == null) return const SizedBox.shrink();
-                  if (!extra.hasDimensions &&
-                      (extra.packageImages == null ||
-                          extra.packageImages!.isEmpty)) {
+                  
+                  // Primary check: if order.package has data, or log has extra data
+                  final bool hasPackageInfo = order.package.length.isNotEmpty || 
+                                             order.package.width.isNotEmpty || 
+                                             order.package.height.isNotEmpty ||
+                                             order.package.deadWeight.isNotEmpty ||
+                                             (extra != null && extra.hasImages);
+
+                  if (extra == null && !hasPackageInfo) {
                     return const SizedBox.shrink();
                   }
-                  return _PackedInfoCard(extra: extra, orderId: orderId);
+                  
+                  return _PackedInfoCard(extra: extra, order: order, orderId: orderId);
                 },
               ),
             ],
@@ -616,24 +622,44 @@ class OrderStatusSection extends StatelessWidget {
 
 // ── Packed Info Card ──────────────────────────────────────────────────────────
 class _PackedInfoCard extends StatelessWidget {
-  const _PackedInfoCard({required this.extra, required this.orderId});
-  final OrderStatusExtraData extra;
+  const _PackedInfoCard({
+    required this.extra, 
+    required this.orderId,
+    required this.order,
+  });
+  
+  final OrderStatusExtraData? extra;
+  final OrderDetailsModel order;
   final int orderId;
 
   void _sharePackageDetails() {
+    final pkg = order.package;
     String text = "📦 *Package Details: Order #$orderId*\n";
-    if (extra.height?.isNotEmpty == true) text += "Height: ${extra.height} cm\n";
-    if (extra.width?.isNotEmpty == true) text += "Width: ${extra.width} cm\n";
-    if (extra.length?.isNotEmpty == true) text += "Length: ${extra.length} cm\n";
-    if (extra.weight?.isNotEmpty == true) text += "Dead Weight: ${extra.weight} g\n";
-    if (extra.volumetricWeight?.isNotEmpty == true) text += "Vol. Weight: ${extra.volumetricWeight} g\n";
-    if (extra.billedWeight?.isNotEmpty == true) text += "Billed Weight: ${extra.billedWeight} g";
+    if (pkg.height.isNotEmpty) text += "Height: ${pkg.height} cm\n";
+    if (pkg.width.isNotEmpty) text += "Width: ${pkg.width} cm\n";
+    if (pkg.length.isNotEmpty) text += "Length: ${pkg.length} cm\n";
+    if (pkg.deadWeight.isNotEmpty) text += "Dead Weight: ${pkg.deadWeight} g\n";
+    if (pkg.volWeight.isNotEmpty) text += "Vol. Weight: ${pkg.volWeight} g\n";
+    if (pkg.billedWeight.isNotEmpty) text += "Billed Weight: ${pkg.billedWeight} g";
 
     Share.share(text);
   }
 
   @override
   Widget build(BuildContext context) {
+    final pkg = order.package;
+    
+    // Check if we have any data to show from order.package
+    bool hasData = pkg.height.isNotEmpty || pkg.width.isNotEmpty || pkg.length.isNotEmpty || 
+                   pkg.deadWeight.isNotEmpty || pkg.volWeight.isNotEmpty || pkg.billedWeight.isNotEmpty;
+    
+    // Fallback check to extraData if package is empty but log has it
+    if (!hasData && extra != null && (extra!.hasDimensions || extra!.hasImages)) {
+      hasData = true;
+    }
+
+    if (!hasData) return const SizedBox.shrink();
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -661,7 +687,6 @@ class _PackedInfoCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              // ✅ Share Button for Package
               IconButton(
                 icon: const Icon(Icons.share_outlined, size: 16, color: Color(0xFF1A1A4F)),
                 onPressed: _sharePackageDetails,
@@ -677,30 +702,105 @@ class _PackedInfoCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (extra.packageImages?.isNotEmpty == true)
-                const SizedBox(width: 14),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (extra.height?.isNotEmpty == true)
-                      _DimRow('Height', '${extra.height} cm'),
-                    if (extra.width?.isNotEmpty == true)
-                      _DimRow('Width', '${extra.width} cm'),
-                    if (extra.length?.isNotEmpty == true)
-                      _DimRow('Length', '${extra.length} cm'),
-                    if (extra.weight?.isNotEmpty == true)
-                      _DimRow('Dead Weight', '${extra.weight} g'),
-                    if (extra.volumetricWeight?.isNotEmpty == true)
-                      _DimRow('Vol. Weight', '${extra.volumetricWeight} g'),
-                    if (extra.billedWeight?.isNotEmpty == true)
-                      _DimRow('Billed Weight', '${extra.billedWeight} g'),
+                    if (pkg.height.isNotEmpty)
+                      _DimRow('Height', '${pkg.height} cm')
+                    else if (extra?.height?.isNotEmpty == true)
+                      _DimRow('Height', '${extra!.height} cm'),
+
+                    if (pkg.width.isNotEmpty)
+                      _DimRow('Width', '${pkg.width} cm')
+                    else if (extra?.width?.isNotEmpty == true)
+                      _DimRow('Width', '${extra!.width} cm'),
+
+                    if (pkg.length.isNotEmpty)
+                      _DimRow('Length', '${pkg.length} cm')
+                    else if (extra?.length?.isNotEmpty == true)
+                      _DimRow('Length', '${extra!.length} cm'),
+
+                    if (pkg.deadWeight.isNotEmpty)
+                      _DimRow('Dead Weight', '${pkg.deadWeight} g')
+                    else if (extra?.weight?.isNotEmpty == true)
+                      _DimRow('Dead Weight', '${extra!.weight} g'),
+
+                    if (pkg.volWeight.isNotEmpty)
+                      _DimRow('Vol. Weight', '${pkg.volWeight} g')
+                    else if (extra?.volumetricWeight?.isNotEmpty == true)
+                      _DimRow('Vol. Weight', '${extra!.volumetricWeight} g'),
+
+                    if (pkg.billedWeight.isNotEmpty)
+                      _DimRow('Billed Weight', '${pkg.billedWeight} g')
+                    else if (extra?.billedWeight?.isNotEmpty == true)
+                      _DimRow('Billed Weight', '${extra!.billedWeight} g'),
                   ],
                 ),
               ),
             ],
           ),
+          
+          if (extra?.packageImages != null && extra!.packageImages!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            const Text(
+              'Package Images',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 80,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: extra!.packageImages!.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: GestureDetector(
+                      onTap: () {
+                         showDialog(
+                           context: context,
+                           builder: (_) => Dialog(
+                             backgroundColor: Colors.transparent,
+                             child: Stack(
+                               children: [
+                                 InteractiveViewer(
+                                   child: Image.network(extra!.packageImages![index]),
+                                 ),
+                                 Positioned(
+                                   right: 0,
+                                   top: 0,
+                                   child: IconButton(
+                                     icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                                     onPressed: () => Navigator.pop(context),
+                                   ),
+                                 ),
+                               ],
+                             ),
+                           ),
+                         );
+                      },
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          extra!.packageImages![index],
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            width: 80,
+                            height: 80,
+                            color: Colors.grey.shade200,
+                            child: const Icon(Icons.image_not_supported, color: Colors.grey),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ],
       ),
     );
