@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:dmj_stock_manager/model/vendor_model/vendor_model.dart';
-import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
+import 'package:dmj_stock_manager/res/components/widgets/app_gradient _button.dart';
 import 'package:dmj_stock_manager/res/components/widgets/custom_text_field.dart';
 import 'package:dmj_stock_manager/res/components/widgets/multi_image_picker_widget.dart';
 import 'package:dmj_stock_manager/res/components/widgets/custom_searchable_dropdown.dart';
@@ -135,9 +135,31 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
                   // ── Pricing ────────────────────────────────────────
                   _buildSectionTitle("Pricing & Stock", Icons.account_balance_wallet_outlined),
                   const SizedBox(height: 12),
-                  AppTextField(controller: itemController.purchasePrice.value, hintText: "Purchase Price", prefixIcon: Icons.payments_outlined),
+                  AppTextField(controller: itemController.purchasePrice.value, hintText: "Purchase Price", prefixIcon: Icons.payments_outlined, keyboardType: TextInputType.number),
                   const SizedBox(height: 12),
-                  AppTextField(controller: itemController.lowStockLimit.value, hintText: "Low Stock Limit", prefixIcon: Icons.warning_amber_rounded),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AppTextField(
+                          controller: itemController.wholesalePrice.value,
+                          hintText: "Wholesale Price",
+                          prefixIcon: Icons.storefront_outlined,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: AppTextField(
+                          controller: itemController.retailerPrice.value,
+                          hintText: "Retailer Price",
+                          prefixIcon: Icons.shopping_bag_outlined,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(controller: itemController.lowStockLimit.value, hintText: "Low Stock Limit", prefixIcon: Icons.warning_amber_rounded, keyboardType: TextInputType.number),
                   const SizedBox(height: 24),
 
                   // ── Weight ─────────────────────────────────────────
@@ -395,6 +417,8 @@ class _AddItemFormBottomSheetState extends State<AddItemFormBottomSheet> {
       itemController.purchasePrice.value.text,
       _selectedHsnId,
       descriptionText.isEmpty ? null : descriptionText,
+      wholesalePrice: itemController.wholesalePrice.value.text.trim(),
+      retailerPrice: itemController.retailerPrice.value.text.trim(),
       isMultiLabelSize: _isMultiLabelSize.value,
       unit: _selectedUnit.value,
       length: _lengthCtrl.text.trim(),

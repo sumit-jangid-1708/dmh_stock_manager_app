@@ -18,6 +18,22 @@ class StockController extends GetxController with BaseController {
   final inventoryList = <InventoryModel>[].obs;
   var isLoading = false.obs;
 
+  // 🔍 Filter logic
+  var selectedFilter = 'ALL'.obs; // 'ALL', 'LOW', 'OUT'
+
+  List<InventoryModel> get filteredInventory {
+    if (selectedFilter.value == 'LOW') {
+      return inventoryList.where((item) => item.quantity < 10 && item.quantity > 0).toList();
+    } else if (selectedFilter.value == 'OUT') {
+      return inventoryList.where((item) => item.quantity == 0).toList();
+    }
+    return inventoryList;
+  }
+
+  void setFilter(String filter) {
+    selectedFilter.value = filter;
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -47,7 +63,6 @@ class StockController extends GetxController with BaseController {
     final product = Get.find<ItemController>().products.firstWhereOrNull(
           (p) => p.id == id,
         );
-    // return product?.name ?? "Unknown Product";
     return product;
   }
 
@@ -65,8 +80,7 @@ class StockController extends GetxController with BaseController {
       AppAlerts.success("Quantity added successfully");
     } catch (e, s) {
       if (kDebugMode) {
-        print(
-            "🚩 Add Inventory Error ❌ Exception Details: $e $s"); // full stack ya raw details
+        print("🚩 Add Inventory Error: $e $s");
       }
       handleError(e);
     } finally {
@@ -99,8 +113,7 @@ class StockController extends GetxController with BaseController {
     try {
       final response = await stockService.inventoryAdjustApi(data);
       if (response["new_quantity"] != null) {
-        AppAlerts.success(
-            "Inventory adjusted. New qty: ${response["new_quantity"]}");
+        AppAlerts.success("Inventory adjusted. New qty: ${response["new_quantity"]}");
       }
       fetchInventoryList();
     } catch (e) {
@@ -118,9 +131,6 @@ class StockController extends GetxController with BaseController {
     const validReasons = {"ORDER", "PURCHASE", "RETURN", "WPS", "ADJUST"};
     if (validReasons.contains(normalized)) {
       return normalized;
-    }
-    if (normalized == "OTHER" || normalized == "DAMAGED") {
-      return "ADJUST";
     }
     return "ADJUST";
   }

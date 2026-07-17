@@ -41,6 +41,8 @@ class ItemController extends GetxController with BaseController {
   final productName = TextEditingController().obs;
   final skuCode = TextEditingController().obs;
   var purchasePrice = TextEditingController().obs;
+  var wholesalePrice = TextEditingController().obs; // New
+  var retailerPrice = TextEditingController().obs;  // New
   var lowStockLimit = TextEditingController().obs;
   final hsnCode = TextEditingController().obs;
   final description = TextEditingController().obs;
@@ -228,6 +230,8 @@ class ItemController extends GetxController with BaseController {
     String purchasePrice,
     int? hsn,
     String? description, {
+    String? wholesalePrice, // New
+    String? retailerPrice,  // New
     bool isMultiLabelSize = false,
     String? unit,
     String? length,
@@ -258,6 +262,8 @@ class ItemController extends GetxController with BaseController {
       "color": color,
       "material": material,
       "unit_purchase_price": purchasePrice,
+      "wholesale_price": wholesalePrice, // New
+      "retailer_price": retailerPrice,   // New
       "hsn": hsn,
       "desc": description,
       "weight_before": weightBefore.value.text.trim().isEmpty
@@ -308,6 +314,8 @@ class ItemController extends GetxController with BaseController {
     required String size,
     required String material,
     required String purchasePrice,
+    String? wholesalePrice, // New
+    String? retailerPrice,  // New
     int? hsnId,
     String? description,
     bool isMultiLabelSize = false,
@@ -339,6 +347,8 @@ class ItemController extends GetxController with BaseController {
       "color": color,
       "material": material,
       "unit_purchase_price": purchasePrice,
+      "wholesale_price": wholesalePrice, // New
+      "retailer_price": retailerPrice,   // New
       "hsn": hsnId,
       "desc": description,
       "weight_before": weightBefore.value.text.trim().isEmpty
@@ -422,6 +432,8 @@ class ItemController extends GetxController with BaseController {
     productName.value.clear();
     skuCode.value.clear();
     purchasePrice.value.clear();
+    wholesalePrice.value.clear(); // New
+    retailerPrice.value.clear();  // New
     lowStockLimit.value.clear();
     hsnCode.value.clear();
     description.value.clear();

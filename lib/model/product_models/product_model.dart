@@ -13,6 +13,8 @@ class ProductModel {
   final String? productImage;
   final List<String> productImageVariants;
   final double unitPurchasePrice;
+  final double? wholesalePrice;
+  final double? retailerPrice;
   final int? hsnId;
   final String? description;
   final String? weightBefore;
@@ -47,6 +49,8 @@ class ProductModel {
     this.productImage,
     required this.productImageVariants,
     required this.unitPurchasePrice,
+    this.wholesalePrice,
+    this.retailerPrice,
     this.hsnId,
     this.description,
     this.weightBefore,
@@ -87,6 +91,14 @@ class ProductModel {
       unitPurchasePrice:
       double.tryParse(json['unit_purchase_price'].toString()) ?? 0.0,
 
+      wholesalePrice: json['wholesale_price'] == null
+          ? null
+          : double.tryParse(json['wholesale_price'].toString()),
+
+      retailerPrice: json['retailer_price'] == null
+          ? null
+          : double.tryParse(json['retailer_price'].toString()),
+
       hsnId: json['hsn'] == null
           ? null
           : int.tryParse(json['hsn'].toString()),
@@ -119,6 +131,8 @@ class ProductModel {
       'product_image': productImage,
       'product_image_variants': productImageVariants,
       'unit_purchase_price': unitPurchasePrice.toStringAsFixed(2),
+      'wholesale_price': wholesalePrice?.toStringAsFixed(2),
+      'retailer_price': retailerPrice?.toStringAsFixed(2),
       'hsn': hsnId,
       'desc': description,
       'weight_before': weightBefore,
@@ -130,4 +144,3 @@ class ProductModel {
     };
   }
 }
-

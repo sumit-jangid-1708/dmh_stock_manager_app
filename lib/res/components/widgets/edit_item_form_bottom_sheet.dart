@@ -74,6 +74,8 @@ class _EditItemFormBottomSheetState extends State<EditItemFormBottomSheet> {
     itemController.productName.value.text = p.name;
     itemController.skuCode.value.text = p.prefixCode ?? '';
     itemController.purchasePrice.value.text = p.unitPurchasePrice.toString();
+    itemController.wholesalePrice.value.text = p.wholesalePrice?.toString() ?? ''; // New
+    itemController.retailerPrice.value.text = p.retailerPrice?.toString() ?? '';   // New
     itemController.description.value.text = p.description ?? '';
     itemController.weightBefore.value.text = p.weightBefore ?? '';
     itemController.weightAfter.value.text = p.weightAfter ?? '';
@@ -193,7 +195,30 @@ class _EditItemFormBottomSheetState extends State<EditItemFormBottomSheet> {
                   AppTextField(
                       controller: itemController.purchasePrice.value,
                       hintText: "Purchase Price",
-                      prefixIcon: Icons.payments_outlined),
+                      prefixIcon: Icons.payments_outlined,
+                      keyboardType: TextInputType.number),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AppTextField(
+                          controller: itemController.wholesalePrice.value,
+                          hintText: "Wholesale Price",
+                          prefixIcon: Icons.storefront_outlined,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: AppTextField(
+                          controller: itemController.retailerPrice.value,
+                          hintText: "Retailer Price",
+                          prefixIcon: Icons.shopping_bag_outlined,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 24),
 
                   // ── Weight ─────────────────────────────────────────
@@ -631,6 +656,8 @@ class _EditItemFormBottomSheetState extends State<EditItemFormBottomSheet> {
       size: _selectedSize.value ?? '',
       material: material,
       purchasePrice: itemController.purchasePrice.value.text,
+      wholesalePrice: itemController.wholesalePrice.value.text.trim(),
+      retailerPrice: itemController.retailerPrice.value.text.trim(),
       hsnId: _selectedHsnId,
       description: descriptionText.isEmpty ? null : descriptionText,
       isMultiLabelSize: _isMultiLabelSize.value,

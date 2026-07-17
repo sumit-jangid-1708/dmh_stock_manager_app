@@ -55,6 +55,8 @@ class ScanProductModel {
   final String? productImage;
   final List<String> productImageVariants;
   final String? unitPurchasePrice;
+  final String? wholesalePrice;
+  final String? retailerPrice;
   final int? hsn;
 
   ScanProductModel({
@@ -74,6 +76,8 @@ class ScanProductModel {
     this.productImage,
     required this.productImageVariants,
     this.unitPurchasePrice,
+    this.wholesalePrice,
+    this.retailerPrice,
     this.hsn,
   });
 
@@ -99,7 +103,9 @@ class ScanProductModel {
       productImage: json['product_image'],
       productImageVariants:
       (json['product_image_variants'] as List?)?.cast<String>() ?? [],
-      unitPurchasePrice: json['unit_purchase_price'],
+      unitPurchasePrice: json['unit_purchase_price']?.toString(),
+      wholesalePrice: json['wholesale_price']?.toString(),
+      retailerPrice: json['retailer_price']?.toString(),
       hsn: json['hsn'],
     );
   }
@@ -122,6 +128,8 @@ class ScanProductModel {
       'product_image': productImage,
       'product_image_variants': productImageVariants,
       'unit_purchase_price': unitPurchasePrice,
+      'wholesale_price': wholesalePrice,
+      'retailer_price': retailerPrice,
       'hsn': hsn,
     };
   }

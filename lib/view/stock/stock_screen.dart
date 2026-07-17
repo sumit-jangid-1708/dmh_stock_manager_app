@@ -1,13 +1,17 @@
+import 'package:dmj_stock_manager/res/app_url/app_url.dart';
 import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
 import 'package:dmj_stock_manager/view_models/controller/stock_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../model/product_models/product_model.dart';
+import '../../model/stock_inventory_models/inventory_model.dart';
 import '../../view_models/controller/item_controller.dart';
 
 class StockScreen extends StatelessWidget {
   StockScreen({super.key});
   final StockController stockController = Get.put(StockController());
   final ScrollController _scrollController = ScrollController();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -15,7 +19,7 @@ class StockScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // 🎨 Gradient Header
+            // 🎨 Gradient Header with Filters
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -45,11 +49,7 @@ class StockScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: IconButton(
-                            icon: Icon(
-                              Icons.arrow_back,
-                              size: 20,
-                              color: Colors.white,
-                            ),
+                            icon: Icon(Icons.arrow_back, size: 20, color: Colors.white),
                             onPressed: () => Get.back(),
                             padding: EdgeInsets.zero,
                           ),
@@ -60,19 +60,16 @@ class StockScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Inventory Management",
+                                "Inventory",
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 20,
+                                  fontSize: 22,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
-                                "Track and manage stock levels",
-                                style: TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 12,
-                                ),
+                                "Manage your stock levels",
+                                style: TextStyle(color: Colors.white70, fontSize: 12),
                               ),
                             ],
                           ),
@@ -80,28 +77,22 @@ class StockScreen extends StatelessWidget {
                         ElevatedButton.icon(
                           onPressed: () => showAddInventorySheet(context),
                           icon: Icon(Icons.add, size: 18),
-                          label: Text("Add", style: TextStyle(fontSize: 13)),
+                          label: Text("Add"),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
                             foregroundColor: Color(0xFF1A1A4F),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
-                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                  // 📊 Stats Section
+                  // 📊 Interactive Stats Section (Filters)
                   Obx(() {
                     final totalItems = stockController.inventoryList.length;
                     final lowStock = stockController.inventoryList
-                        .where((item) => item.quantity < 10)
+                        .where((item) => item.quantity < 10 && item.quantity > 0)
                         .length;
                     final outOfStock = stockController.inventoryList
                         .where((item) => item.quantity == 0)
@@ -109,34 +100,33 @@ class StockScreen extends StatelessWidget {
 
                     return Container(
                       margin: EdgeInsets.only(bottom: 20, left: 20, right: 20),
-                      padding: EdgeInsets.all(16),
+                      padding: EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.2),
-                        ),
+                        border: Border.all(color: Colors.white.withOpacity(0.1)),
                       ),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildStatItem(
+                          _buildFilterItem(
                             "Total",
                             totalItems.toString(),
                             Icons.inventory_2,
+                            'ALL',
+                            Colors.blue.shade300,
                           ),
-                          _buildDivider(),
-                          _buildStatItem(
+                          _buildFilterItem(
                             "Low Stock",
                             lowStock.toString(),
                             Icons.warning_amber,
+                            'LOW',
                             Colors.orange.shade300,
                           ),
-                          _buildDivider(),
-                          _buildStatItem(
+                          _buildFilterItem(
                             "Out",
                             outOfStock.toString(),
                             Icons.error_outline,
+                            'OUT',
                             Colors.red.shade300,
                           ),
                         ],
@@ -150,62 +140,39 @@ class StockScreen extends StatelessWidget {
             // 📦 Inventory List
             Expanded(
               child: RefreshIndicator(
-                onRefresh: () async {
-                  await stockController.fetchInventoryList();
-                },
+                onRefresh: () async => await stockController.fetchInventoryList(),
                 child: Obx(() {
-                  if (stockController.isLoading.value &&
-                      stockController.inventoryList.isEmpty) {
+                  if (stockController.isLoading.value && stockController.inventoryList.isEmpty) {
                     return Center(child: CircularProgressIndicator());
                   }
 
-                  if (stockController.inventoryList.isEmpty) {
+                  final list = stockController.filteredInventory;
+
+                  if (list.isEmpty) {
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.inventory_2_outlined,
-                            size: 80,
-                            color: Colors.grey.shade300,
-                          ),
+                          Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey.shade300),
                           SizedBox(height: 16),
                           Text(
-                            "No inventory items yet",
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          TextButton.icon(
-                            onPressed: () => showAddInventorySheet(context),
-                            icon: Icon(Icons.add),
-                            label: Text("Add First Item"),
+                            "No items found for this filter",
+                            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                           ),
                         ],
                       ),
                     );
                   }
 
-                  return Scrollbar(
+                  return ListView.builder(
                     controller: _scrollController,
-                    thumbVisibility: true,
-                    thickness: 6,
-                    radius: const Radius.circular(10),
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      padding: EdgeInsets.all(16),
-                      itemCount: stockController.inventoryList.length,
-                      itemBuilder: (context, index) {
-                        final item = stockController.inventoryList[index];
-                        final product = stockController.getProductById(
-                          item.product,
-                        );
-
-                        return _buildInventoryCard(item, product, context);
-                      },
-                    ),
+                    padding: EdgeInsets.all(16),
+                    itemCount: list.length,
+                    itemBuilder: (context, index) {
+                      final item = list[index];
+                      final product = stockController.getProductById(item.product);
+                      return _buildMinimalInventoryCard(item, product, context);
+                    },
                   );
                 }),
               ),
@@ -216,202 +183,187 @@ class StockScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatItem(
-    String label,
-    String value,
-    IconData icon, [
-    Color? iconColor,
-  ]) {
-    return Column(
-      children: [
-        Icon(icon, color: iconColor ?? Colors.white70, size: 24),
-        SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+  Widget _buildFilterItem(String label, String value, IconData icon, String filter, Color activeColor) {
+    return Expanded(
+      child: Obx(() {
+        bool isActive = stockController.selectedFilter.value == filter;
+        return GestureDetector(
+          onTap: () => stockController.setFilter(filter),
+          child: AnimatedContainer(
+            duration: Duration(milliseconds: 200),
+            padding: EdgeInsets.symmetric(vertical: 12),
+            decoration: BoxDecoration(
+              color: isActive ? Colors.white.withOpacity(0.15) : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                Icon(icon, color: isActive ? activeColor : Colors.white60, size: 22),
+                SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: isActive ? Colors.white : Colors.white60,
+                    fontSize: 10,
+                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+                if (isActive)
+                  Container(
+                    margin: EdgeInsets.only(top: 4),
+                    height: 3,
+                    width: 20,
+                    decoration: BoxDecoration(
+                      color: activeColor,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  )
+              ],
+            ),
           ),
-        ),
-        Text(label, style: TextStyle(color: Colors.white70, fontSize: 11)),
-      ],
+        );
+      }),
     );
   }
 
-  Widget _buildDivider() {
-    return Container(height: 40, width: 1, color: Colors.white24);
-  }
-
-  Widget _buildInventoryCard(
-    dynamic item,
-    dynamic product,
-    BuildContext context,
-  ) {
+  Widget _buildMinimalInventoryCard(InventoryModel item, ProductModel? product, BuildContext context) {
     final isLowStock = item.quantity < 10 && item.quantity > 0;
     final isOutOfStock = item.quantity == 0;
-
-    Color statusColor = isOutOfStock
-        ? Colors.red
-        : isLowStock
-            ? Colors.orange
-            : Colors.green;
-
-    String statusText = isOutOfStock
-        ? "OUT OF STOCK"
-        : isLowStock
-            ? "LOW STOCK"
-            : "IN STOCK";
+    Color statusColor = isOutOfStock ? Colors.red : isLowStock ? Colors.orange : Colors.green;
 
     return Container(
-      margin: EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isOutOfStock ? Colors.red.shade100 : Colors.grey.shade200,
-          width: isOutOfStock ? 2 : 1,
-        ),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 8,
-            offset: Offset(0, 3),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         children: [
+          // 🔝 Top Section: Quantity and Adjust
           Padding(
-            padding: EdgeInsets.all(14),
-            child: Column(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Available Quantity",
+                      style: TextStyle(color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w500),
+                    ),
+                    Text(
+                      item.quantity.toString(),
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: statusColor,
+                      ),
+                    ),
+                  ],
+                ),
+                AppGradientButton(
+                  onPressed: () {
+                    if (product?.sku != null) {
+                      showAdjustSheet(context, product!.sku);
+                    } else {
+                      Get.snackbar("Error", "SKU not available");
+                    }
+                  },
+                  icon: Icons.tune,
+                  text: "Adjust",
+                  height: 40,
+                ),
+              ],
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Divider(color: Colors.grey.shade100, thickness: 1),
+          ),
+
+          // 🔽 Bottom Section: Product Details
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header Row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            product?.name ?? "Unknown Product",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          if (product?.baseSku != null)
-                            Row(
-                              children: [
-                                Text(
-                                  "SKU: ${product!.baseSku}",
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: statusColor, width: 1),
-                      ),
-                      child: Text(
-                        statusText,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
+                // Product Image
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: (product?.productImageVariants.isNotEmpty ?? false)
+                      ? Image.network(
+                          AppUrl.mediaUrl(product!.productImageVariants.first),
+                          width: 60,
+                          height: 60,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _imagePlaceholder(),
+                        )
+                      : _imagePlaceholder(),
                 ),
-
-                SizedBox(height: 12),
-
-                // Attributes Row
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    if (product?.size != null && product!.size.isNotEmpty)
-                      _buildAttributeChip(
-                        product.size,
-                        Icons.straighten,
-                        Colors.blue,
-                      ),
-                    if (product?.color != null && product!.color.isNotEmpty)
-                      _buildAttributeChip(
-                        product.color,
-                        Icons.palette,
-                        Colors.red,
-                      ),
-                    if (product?.material != null &&
-                        product!.material.isNotEmpty)
-                      _buildAttributeChip(
-                        product.material,
-                        Icons.category,
-                        Colors.brown,
-                      ),
-                  ],
-                ),
-
-                SizedBox(height: 12),
-
-                // Quantity & Adjust Section
-                Container(
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            "Available Quantity",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade600,
+                          Expanded(
+                            child: Text(
+                              product?.name ?? "Unknown Product",
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF1A1A4F)),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          SizedBox(height: 4),
-                          Text(
-                            item.quantity.toString(),
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: statusColor,
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: statusColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              isOutOfStock ? "Out" : isLowStock ? "Low" : "In Stock",
+                              style: TextStyle(color: statusColor, fontSize: 9, fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],
                       ),
-                      AppGradientButton(
-                        onPressed: () {
-                          if (product?.sku != null) {
-                            showAdjustSheet(context, product!.sku!);
-                          } else {
-                            Get.snackbar("Error", "SKU not available");
-                          }
-                        },
-                        icon: Icons.tune,
-                        text: "Adjust",
+                      Text(
+                        "SKU: ${product?.baseSku ?? 'N/A'}",
+                        style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+                      ),
+                      SizedBox(height: 8),
+                      // Attributes
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: [
+                          if (product?.size != null && product!.size.isNotEmpty)
+                            _minimalChip(product.size, Colors.blue),
+                          if (product?.color != null && product!.color.isNotEmpty)
+                            _minimalChip(product.color, Colors.red),
+                          if (product?.material != null && product!.material.isNotEmpty)
+                            _minimalChip(product.material, Colors.brown),
+                        ],
                       ),
                     ],
                   ),
@@ -424,32 +376,30 @@ class StockScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAttributeChip(String label, IconData icon, Color color) {
+  Widget _minimalChip(String label, Color color) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.3)),
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withOpacity(0.1)),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 10, color: color),
-          SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 9, color: color, fontWeight: FontWeight.w600),
       ),
     );
   }
+
+  Widget _imagePlaceholder() => Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(12)),
+        child: Icon(Icons.image_not_supported, color: Colors.grey.shade400, size: 20),
+      );
 }
+
+// Keep showAddInventorySheet and showAdjustSheet as they were (or slightly updated for types if needed)
 
 void showAddInventorySheet(BuildContext context) {
   final qtyController = TextEditingController(text: "1");

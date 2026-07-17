@@ -1,6 +1,6 @@
 import 'package:dmj_stock_manager/model/product_models/product_model.dart';
 import 'package:dmj_stock_manager/res/app_url/app_url.dart';
-import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
+import 'package:dmj_stock_manager/res/components/widgets/app_gradient _button.dart';
 import 'package:dmj_stock_manager/view/items/items_screen.dart';
 import 'package:dmj_stock_manager/view_models/controller/item_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/stock_controller.dart';
@@ -22,28 +22,14 @@ class ItemDetailScreen extends StatelessWidget {
   final StockController stockController = Get.find<StockController>();
   final PageController _pageController = PageController();
 
-  // String _getImageUrl(dynamic imageItem) {
-  //   String raw = '';
-  //   if (imageItem is String) {
-  //     raw = imageItem;
-  //   } else {
-  //     return "https://via.placeholder.com/150";
-  //   }
-  //   if (raw.isEmpty) return "https://via.placeholder.com/150";
-  //   if (raw.startsWith('http')) return raw;
-  //   return '$_baseUrl$raw';
-  // }
   String _getImageUrl(dynamic imageItem) {
     String raw = '';
-
     if (imageItem is String) {
       raw = imageItem;
     } else {
       return "https://via.placeholder.com/150";
     }
-
     if (raw.isEmpty) return "https://via.placeholder.com/150";
-
     return AppUrl.mediaUrl(raw);
   }
 
@@ -66,7 +52,6 @@ class ItemDetailScreen extends StatelessWidget {
       hsnDisplay = hsnModel?.hsnCode ?? "HSN ID: ${product.hsnId}";
     }
 
-    // ✅ Detect if this product has multi-label size
     final bool hasMultiLabel =
         (product.length != null && product.length!.isNotEmpty) ||
             (product.width != null && product.width!.isNotEmpty) ||
@@ -148,8 +133,6 @@ class ItemDetailScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-
-                      // Stock Badge
                       Positioned(
                         top: 15,
                         left: 35,
@@ -175,8 +158,6 @@ class ItemDetailScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-
-                      // Share Button
                       Positioned(
                         top: 15,
                         right: 35,
@@ -197,7 +178,6 @@ class ItemDetailScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-
                       if (imageList.length > 1)
                         Positioned(
                           bottom: 20,
@@ -225,28 +205,13 @@ class ItemDetailScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                product.name,
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1A1A4F),
-                                ),
-                              ),
-                            ),
-                            Text(
-                              "₹${product.unitPurchasePrice.toStringAsFixed(2)}",
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w900,
-                                color: Color(0xFF1A1A4F),
-                              ),
-                            ),
-                          ],
+                        Text(
+                          product.name,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1A1A4F),
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -255,6 +220,60 @@ class ItemDetailScreen extends StatelessWidget {
                             color: Colors.grey.shade500,
                             fontWeight: FontWeight.w500,
                             letterSpacing: 1,
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+
+                        // 💰 Pricing Section
+                        _buildSectionHeader("Pricing Details"),
+                        const SizedBox(height: 15),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.grey.shade100),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.02),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            children: [
+                              _buildPriceRow(
+                                "Purchase Price",
+                                product.unitPurchasePrice,
+                                const Color(0xFF1A1A4F),
+                                Icons.payments_outlined,
+                              ),
+                              if (product.wholesalePrice != null) ...[
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 12),
+                                  child: Divider(height: 1, color: Color(0xFFF5F5F5)),
+                                ),
+                                _buildPriceRow(
+                                  "Wholesale Price",
+                                  product.wholesalePrice!,
+                                  Colors.blue.shade700,
+                                  Icons.storefront_outlined,
+                                ),
+                              ],
+                              if (product.retailerPrice != null) ...[
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 12),
+                                  child: Divider(height: 1, color: Color(0xFFF5F5F5)),
+                                ),
+                                _buildPriceRow(
+                                  "Retailer Price",
+                                  product.retailerPrice!,
+                                  Colors.green.shade700,
+                                  Icons.shopping_bag_outlined,
+                                ),
+                              ],
+                            ],
                           ),
                         ),
 
@@ -277,10 +296,7 @@ class ItemDetailScreen extends StatelessWidget {
                                 product.material,
                                 Icons.layers_outlined,
                               ),
-
-                              // ✅ Size — single or multi label
                               if (hasMultiLabel) ...[
-                                // Multi-label: show dimensions separately
                                 if (product.length != null &&
                                     product.length!.isNotEmpty)
                                   _buildGridItem(
@@ -309,7 +325,6 @@ class ItemDetailScreen extends StatelessWidget {
                                     product.unit!,
                                     Icons.square_foot_outlined,
                                   ),
-                                // Also show computed size string
                                 if (product.size.isNotEmpty)
                                   _buildGridItem(
                                     "Size",
@@ -317,14 +332,12 @@ class ItemDetailScreen extends StatelessWidget {
                                     Icons.straighten_outlined,
                                   ),
                               ] else ...[
-                                // Single label
                                 _buildGridItem(
                                   "Size",
                                   product.size,
                                   Icons.straighten_outlined,
                                 ),
                               ],
-
                               _buildGridItem(
                                 "Color",
                                 product.color,
@@ -340,7 +353,6 @@ class ItemDetailScreen extends StatelessWidget {
                                 product.serial?.toString() ?? "N/A",
                                 Icons.tag,
                               ),
-
                               if (product.weightBefore != null &&
                                   product.weightBefore!.isNotEmpty)
                                 _buildGridItem(
@@ -405,7 +417,6 @@ class ItemDetailScreen extends StatelessWidget {
                             ),
                             child: Column(
                               children: [
-                                // ✅ QR from SKU — crisp, no network
                                 SkuQrWidget(
                                   sku: product.sku,
                                   size: 130,
@@ -423,48 +434,6 @@ class ItemDetailScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        // GestureDetector(
-                        //   onTap: () => showBarcodeDialog(
-                        //     context,
-                        //     product.id,
-                        //     product.barcode,
-                        //     product.barcodeImage,
-                        //   ),
-                        //   child: Container(
-                        //     width: double.infinity,
-                        //     padding: const EdgeInsets.all(20),
-                        //     decoration: BoxDecoration(
-                        //       color: Colors.white,
-                        //       borderRadius: BorderRadius.circular(20),
-                        //       border: Border.all(
-                        //         color: const Color(0xFF1A1A4F).withOpacity(0.1),
-                        //       ),
-                        //     ),
-                        //     child: Column(
-                        //       children: [
-                        //         Image.network(
-                        //           product.barcodeImage.startsWith('http')
-                        //               ? product.barcodeImage
-                        //               : '$_baseUrl${product.barcodeImage}',
-                        //           height: 60,
-                        //           errorBuilder: (_, __, ___) => const Icon(
-                        //             Icons.barcode_reader,
-                        //             size: 40,
-                        //             color: Colors.grey,
-                        //           ),
-                        //         ),
-                        //         const SizedBox(height: 10),
-                        //         const Text(
-                        //           "Tap to view or print barcode",
-                        //           style: TextStyle(
-                        //             color: Colors.grey,
-                        //             fontSize: 12,
-                        //           ),
-                        //         ),
-                        //       ],
-                        //     ),
-                        //   ),
-                        // ),
                       ],
                     ),
                   ),
@@ -472,8 +441,6 @@ class ItemDetailScreen extends StatelessWidget {
               ),
             ),
           ),
-
-          // ── STICKY ACTION BUTTON ──────────────────────────────────────────
           Container(
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
             decoration: BoxDecoration(
@@ -499,6 +466,39 @@ class ItemDetailScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPriceRow(String label, double price, Color color, IconData icon) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, size: 20, color: color),
+        ),
+        const SizedBox(width: 14),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade700,
+          ),
+        ),
+        const Spacer(),
+        Text(
+          "₹${price.toStringAsFixed(2)}",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 
