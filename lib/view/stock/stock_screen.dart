@@ -1,5 +1,6 @@
 import 'package:dmj_stock_manager/res/app_url/app_url.dart';
-import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
+import 'package:dmj_stock_manager/res/components/widgets/app_gradient _button.dart';
+import 'package:dmj_stock_manager/res/components/widgets/custom_text_field.dart';
 import 'package:dmj_stock_manager/view_models/controller/stock_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -19,7 +20,7 @@ class StockScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // 🎨 Gradient Header with Filters
+            // 🎨 Gradient Header with Filters & Search
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -39,50 +40,62 @@ class StockScreen extends StatelessWidget {
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(20),
-                    child: Row(
+                    child: Column(
                       children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: IconButton(
-                            icon: Icon(Icons.arrow_back, size: 20, color: Colors.white),
-                            onPressed: () => Get.back(),
-                            padding: EdgeInsets.zero,
-                          ),
-                        ),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Inventory",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              Text(
-                                "Manage your stock levels",
-                                style: TextStyle(color: Colors.white70, fontSize: 12),
+                              child: IconButton(
+                                icon: Icon(Icons.arrow_back, size: 20, color: Colors.white),
+                                onPressed: () => Get.back(),
+                                padding: EdgeInsets.zero,
                               ),
-                            ],
-                          ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Inventory",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    "Manage your stock levels",
+                                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ElevatedButton.icon(
+                              onPressed: () => showAddInventorySheet(context),
+                              icon: Icon(Icons.add, size: 18),
+                              label: Text("Add"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Color(0xFF1A1A4F),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
+                          ],
                         ),
-                        ElevatedButton.icon(
-                          onPressed: () => showAddInventorySheet(context),
-                          icon: Icon(Icons.add, size: 18),
-                          label: Text("Add"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Color(0xFF1A1A4F),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
+                        const SizedBox(height: 16),
+                        // 🔍 Workable Search Bar
+                        AppTextField(
+                          controller: stockController.searchController,
+                          hintText: "Search by name or SKU...",
+                          prefixIcon: Icons.search,
+                          isSearch: true,
                         ),
                       ],
                     ),
@@ -156,7 +169,9 @@ class StockScreen extends StatelessWidget {
                           Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey.shade300),
                           SizedBox(height: 16),
                           Text(
-                            "No items found for this filter",
+                            stockController.searchQuery.value.isNotEmpty 
+                              ? "No results found for '${stockController.searchQuery.value}'"
+                              : "No items found for this filter",
                             style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                           ),
                         ],
@@ -398,8 +413,6 @@ class StockScreen extends StatelessWidget {
         child: Icon(Icons.image_not_supported, color: Colors.grey.shade400, size: 20),
       );
 }
-
-// Keep showAddInventorySheet and showAdjustSheet as they were (or slightly updated for types if needed)
 
 void showAddInventorySheet(BuildContext context) {
   final qtyController = TextEditingController(text: "1");

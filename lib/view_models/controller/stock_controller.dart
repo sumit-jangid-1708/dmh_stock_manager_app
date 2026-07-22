@@ -20,14 +20,33 @@ class StockController extends GetxController with BaseController {
 
   // 🔍 Filter logic
   var selectedFilter = 'ALL'.obs; // 'ALL', 'LOW', 'OUT'
+  
+  // 🔍 Search logic
+  final searchController = TextEditingController();
+  var searchQuery = "".obs;
 
   List<InventoryModel> get filteredInventory {
+    List<InventoryModel> list = inventoryList;
+
+    // 1. Apply Status Filter
     if (selectedFilter.value == 'LOW') {
-      return inventoryList.where((item) => item.quantity < 10 && item.quantity > 0).toList();
+      list = list.where((item) => item.quantity < 10 && item.quantity > 0).toList();
     } else if (selectedFilter.value == 'OUT') {
-      return inventoryList.where((item) => item.quantity == 0).toList();
+      list = list.where((item) => item.quantity == 0).toList();
     }
-    return inventoryList;
+
+    // 2. Apply Search Query
+    if (searchQuery.value.isNotEmpty) {
+      final query = searchQuery.value.toLowerCase();
+      list = list.where((item) {
+        final product = getProductById(item.product);
+        if (product == null) return false;
+        return product.name.toLowerCase().contains(query) || 
+               product.sku.toLowerCase().contains(query);
+      }).toList();
+    }
+
+    return list;
   }
 
   void setFilter(String filter) {
@@ -38,6 +57,16 @@ class StockController extends GetxController with BaseController {
   void onInit() {
     super.onInit();
     fetchInventoryList();
+    
+    searchController.addListener(() {
+      searchQuery.value = searchController.text;
+    });
+  }
+
+  @override
+  void onClose() {
+    searchController.dispose();
+    super.onClose();
   }
 
   Future<void> fetchInventoryList() async {
