@@ -77,6 +77,50 @@ class StockScreen extends StatelessWidget {
                                 ],
                               ),
                             ),
+                            // 🔃 Sorting Menu
+                            Obx(() => PopupMenuButton<String>(
+                                  icon: Icon(
+                                    stockController.sortOrder.value == 'NONE' 
+                                        ? Icons.sort 
+                                        : Icons.filter_list_alt,
+                                    color: Colors.white,
+                                  ),
+                                  tooltip: "Sort Stock",
+                                  onSelected: (value) => stockController.setSortOrder(value),
+                                  itemBuilder: (context) => [
+                                    PopupMenuItem(
+                                      value: 'NONE',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.history, size: 20, color: Colors.grey),
+                                          SizedBox(width: 8),
+                                          Text('Default Order'),
+                                        ],
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'LOW_TO_HIGH',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.trending_up, size: 20, color: Colors.green),
+                                          SizedBox(width: 8),
+                                          Text('Low to High'),
+                                        ],
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'HIGH_TO_LOW',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.trending_down, size: 20, color: Colors.red),
+                                          SizedBox(width: 8),
+                                          Text('High to Low'),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                )),
+                            SizedBox(width: 8),
                             ElevatedButton.icon(
                               onPressed: () => showAddInventorySheet(context),
                               icon: Icon(Icons.add, size: 18),

@@ -20,13 +20,14 @@ class StockController extends GetxController with BaseController {
 
   // 🔍 Filter logic
   var selectedFilter = 'ALL'.obs; // 'ALL', 'LOW', 'OUT'
+  var sortOrder = 'NONE'.obs; // 'NONE', 'LOW_TO_HIGH', 'HIGH_TO_LOW'
   
   // 🔍 Search logic
   final searchController = TextEditingController();
   var searchQuery = "".obs;
 
   List<InventoryModel> get filteredInventory {
-    List<InventoryModel> list = inventoryList;
+    List<InventoryModel> list = List.from(inventoryList);
 
     // 1. Apply Status Filter
     if (selectedFilter.value == 'LOW') {
@@ -46,11 +47,22 @@ class StockController extends GetxController with BaseController {
       }).toList();
     }
 
+    // 3. Apply Sorting
+    if (sortOrder.value == 'LOW_TO_HIGH') {
+      list.sort((a, b) => a.quantity.compareTo(b.quantity));
+    } else if (sortOrder.value == 'HIGH_TO_LOW') {
+      list.sort((a, b) => b.quantity.compareTo(a.quantity));
+    }
+
     return list;
   }
 
   void setFilter(String filter) {
     selectedFilter.value = filter;
+  }
+
+  void setSortOrder(String order) {
+    sortOrder.value = order;
   }
 
   @override
