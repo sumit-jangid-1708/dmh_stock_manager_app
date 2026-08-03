@@ -92,58 +92,82 @@ class ItemsScreen extends StatelessWidget {
               onRefresh: () async => itemController.getProducts(),
               child: Column(
                 children: [
-                  // ── Search bar (sirf normal mode mein) ──
+                  // ── Search & Filter Section (sirf normal mode mein) ──
                   if (!inSelection)
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 25,
-                      ),
-                      child: Row(
+                      padding: const EdgeInsets.fromLTRB(20, 25, 20, 10),
+                      child: Column(
                         children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: itemController.searchBar,
-                              decoration: InputDecoration(
-                                prefixIcon: const Icon(Icons.search),
-                                suffixIcon: IconButton(
-                                  onPressed: () {
-                                    itemController.searchBar.clear();
-                                    itemController.filteredProducts.assignAll(
-                                      itemController.products,
-                                    );
-                                  },
-                                  icon: const Icon(Icons.close),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: itemController.searchBar,
+                                  decoration: InputDecoration(
+                                    prefixIcon: const Icon(Icons.search),
+                                    suffixIcon: IconButton(
+                                      onPressed: () {
+                                        itemController.searchBar.clear();
+                                        itemController.applyAllFilters();
+                                      },
+                                      icon: const Icon(Icons.close),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.grey.withOpacity(0.1),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    hintText: "Search products...",
+                                  ),
                                 ),
-                                filled: true,
-                                fillColor: Colors.grey.withOpacity(0.1),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide.none,
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
-                                ),
-                                hintText: "Search products...",
                               ),
-                            ),
+                              const SizedBox(width: 10),
+                              Container(
+                                height: 48,
+                                width: 48,
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFF1A1A4F), Color(0xFF4A4ABF)],
+                                  ),
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                                child: AppGradientButton(
+                                  onPressed: () =>
+                                      showProductSelectionDialog(context),
+                                  icon: Icons.print,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 10),
-                          Container(
-                            height: 48,
-                            width: 48,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF1A1A4F), Color(0xFF4A4ABF)],
+                          const SizedBox(height: 12),
+                          // ── Price Range Filter Row ──
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _priceTextField(
+                                  controller: itemController.minPriceFilter,
+                                  hint: "Min Price",
+                                ),
                               ),
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            child: AppGradientButton(
-                              onPressed: () =>
-                                  showProductSelectionDialog(context),
-                              icon: Icons.print,
-                            ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _priceTextField(
+                                  controller: itemController.maxPriceFilter,
+                                  hint: "Max Price",
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              IconButton(
+                                onPressed: itemController.clearFilters,
+                                icon: const Icon(Icons.filter_alt_off, color: Color(0xFF1A1A4F)),
+                                tooltip: "Clear All Filters",
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -184,6 +208,29 @@ class ItemsScreen extends StatelessWidget {
         ),
       );
     });
+  }
+
+  Widget _priceTextField({required TextEditingController controller, required String hint}) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: TextInputType.number,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(fontSize: 13),
+        filled: true,
+        fillColor: Colors.grey.withOpacity(0.05),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      ),
+      style: const TextStyle(fontSize: 14),
+    );
   }
 
   // ── Product Card ──────────────────────────────────────────────────────────
@@ -277,23 +324,38 @@ class ItemsScreen extends StatelessWidget {
 
                 // ── Edit/Delete (sirf normal mode mein) ──
                 if (!inSelection)
-                  Row(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      _actionButton(
-                        icon: Icons.edit_outlined,
-                        color: Colors.white,
-                        onTap: () => Get.bottomSheet(
-                          EditItemFormBottomSheet(product: product),
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                        ),
+                      Row(
+                        children: [
+                          _actionButton(
+                            icon: Icons.edit_outlined,
+                            color: Colors.white,
+                            onTap: () => Get.bottomSheet(
+                              EditItemFormBottomSheet(product: product),
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          _actionButton(
+                            icon: Icons.delete_outline,
+                            color: Colors.white,
+                            onTap: () =>
+                                _showDeleteConfirmationDialog(context, product),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      _actionButton(
-                        icon: Icons.delete_outline,
-                        color: Colors.white,
-                        onTap: () =>
-                            _showDeleteConfirmationDialog(context, product),
+                      const SizedBox(height: 4),
+                      Text(
+                        "₹${product.unitPurchasePrice}",
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A1A4F),
+                        ),
                       ),
                     ],
                   ),
@@ -337,18 +399,6 @@ class ItemsScreen extends StatelessWidget {
       ),
     );
   }
-
-  // Helper function for image URL
-  // String _getImageUrl(dynamic imageItem) {
-  //   if (imageItem is ProductImageVariant) {
-  //     return imageItem.url; // full URL already in model
-  //   } else if (imageItem is String && imageItem.startsWith('http')) {
-  //     return imageItem;
-  //   } else if (imageItem is Map<String, dynamic> && imageItem.containsKey('url')) {
-  //     return imageItem['url']?.toString() ?? '';
-  //   }
-  //   return "https://via.placeholder.com/150";
-  // }
 
   /// ✅ Delete Confirmation Dialog
   void _showDeleteConfirmationDialog(

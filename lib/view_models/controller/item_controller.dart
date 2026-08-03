@@ -56,6 +56,11 @@ class ItemController extends GetxController with BaseController {
 
   var filteredProducts = <ProductModel>[].obs;
   final searchBar = TextEditingController();
+  
+  // ✅ Price Range Filters
+  final minPriceFilter = TextEditingController();
+  final maxPriceFilter = TextEditingController();
+
   var selectedProducts = <ProductModel>[].obs;
 
   final hsnList = <HsnGstModel>[].obs;
@@ -77,20 +82,42 @@ class ItemController extends GetxController with BaseController {
     getHsnList();
     filteredProducts.assignAll(products);
 
-    searchBar.addListener(() {
-      final query = searchBar.text.toLowerCase();
-      if (query.isEmpty) {
-        filteredProducts.assignAll(products);
-      } else {
-        filteredProducts.assignAll(
-          products.where(
-            (product) =>
-                product.name.toLowerCase().contains(query) ||
-                product.sku.toLowerCase().contains(query),
-          ),
-        );
-      }
-    });
+    searchBar.addListener(applyAllFilters);
+    minPriceFilter.addListener(applyAllFilters);
+    maxPriceFilter.addListener(applyAllFilters);
+  }
+
+  void applyAllFilters() {
+    final query = searchBar.text.toLowerCase();
+    final minText = minPriceFilter.text.trim();
+    final maxText = maxPriceFilter.text.trim();
+
+    double? min = double.tryParse(minText);
+    double? max = double.tryParse(maxText);
+
+    filteredProducts.assignAll(
+      products.where((product) {
+        final matchesSearch = product.name.toLowerCase().contains(query) ||
+            product.sku.toLowerCase().contains(query);
+        
+        bool matchesPrice = true;
+        if (min != null) {
+          matchesPrice = matchesPrice && product.unitPurchasePrice >= min;
+        }
+        if (max != null) {
+          matchesPrice = matchesPrice && product.unitPurchasePrice <= max;
+        }
+        
+        return matchesSearch && matchesPrice;
+      }).toList(),
+    );
+  }
+
+  void clearFilters() {
+    searchBar.clear();
+    minPriceFilter.clear();
+    maxPriceFilter.clear();
+    filteredProducts.assignAll(products);
   }
 
   void enterSelectionMode(int productId) {
@@ -206,7 +233,7 @@ class ItemController extends GetxController with BaseController {
           .map<ProductModel>((item) => ProductModel.fromJson(item))
           .toList();
       products.sort((a, b) => b.id.compareTo(a.id));
-      filteredProducts.assignAll(products);
+      applyAllFilters();
       print("✅ Products fetched: ${products.length}");
     } catch (e, stackTrace) {
       print("🚩 Product Error: $e");
