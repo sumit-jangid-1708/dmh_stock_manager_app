@@ -1,8 +1,12 @@
-import 'package:dmj_stock_manager/res/routes/routes_names.dart';
-import 'package:dmj_stock_manager/view_models/controller/order_controller.dart';
+// lib/view/orders/order_screen.dart
+
+// import 'package:dmj_stock_manager/res/routes/routes_name.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../res/routes/routes_names.dart';
+import '../../view_models/controller/order_controller.dart';
 import 'order_create_bottom_sheet.dart';
+// import '../../res/components/widgets/order_create_bottom_sheet.dart';
 
 class OrderScreen extends StatelessWidget {
   final OrderController orderController = Get.put(OrderController());
@@ -21,6 +25,7 @@ class OrderScreen extends StatelessWidget {
     {"label": "Courier Return", "value": 6},
     {"label": "Customer Return", "value": 7},
     {"label": "Return Received", "value": 8},
+    {"label": "Not Received", "value": 9},
   ];
 
   Color _getStatusColor(String? status) {

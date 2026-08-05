@@ -33,7 +33,7 @@ class OrderStatusSection extends StatelessWidget {
     6: 'Courier Return',
     7: 'Customer Return',
     8: 'Return Received',
-    9: 'Return Received',
+    9: 'Not Received',
   };
   static const _statusColors = {
     1: Color(0xFFFFF3CD),
@@ -44,7 +44,7 @@ class OrderStatusSection extends StatelessWidget {
     6: Color(0xFFFDE8D8),
     7: Color(0xFFE8E2FF),
     8: Color(0xFFD0F0ED),
-    9: Color(0xFFD0F0ED),
+    9: Color(0xFFF8D7DA),
   };
   static const _statusTextColors = {
     1: Color(0xFF7D5A00),
@@ -55,7 +55,7 @@ class OrderStatusSection extends StatelessWidget {
     6: Color(0xFF7B3206),
     7: Color(0xFF3B2483),
     8: Color(0xFF00574B),
-    9: Color(0xFF00574B),
+    9: Color(0xFF721C24),
   };
   static const _statusIcons = {
     1: Icons.settings_outlined,
@@ -66,7 +66,7 @@ class OrderStatusSection extends StatelessWidget {
     6: Icons.assignment_return_outlined,
     7: Icons.keyboard_return_outlined,
     8: Icons.check_circle_outline,
-    9: Icons.check_circle_outline,
+    9: Icons.cancel_outlined,
   };
 
   String _label(int s) => _statusLabels[s] ?? 'Unknown';
@@ -154,6 +154,7 @@ class OrderStatusSection extends StatelessWidget {
     final isReturnPath = currentStatus == 6 ||
         currentStatus == 7 ||
         currentStatus == 8 ||
+        currentStatus == 9 ||
         _logFor(logs, 6) != null ||
         _logFor(logs, 7) != null;
 
@@ -182,7 +183,7 @@ class OrderStatusSection extends StatelessWidget {
       if (currentStatus == 6) {
         steps.add(_TimelineStep(
           icon: Icons.inventory_2_outlined,
-          title: 'Mark Return Received',
+          title: 'Mark Return Received / Not Received',
           subtitle: 'Pending',
           isDone: false,
           isLast: true,
@@ -204,7 +205,7 @@ class OrderStatusSection extends StatelessWidget {
       if (currentStatus == 7) {
         steps.add(_TimelineStep(
           icon: Icons.inventory_2_outlined,
-          title: 'Mark Return Received',
+          title: 'Mark Return Received / Not Received',
           subtitle: 'Pending',
           isDone: false,
           isLast: true,
@@ -218,6 +219,18 @@ class OrderStatusSection extends StatelessWidget {
       steps.add(_TimelineStep(
         icon: Icons.inventory_2_outlined,
         title: 'Return Received',
+        subtitle: _formatLogDate(log?.createdAt),
+        isDone: true,
+        isLast: true,
+      ));
+      return steps;
+    }
+
+    if (currentStatus == 9) {
+      final log = _logFor(logs, 9);
+      steps.add(_TimelineStep(
+        icon: Icons.cancel_outlined,
+        title: 'Not Received',
         subtitle: _formatLogDate(log?.createdAt),
         isDone: true,
         isLast: true,
@@ -414,16 +427,32 @@ class OrderStatusSection extends StatelessWidget {
         );
       case 6:
       case 7:
-        return AppGradientButton(
-          onPressed: () async => ctrl.updateOrderStatus(
-            orderId: orderId,
-            status: 8,
-            note: "Return Received",
-          ),
-          text: 'Mark Return Received',
-          icon: Icons.inventory_2_outlined,
-          width: double.infinity,
-          height: 50,
+        return Column(
+          children: [
+            AppGradientButton(
+              onPressed: () async => ctrl.updateOrderStatus(
+                orderId: orderId,
+                status: 8,
+                note: "Return Received",
+              ),
+              text: 'Mark Return Received',
+              icon: Icons.inventory_2_outlined,
+              width: double.infinity,
+              height: 50,
+            ),
+            const SizedBox(height: 10),
+            AppGradientButton(
+              onPressed: () async => ctrl.updateOrderStatus(
+                orderId: orderId,
+                status: 9,
+                note: "Not Received",
+              ),
+              text: 'Mark Not Received',
+              icon: Icons.cancel_outlined,
+              width: double.infinity,
+              height: 50,
+            ),
+          ],
         );
       case 8:
       case 9:
