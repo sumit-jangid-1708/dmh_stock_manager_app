@@ -1,22 +1,22 @@
 // lib/view/orders/order_screen.dart
 
-// import 'package:dmj_stock_manager/res/routes/routes_name.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../res/routes/routes_names.dart';
 import '../../view_models/controller/order_controller.dart';
+import '../../view_models/controller/home_controller.dart';
 import 'order_create_bottom_sheet.dart';
-// import '../../res/components/widgets/order_create_bottom_sheet.dart';
 
 class OrderScreen extends StatelessWidget {
   final OrderController orderController = Get.put(OrderController());
+  final HomeController homeController = Get.find<HomeController>();
   final TextEditingController searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
   OrderScreen({super.key});
 
   static const List<Map<String, dynamic>> _statusFilters = [
-    {"label": "All", "value": -1},
+    {"label": "All Status", "value": -1},
     {"label": "In Process", "value": 1},
     {"label": "Packed", "value": 2},
     {"label": "In Transit", "value": 3},
@@ -176,10 +176,6 @@ class OrderScreen extends StatelessWidget {
   }
 
   Widget _buildOrderCard(BuildContext context, dynamic order) {
-    // Logic for Status Colors
-    final bool isActive = order.status?.toLowerCase() == "active";
-    final Color statusColor = _getStatusColor(order.orderStatus.toString());
-
     String latestRemark = "NO REMARKS";
     if (order.remarks != null && order.remarks.isNotEmpty) {
       final sorted = List.from(order.remarks)
@@ -194,7 +190,7 @@ class OrderScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: Colors.grey.withOpacity(0.1),
-        ), // Subtle border
+        ),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -206,30 +202,10 @@ class OrderScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              // ── Indicator Dot (Green/Red) ──────────────────
-              // Container(
-              //   width: 10,
-              //   height: 10,
-              //   decoration: BoxDecoration(
-              //     color: statusColor,
-              //     shape: BoxShape.circle,
-              //     boxShadow: [
-              //       BoxShadow(
-              //         color: statusColor.withOpacity(0.3),
-              //         blurRadius: 4,
-              //         spreadRadius: 1,
-              //       ),
-              //     ],
-              //   ),
-              // ),
-              // const SizedBox(width: 16),
-
-              // ── Main Content ───────────────────────────────
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Top row: name + status chip ──
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -246,7 +222,6 @@ class OrderScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // ✅ Order Status Chip
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
@@ -261,9 +236,6 @@ class OrderScreen extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            // order.latestStatus?.note?.isNotEmpty == true
-                            //     ? order.latestStatus!.note
-                            //     : order.orderStatusText,
                             order.orderStatusText,
                             style: TextStyle(
                               fontSize: 10,
@@ -300,7 +272,6 @@ class OrderScreen extends StatelessWidget {
                 ),
               ),
 
-              // ── Action Button ──────────────────────────────
               IconButton(
                 onPressed: () => _showDeleteConfirmDialog(context, order.id),
                 icon: Icon(
@@ -317,7 +288,6 @@ class OrderScreen extends StatelessWidget {
     );
   }
 
-  // ✅ Confirm dialog before delete
   void _showDeleteConfirmDialog(BuildContext context, int orderId) {
     showDialog(
       context: context,
@@ -394,52 +364,128 @@ class OrderScreen extends StatelessWidget {
 
   Widget _buildFilterSection() {
     return Obx(() {
-      return Container(
-        color: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: SizedBox(
-          height: 34,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            children: _statusFilters.map((f) {
-              final isSelected =
-                  orderController.selectedStatusFilter.value == f["value"];
+      return Column(
+        children: [
+          // ── Status Filters ──
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: SizedBox(
+              height: 34,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                children: _statusFilters.map((f) {
+                  final isSelected =
+                      orderController.selectedStatusFilter.value == f["value"];
 
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text(
-                    f["label"] as String,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: isSelected
-                          ? const Color(0xFF1A1A4F)
-                          : Colors.grey.shade600,
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(
+                        f["label"] as String,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: isSelected
+                              ? const Color(0xFF1A1A4F)
+                              : Colors.grey.shade600,
+                        ),
+                      ),
+                      selected: isSelected,
+                      selectedColor: const Color(0xFF1A1A4F).withOpacity(0.08),
+                      backgroundColor: Colors.grey.shade100,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
+                          color: isSelected
+                              ? const Color(0xFF1A1A4F)
+                              : Colors.grey.shade300,
+                        ),
+                      ),
+                      onSelected: (_) {
+                        orderController.selectedStatusFilter.value =
+                            f["value"] as int;
+                        orderController.applyFilters();
+                      },
                     ),
-                  ),
-                  selected: isSelected,
-                  selectedColor: const Color(0xFF1A1A4F).withOpacity(0.08),
-                  backgroundColor: Colors.grey.shade100,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(
-                      color: isSelected
-                          ? const Color(0xFF1A1A4F)
-                          : Colors.grey.shade300,
-                    ),
-                  ),
-                  onSelected: (_) {
-                    orderController.selectedStatusFilter.value =
-                        f["value"] as int;
-                    orderController.applyFilters();
-                  },
-                ),
-              );
-            }).toList(),
+                  );
+                }).toList(),
+              ),
+            ),
           ),
-        ),
+          
+          // ── Channel Filters ──
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.only(bottom: 8),
+            child: SizedBox(
+              height: 34,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                children: [
+                  // "All Channels" Option
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: const Text(
+                        "All Channels",
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+                      ),
+                      selected: orderController.selectedChannelFilter.value == null,
+                      selectedColor: const Color(0xFF1A1A4F).withOpacity(0.08),
+                      backgroundColor: Colors.grey.shade100,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      onSelected: (_) {
+                        orderController.selectedChannelFilter.value = null;
+                        orderController.applyFilters();
+                      },
+                    ),
+                  ),
+                  // Dynamic Channels from HomeController
+                  ...homeController.channels.map((channel) {
+                    // ✅ Fixed: Match by Channel Name (String)
+                    final isSelected = orderController.selectedChannelFilter.value == channel.name;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(
+                          channel.name,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: isSelected
+                                ? const Color(0xFF1A1A4F)
+                                : Colors.grey.shade600,
+                          ),
+                        ),
+                        selected: isSelected,
+                        selectedColor: const Color(0xFF1A1A4F).withOpacity(0.08),
+                        backgroundColor: Colors.grey.shade100,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: BorderSide(
+                            color: isSelected
+                                ? const Color(0xFF1A1A4F)
+                                : Colors.grey.shade300,
+                          ),
+                        ),
+                        onSelected: (_) {
+                          // ✅ Fixed: Pass Channel Name (String) instead of ID
+                          orderController.selectedChannelFilter.value = channel.name;
+                          orderController.applyFilters();
+                        },
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
+        ],
       );
     });
   }

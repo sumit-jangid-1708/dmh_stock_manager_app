@@ -93,6 +93,9 @@ class OrderController extends GetxController with BaseController {
   final RxBool isLoadingStatusLogs = false.obs;
 
   final RxInt selectedStatusFilter = (-1).obs;
+  // ✅ Filter by Channel Name (String)
+  final RxnString selectedChannelFilter = RxnString(null);
+  final RxString searchQuery = "".obs;
 
   void addItemRow() {
     items.add({
@@ -143,22 +146,33 @@ class OrderController extends GetxController with BaseController {
   void resetForm() => clearForm();
 
   void applyFilters() {
-    final statusFilter = selectedStatusFilter.value;
-
-    if (statusFilter == -1) {
-      filteredOrders.assignAll(orders);
-      return;
-    }
+    final status = selectedStatusFilter.value;
+    final channel = selectedChannelFilter.value;
+    final query = searchQuery.value.toLowerCase().trim();
 
     filteredOrders.assignAll(
       orders.where((order) {
-        return order.effectiveStatus == statusFilter;
+        // Status Match
+        final bool statusMatch = status == -1 || order.effectiveStatus == status;
+        
+        // Channel Match (String comparison)
+        final bool channelMatch = channel == null || 
+                                 order.channel.trim().toLowerCase() == channel.trim().toLowerCase();
+        
+        // Search Match
+        final bool searchMatch = query.isEmpty || 
+                                order.customerName.toLowerCase().contains(query) || 
+                                order.id.toString().contains(query);
+
+        return statusMatch && channelMatch && searchMatch;
       }).toList(),
     );
   }
 
   void clearFilters() {
     selectedStatusFilter.value = -1;
+    selectedChannelFilter.value = null;
+    searchQuery.value = "";
     filteredOrders.assignAll(orders);
   }
 
@@ -564,23 +578,8 @@ class OrderController extends GetxController with BaseController {
   }
 
   void filterOrders(String query) {
-    if (query.isEmpty) {
-      applyFilters();
-      return;
-    }
-    final statusFilter = selectedStatusFilter.value;
-    filteredOrders.assignAll(
-      orders.where((order) {
-        final name = order.customerName.toLowerCase();
-        final id = order.id.toString();
-        final searchLower = query.toLowerCase();
-        final matchesSearch =
-            name.contains(searchLower) || id.contains(searchLower);
-        final bool statusMatch =
-            statusFilter == -1 || order.effectiveStatus == statusFilter;
-        return matchesSearch && statusMatch;
-      }).toList(),
-    );
+    searchQuery.value = query;
+    applyFilters();
   }
 
   void openOrderBottomSheet() {
