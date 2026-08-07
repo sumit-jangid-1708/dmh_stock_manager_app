@@ -6,6 +6,7 @@ import '../../res/routes/routes_names.dart';
 import '../../view_models/controller/order_controller.dart';
 import '../../view_models/controller/home_controller.dart';
 import 'order_create_bottom_sheet.dart';
+import 'order_filter_bottom_sheet.dart';
 
 class OrderScreen extends StatelessWidget {
   final OrderController orderController = Get.put(OrderController());
@@ -16,7 +17,7 @@ class OrderScreen extends StatelessWidget {
   OrderScreen({super.key});
 
   static const List<Map<String, dynamic>> _statusFilters = [
-    {"label": "All Status", "value": -1},
+    {"label": "All", "value": -1},
     {"label": "In Process", "value": 1},
     {"label": "Packed", "value": 2},
     {"label": "In Transit", "value": 3},
@@ -27,17 +28,6 @@ class OrderScreen extends StatelessWidget {
     {"label": "Return Received", "value": 8},
     {"label": "Not Received", "value": 9},
   ];
-
-  Color _getStatusColor(String? status) {
-    switch (status?.toLowerCase()) {
-      case "cancelled":
-        return Colors.red;
-      case "active":
-        return Colors.green;
-      default:
-        return Colors.grey;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,43 +90,74 @@ class OrderScreen extends StatelessWidget {
               ),
             ),
 
-            _buildFilterSection(),
-            // ── Search Bar ────────────────────────────────────────────────
+            // ── Search Bar & Filter Button ────────────────────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Container(
-                height: 50,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: TextField(
+                        controller: searchController,
+                        onChanged: (value) => orderController.filterOrders(value),
+                        decoration: InputDecoration(
+                          hintText: "Search by ID or customer name...",
+                          hintStyle: TextStyle(
+                            color: Colors.grey.shade400,
+                            fontSize: 14,
+                          ),
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            color: Color(0xFF1A1A4F),
+                            size: 20,
+                          ),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                        ),
+                      ),
                     ),
-                  ],
-                ),
-                child: TextField(
-                  controller: searchController,
-                  onChanged: (value) => orderController.filterOrders(value),
-                  decoration: InputDecoration(
-                    hintText: "Search by ID or customer name...",
-                    hintStyle: TextStyle(
-                      color: Colors.grey.shade400,
-                      fontSize: 14,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      color: Color(0xFF1A1A4F),
-                      size: 20,
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 15),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  Material(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    elevation: 0,
+                    child: InkWell(
+                      onTap: () => _showFilterBottomSheet(context),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        height: 50,
+                        width: 50,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: const Icon(
+                          Icons.tune_rounded,
+                          color: Color(0xFF1A1A4F),
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+
+            // ── Status Chips ──────────────────────────────────────────────
+            _buildStatusFilterSection(),
 
             // ── Orders List ───────────────────────────────────────────────
             Expanded(
@@ -172,6 +193,67 @@ class OrderScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildStatusFilterSection() {
+    return Obx(() {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: SizedBox(
+          height: 38,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            children: _statusFilters.map((f) {
+              final isSelected =
+                  orderController.selectedStatusFilter.value == f["value"];
+
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(
+                    f["label"] as String,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: isSelected
+                          ? const Color(0xFF1A1A4F)
+                          : Colors.grey.shade600,
+                    ),
+                  ),
+                  selected: isSelected,
+                  selectedColor: const Color(0xFF1A1A4F).withOpacity(0.08),
+                  backgroundColor: Colors.white,
+                  showCheckmark: false,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(
+                      color: isSelected
+                          ? const Color(0xFF1A1A4F)
+                          : Colors.grey.shade300,
+                    ),
+                  ),
+                  onSelected: (_) {
+                    orderController.selectedStatusFilter.value =
+                        f["value"] as int;
+                    orderController.applyFilters();
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+      );
+    });
+  }
+
+  void _showFilterBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const OrderFilterBottomSheet(),
     );
   }
 
@@ -360,133 +442,5 @@ class OrderScreen extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.white,
     );
-  }
-
-  Widget _buildFilterSection() {
-    return Obx(() {
-      return Column(
-        children: [
-          // ── Status Filters ──
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: SizedBox(
-              height: 34,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                children: _statusFilters.map((f) {
-                  final isSelected =
-                      orderController.selectedStatusFilter.value == f["value"];
-
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(
-                        f["label"] as String,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: isSelected
-                              ? const Color(0xFF1A1A4F)
-                              : Colors.grey.shade600,
-                        ),
-                      ),
-                      selected: isSelected,
-                      selectedColor: const Color(0xFF1A1A4F).withOpacity(0.08),
-                      backgroundColor: Colors.grey.shade100,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(
-                          color: isSelected
-                              ? const Color(0xFF1A1A4F)
-                              : Colors.grey.shade300,
-                        ),
-                      ),
-                      onSelected: (_) {
-                        orderController.selectedStatusFilter.value =
-                            f["value"] as int;
-                        orderController.applyFilters();
-                      },
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-          
-          // ── Channel Filters ──
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.only(bottom: 8),
-            child: SizedBox(
-              height: 34,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                children: [
-                  // "All Channels" Option
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: const Text(
-                        "All Channels",
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
-                      ),
-                      selected: orderController.selectedChannelFilter.value == null,
-                      selectedColor: const Color(0xFF1A1A4F).withOpacity(0.08),
-                      backgroundColor: Colors.grey.shade100,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      onSelected: (_) {
-                        orderController.selectedChannelFilter.value = null;
-                        orderController.applyFilters();
-                      },
-                    ),
-                  ),
-                  // Dynamic Channels from HomeController
-                  ...homeController.channels.map((channel) {
-                    // ✅ Fixed: Match by Channel Name (String)
-                    final isSelected = orderController.selectedChannelFilter.value == channel.name;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(
-                          channel.name,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: isSelected
-                                ? const Color(0xFF1A1A4F)
-                                : Colors.grey.shade600,
-                          ),
-                        ),
-                        selected: isSelected,
-                        selectedColor: const Color(0xFF1A1A4F).withOpacity(0.08),
-                        backgroundColor: Colors.grey.shade100,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          side: BorderSide(
-                            color: isSelected
-                                ? const Color(0xFF1A1A4F)
-                                : Colors.grey.shade300,
-                          ),
-                        ),
-                        onSelected: (_) {
-                          // ✅ Fixed: Pass Channel Name (String) instead of ID
-                          orderController.selectedChannelFilter.value = channel.name;
-                          orderController.applyFilters();
-                        },
-                      ),
-                    );
-                  }),
-                ],
-              ),
-            ),
-          ),
-        ],
-      );
-    });
   }
 }

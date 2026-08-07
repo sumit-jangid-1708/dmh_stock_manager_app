@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 import 'package:dmj_stock_manager/model/bills_model/create_bill_model.dart';
 import 'package:dmj_stock_manager/model/order_models/create_order_response_model.dart';
 import 'package:dmj_stock_manager/model/order_models/order_model.dart';
@@ -97,6 +96,11 @@ class OrderController extends GetxController with BaseController {
   final RxnString selectedChannelFilter = RxnString(null);
   final RxString searchQuery = "".obs;
 
+  // New Filter Options
+  final RxString selectedDateFilter = 'all'.obs; // all, today, yesterday, last7days, thisMonth, custom
+  final Rxn<DateTimeRange> customDateRange = Rxn<DateTimeRange>();
+  final RxString selectedSort = 'newest'.obs; // newest, oldest
+
   void addItemRow() {
     items.add({
       "product": Rx<ProductModel?>(null),
@@ -149,31 +153,65 @@ class OrderController extends GetxController with BaseController {
     final status = selectedStatusFilter.value;
     final channel = selectedChannelFilter.value;
     final query = searchQuery.value.toLowerCase().trim();
+    final dateFilter = selectedDateFilter.value;
+    final dateRange = customDateRange.value;
 
-    filteredOrders.assignAll(
-      orders.where((order) {
-        // Status Match
-        final bool statusMatch = status == -1 || order.effectiveStatus == status;
-        
-        // Channel Match (String comparison)
-        final bool channelMatch = channel == null || 
+    List<OrderDetailModel> results = orders.where((order) {
+      // Status Match
+      final bool statusMatch = status == -1 || order.effectiveStatus == status;
+      
+      // Channel Match (String comparison)
+      final bool channelMatch = channel == null || 
                                  order.channel.trim().toLowerCase() == channel.trim().toLowerCase();
-        
-        // Search Match
-        final bool searchMatch = query.isEmpty || 
+      
+      // Search Match
+      final bool searchMatch = query.isEmpty || 
                                 order.customerName.toLowerCase().contains(query) || 
                                 order.id.toString().contains(query);
 
-        return statusMatch && channelMatch && searchMatch;
-      }).toList(),
-    );
+      // Date Match
+      bool dateMatch = true;
+      final orderDate = order.createdAt;
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+
+      if (dateFilter == 'today') {
+        dateMatch = orderDate.isAfter(today);
+      } else if (dateFilter == 'yesterday') {
+        final yesterday = today.subtract(const Duration(days: 1));
+        dateMatch = orderDate.isAfter(yesterday) && orderDate.isBefore(today);
+      } else if (dateFilter == 'last7days') {
+        final last7Days = today.subtract(const Duration(days: 7));
+        dateMatch = orderDate.isAfter(last7Days);
+      } else if (dateFilter == 'thisMonth') {
+        final firstOfMonth = DateTime(now.year, now.month, 1);
+        dateMatch = orderDate.isAfter(firstOfMonth);
+      } else if (dateFilter == 'custom' && dateRange != null) {
+        dateMatch = orderDate.isAfter(dateRange.start) && 
+                   orderDate.isBefore(dateRange.end.add(const Duration(days: 1)));
+      }
+
+      return statusMatch && channelMatch && searchMatch && dateMatch;
+    }).toList();
+
+    // Sort Results
+    if (selectedSort.value == 'newest') {
+      results.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    } else if (selectedSort.value == 'oldest') {
+      results.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+    }
+
+    filteredOrders.assignAll(results);
   }
 
   void clearFilters() {
     selectedStatusFilter.value = -1;
     selectedChannelFilter.value = null;
     searchQuery.value = "";
-    filteredOrders.assignAll(orders);
+    selectedDateFilter.value = 'all';
+    customDateRange.value = null;
+    selectedSort.value = 'newest';
+    applyFilters();
   }
 
   @override
