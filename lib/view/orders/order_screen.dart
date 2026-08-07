@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../res/color/app_colors.dart';
+import '../../res/fonts/app_text_styles.dart';
 import '../../res/routes/routes_names.dart';
 import '../../view_models/controller/order_controller.dart';
 import '../../view_models/controller/home_controller.dart';
@@ -32,31 +34,31 @@ class OrderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: AppColors.background,
       floatingActionButton: Container(
         height: 60,
         width: 60,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
           gradient: const LinearGradient(
-            colors: [Color(0xFF1A1A4F), Color(0xFF4A4ABF)],
+            colors: [AppColors.primary, AppColors.primaryLight],
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
           ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF1A1A4F).withOpacity(0.4),
+              color: AppColors.primary.withOpacity(0.4),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
           ],
         ),
         child: FloatingActionButton(
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppColors.transparent,
           elevation: 0,
           highlightElevation: 0,
           onPressed: () => _showCreateOrderSheet(context),
-          child: const Icon(Icons.add, color: Colors.white, size: 30),
+          child: const Icon(Icons.add, color: AppColors.white, size: 30),
         ),
       ),
       body: SafeArea(
@@ -69,21 +71,18 @@ class OrderScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     "Orders",
-                    style: TextStyle(
+                    style: AppTextStyles.headlineSmall.copyWith(
                       fontSize: 25,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF1A1A4F),
                       letterSpacing: -1,
                     ),
                   ),
                   Text(
                     "View and manage your recent transactions",
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.grey.shade500,
-                      fontWeight: FontWeight.w400,
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -99,11 +98,11 @@ class OrderScreen extends StatelessWidget {
                     child: Container(
                       height: 50,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
+                            color: AppColors.black.withOpacity(0.03),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -112,15 +111,15 @@ class OrderScreen extends StatelessWidget {
                       child: TextField(
                         controller: searchController,
                         onChanged: (value) => orderController.filterOrders(value),
+                        style: AppTextStyles.bodyMedium,
                         decoration: InputDecoration(
                           hintText: "Search by ID or customer name...",
-                          hintStyle: TextStyle(
-                            color: Colors.grey.shade400,
-                            fontSize: 14,
+                          hintStyle: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.textTertiary,
                           ),
                           prefixIcon: const Icon(
                             Icons.search,
-                            color: Color(0xFF1A1A4F),
+                            color: AppColors.primary,
                             size: 20,
                           ),
                           border: InputBorder.none,
@@ -131,7 +130,7 @@ class OrderScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Material(
-                    color: Colors.white,
+                    color: AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
                     elevation: 0,
                     child: InkWell(
@@ -142,11 +141,11 @@ class OrderScreen extends StatelessWidget {
                         width: 50,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade200),
+                          border: Border.all(color: AppColors.grey200),
                         ),
                         child: const Icon(
                           Icons.tune_rounded,
-                          color: Color(0xFF1A1A4F),
+                          color: AppColors.primary,
                           size: 22,
                         ),
                       ),
@@ -162,7 +161,7 @@ class OrderScreen extends StatelessWidget {
             // ── Orders List ───────────────────────────────────────────────
             Expanded(
               child: RefreshIndicator(
-                color: const Color(0xFF1A1A4F),
+                color: AppColors.primary,
                 onRefresh: () async => await orderController.getOrderList(),
                 child: Obx(() {
                   if (orderController.isLoading.value &&
@@ -214,24 +213,23 @@ class OrderScreen extends StatelessWidget {
                 child: ChoiceChip(
                   label: Text(
                     f["label"] as String,
-                    style: TextStyle(
-                      fontSize: 11,
+                    style: AppTextStyles.labelSmall.copyWith(
                       fontWeight: FontWeight.w500,
                       color: isSelected
-                          ? const Color(0xFF1A1A4F)
-                          : Colors.grey.shade600,
+                          ? AppColors.primary
+                          : AppColors.grey600,
                     ),
                   ),
                   selected: isSelected,
-                  selectedColor: const Color(0xFF1A1A4F).withOpacity(0.08),
-                  backgroundColor: Colors.white,
+                  selectedColor: AppColors.primary.withOpacity(0.08),
+                  backgroundColor: AppColors.white,
                   showCheckmark: false,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                     side: BorderSide(
                       color: isSelected
-                          ? const Color(0xFF1A1A4F)
-                          : Colors.grey.shade300,
+                          ? AppColors.primary
+                          : AppColors.grey300,
                     ),
                   ),
                   onSelected: (_) {
@@ -252,7 +250,7 @@ class OrderScreen extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (context) => const OrderFilterBottomSheet(),
     );
   }
@@ -268,10 +266,10 @@ class OrderScreen extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.grey.withOpacity(0.1),
+          color: AppColors.grey100,
         ),
       ),
       child: InkWell(
@@ -294,11 +292,7 @@ class OrderScreen extends StatelessWidget {
                         Expanded(
                           child: Text(
                             order.customerName ?? "Unknown Customer",
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
-                              color: Color(0xFF1A1A4F),
-                            ),
+                            style: AppTextStyles.titleMedium,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -319,8 +313,7 @@ class OrderScreen extends StatelessWidget {
                           ),
                           child: Text(
                             order.orderStatusText,
-                            style: TextStyle(
-                              fontSize: 10,
+                            style: AppTextStyles.labelSmall.copyWith(
                               fontWeight: FontWeight.w600,
                               color: order.orderStatusColor,
                             ),
@@ -331,18 +324,14 @@ class OrderScreen extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       "ID: #${order.id}  •  ${order.createdAt.toLocal().toString().split(' ')[0]}",
-                      style: TextStyle(
-                        color: Colors.grey.shade500,
-                        fontSize: 12,
-                      ),
+                      style: AppTextStyles.bodySmall,
                     ),
                     if (latestRemark != "NO REMARKS") ...[
                       const SizedBox(height: 6),
                       Text(
                         latestRemark.toUpperCase(),
-                        style: TextStyle(
-                          color: Colors.blueGrey.shade400,
-                          fontSize: 10,
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: AppColors.grey500,
                           fontWeight: FontWeight.w500,
                           letterSpacing: 0.5,
                         ),
@@ -356,9 +345,9 @@ class OrderScreen extends StatelessWidget {
 
               IconButton(
                 onPressed: () => _showDeleteConfirmDialog(context, order.id),
-                icon: Icon(
+                icon: const Icon(
                   Icons.delete_outline_rounded,
-                  color: Colors.red.shade300,
+                  color: AppColors.error,
                   size: 22,
                 ),
                 visualDensity: VisualDensity.compact,
@@ -374,11 +363,11 @@ class OrderScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 24),
+            Icon(Icons.warning_amber_rounded, color: AppColors.warning, size: 24),
             SizedBox(width: 8),
             Text(
               "Delete Order",
@@ -388,14 +377,14 @@ class OrderScreen extends StatelessWidget {
         ),
         content: Text(
           "Are you sure you want to delete order #$orderId?",
-          style: TextStyle(color: Colors.grey.shade700, fontSize: 14),
+          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.grey700),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: Text(
               "Cancel",
-              style: TextStyle(color: Colors.grey.shade600),
+              style: TextStyle(color: AppColors.grey600),
             ),
           ),
           ElevatedButton(
@@ -404,8 +393,8 @@ class OrderScreen extends StatelessWidget {
               orderController.deleteOrderFromList(orderId);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.error,
+              foregroundColor: AppColors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -425,11 +414,11 @@ class OrderScreen extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.inbox_rounded, size: 60, color: Colors.grey.shade300),
+          const Icon(Icons.inbox_rounded, size: 60, color: AppColors.grey300),
           const SizedBox(height: 16),
           Text(
             "No orders found",
-            style: TextStyle(color: Colors.grey.shade500, fontSize: 16),
+            style: AppTextStyles.bodyLarge.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -440,7 +429,7 @@ class OrderScreen extends StatelessWidget {
     Get.bottomSheet(
       OrderCreateBottomSheet(),
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
     );
   }
 }
