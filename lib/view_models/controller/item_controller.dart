@@ -3,6 +3,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dmj_stock_manager/model/product_models/hsn_model.dart';
 import 'package:dmj_stock_manager/model/product_models/product_model.dart';
 import 'package:dmj_stock_manager/utils/app_alerts.dart';
@@ -141,6 +142,46 @@ class ItemController extends GetxController with BaseController {
 
   List<ProductModel> get shareSelectedProducts =>
       products.where((p) => selectedProductIds.contains(p.id)).toList();
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ✅ Permission Handlers
+  // ─────────────────────────────────────────────────────────────────────────
+  Future<bool> _requestCameraPermission() async {
+    var status = await Permission.camera.request();
+    if (status.isGranted) return true;
+    if (status.isPermanentlyDenied) {
+      AppAlerts.permissionAlert(
+        title: "Camera Permission",
+        message: "Camera access is needed to take product photos. Please enable it in settings.",
+      );
+    }
+    return false;
+  }
+
+  Future<bool> _requestGalleryPermission() async {
+    PermissionStatus status;
+    if (Platform.isAndroid) {
+      // Check for Android 13+ granular permissions
+      final deviceInfo = await DeviceInfoPlugin().androidInfo;
+      if (deviceInfo.version.sdkInt >= 33) {
+        status = await Permission.photos.request();
+      } else {
+        status = await Permission.storage.request();
+      }
+    } else {
+      status = await Permission.photos.request();
+    }
+
+    if (status.isGranted || status.isLimited) return true;
+    if (status.isPermanentlyDenied) {
+      AppAlerts.permissionAlert(
+        title: "Gallery Permission",
+        message: "Gallery access is needed to select product photos. Please enable it in settings.",
+      );
+    }
+    return false;
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
   // ✅ Existing image helpers (edit mode)
   // ─────────────────────────────────────────────────────────────────────────
@@ -186,6 +227,8 @@ class ItemController extends GetxController with BaseController {
 
   Future<void> pickFromCamera() async {
     if (selectedImage.length >= 6) return;
+    if (!await _requestCameraPermission()) return;
+
     final XFile? file = await picker.pickImage(source: ImageSource.camera);
     if (file == null) return;
     final image = File(file.path);
@@ -196,6 +239,8 @@ class ItemController extends GetxController with BaseController {
 
   Future<void> pickFromGalleryMultiple() async {
     if (selectedImage.length >= 6) return;
+    if (!await _requestGalleryPermission()) return;
+
     final List<XFile> files = await picker.pickMultiImage();
     if (files.isEmpty) return;
     final remaining = 6 - selectedImage.length;
