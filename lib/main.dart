@@ -1,5 +1,6 @@
 import 'package:dmj_stock_manager/res/routes/routes.dart';
 import 'package:dmj_stock_manager/res/routes/routes_names.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -14,6 +15,12 @@ Future<void> main() async {
   final storage = GetStorage();
   final token = storage.read("access_token");
   final user = storage.read("app_user");
+
+  // ✅ Token ko logs me print karne ke liye
+  if (kDebugMode) {
+    print("🔑 [ACCESS TOKEN]: $token  ......." );
+  }
+
   final initialRoute = (token is String && token.isNotEmpty && user is Map)
       ? RouteName.dashboard
       : RouteName.auth;

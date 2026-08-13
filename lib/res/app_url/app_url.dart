@@ -1,5 +1,6 @@
 class AppUrl {
   static const String serverBaseUrl = "http://69.62.75.208:8000";
+  // static const String serverBaseUrl = "https://ffa3-103-87-58-83.ngrok-free.app";
   static const String baseUrl = "$serverBaseUrl/api";
   // static const String baseUrl = "https://traders.testwebs.in/api";
   static const String localUrl = "http://127.0.0.1:8000/api";
@@ -56,6 +57,8 @@ class AppUrl {
   static const String appUsers = "$baseUrl/app/users/";
   static const String appPurchases = "$baseUrl/app/purchases/";
   static const String appOrders = "$baseUrl/app/orders/";
+
+  static const String appActivityLog = "$baseUrl/app/activity/";
 
   static String mediaUrl(String path) {
     final raw = path.trim();

@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../data/app_exceptions.dart';
+import '../../model/activity_model.dart';
 import '../../model/stock_inventory_models/stock_details_model.dart';
 
 class HomeController extends GetxController with BaseController {
@@ -38,6 +39,7 @@ class HomeController extends GetxController with BaseController {
   var userSearchQuery = "".obs;
 
   var bestSellingProducts = <BestSellingProductModel>[].obs;
+  var activityLogs = <ActivityLog>[].obs;
   var selectedLowStockFilter = "all".obs;
   var bestSellingLimit = 5.obs;
   var selectedStockSource = "stock".obs;
@@ -50,6 +52,7 @@ class HomeController extends GetxController with BaseController {
     getChannels();
     getStockDetail();
     getBestSellingProducts();
+    getActivityLogs();
   }
 
   void fetchStats() {
@@ -219,6 +222,22 @@ class HomeController extends GetxController with BaseController {
     }
   }
 
+  Future<void> getActivityLogs({int limit = 20}) async {
+    try {
+      isLoading.value = true;
+      final response = await _homeService.appActivityLogApi(limit);
+      final activityResponse = ActivityLogResponse.fromJson(response);
+      activityLogs.value = activityResponse.results;
+    } catch (e) {
+      if (kDebugMode) {
+        print("Error fetching Activity logs: $e");
+      }
+      handleError(e, onRetry: () => getActivityLogs(limit: limit));
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   // ✅ NEW: Change limit dynamically
   void changeBestSellingLimit(int newLimit) {
     bestSellingLimit.value = newLimit;
@@ -232,6 +251,7 @@ class HomeController extends GetxController with BaseController {
       getChannels(),
       getStockDetail(),
       getBestSellingProducts(),
+      getActivityLogs(),
       getAppUsers(search: userSearchQuery.value),
     ]);
     fetchStats();

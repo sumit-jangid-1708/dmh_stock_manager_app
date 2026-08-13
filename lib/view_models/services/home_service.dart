@@ -40,4 +40,9 @@ class HomeService {
         "${AppUrl.bestSellingProducts}/?best_selling=true&limit=$limit");
     return response;
   }
+  
+  Future<dynamic> appActivityLogApi(int limit) async{
+    dynamic response = await _apiServices.getApi("${AppUrl.appActivityLog}?limit=$limit");
+    return response;
+  }
 }

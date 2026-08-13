@@ -1,5 +1,5 @@
 import 'package:dmj_stock_manager/res/components/barcode_dialog.dart';
-import 'package:dmj_stock_manager/res/components/widgets/app_gradient%20_button.dart';
+import 'package:dmj_stock_manager/res/components/widgets/app_gradient _button.dart';
 import 'package:dmj_stock_manager/res/components/widgets/product_list_card_widget.dart';
 import 'package:dmj_stock_manager/res/components/widgets/statCard.dart';
 import 'package:dmj_stock_manager/res/components/widgets/stock_button_row.dart';
@@ -19,7 +19,9 @@ import 'package:dmj_stock_manager/view_models/controller/home_controller.dart';
 import 'package:dmj_stock_manager/view_models/controller/stock_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
+import '../../model/activity_model.dart';
 import '../../res/components/widgets/channel_dialog_widget.dart';
 import '../../res/components/widgets/iamge_share_dialog.dart';
 import '../../view_models/controller/item_controller.dart';
@@ -640,15 +642,16 @@ class HomeScreen extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.only(left: 4, bottom: 12),
                   child: _sectionTitle(
-                    icon: Icons.access_time,
-                    title: "Recent Added Products",
+                    icon: Icons.history_rounded,
+                    title: "Recent Activity",
                   ),
                 ),
 
                 const SizedBox(height: 8),
 
                 Obx(() {
-                  if (itemController.isLoading.value) {
+                  if (homeController.isLoading.value &&
+                      homeController.activityLogs.isEmpty) {
                     return Container(
                       padding: EdgeInsets.all(40),
                       child: Center(
@@ -659,7 +662,7 @@ class HomeScreen extends StatelessWidget {
                     );
                   }
 
-                  if (itemController.products.isEmpty) {
+                  if (homeController.activityLogs.isEmpty) {
                     return Container(
                       padding: EdgeInsets.all(40),
                       decoration: BoxDecoration(
@@ -671,13 +674,13 @@ class HomeScreen extends StatelessWidget {
                         child: Column(
                           children: [
                             Icon(
-                              Icons.inventory_2_outlined,
+                              Icons.history_toggle_off_rounded,
                               size: 60,
                               color: Colors.grey.shade300,
                             ),
                             SizedBox(height: 12),
                             Text(
-                              "No products found",
+                              "No activity found",
                               style: TextStyle(
                                 fontSize: 16,
                                 color: Colors.grey.shade600,
@@ -689,38 +692,20 @@ class HomeScreen extends StatelessWidget {
                     );
                   }
 
-                  final displayCount = itemController.products.length > 5
-                      ? 5
-                      : itemController.products.length;
-
-                  return ListView.builder(
-                    itemCount: displayCount,
+                  return ListView.separated(
+                    itemCount: homeController.activityLogs.length,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
+                    separatorBuilder: (context, index) => const Divider(
+                      height: 1,
+                      indent: 70,
+                      endIndent: 10,
+                    ),
                     itemBuilder: (context, index) {
-                      final product = itemController.products[index];
-
-                      return ProductCard(
-                        count: index + 1,
-                        product: product,
-                        onShare: () {
-                          showDialog(
-                            context: context,
-                            builder: (_) => ImageShareDialog(product: product),
-                          );
-                        },
-                        onView: () {
-                          showBarcodeDialog(
-                            context,
-                            // product.id,
-                            product.barcode,
-                            product.name,
-                            // product.barcodeImage,
-                          );
-                        },
-                        onAdd: () {
-                          handleInventoryAction(product);
-                        },
+                      final log = homeController.activityLogs[index];
+                      return ActivityLogItem(
+                        log: log,
+                        icon: _getActivityIcon(log.event),
                       );
                     },
                   );
@@ -734,227 +719,133 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+
+  IconData _getActivityIcon(String? event) {
+    if (event == null) return Icons.notifications_none_rounded;
+    final e = event.toLowerCase();
+    if (e.contains('add') || e.contains('create')) return Icons.add_circle_outline_rounded;
+    if (e.contains('update') || e.contains('edit')) return Icons.edit_note_rounded;
+    if (e.contains('delete') || e.contains('remove')) return Icons.delete_outline_rounded;
+    if (e.contains('order')) return Icons.shopping_bag_outlined;
+    if (e.contains('stock')) return Icons.inventory_2_outlined;
+    if (e.contains('login')) return Icons.login_rounded;
+    return Icons.event_note_rounded;
+  }
 }
 
-// import 'package:dmj_stock_manager/res/components/barcode_dialog.dart';
-// import 'package:dmj_stock_manager/res/components/widgets/product_list_card_widget.dart';
-// import 'package:dmj_stock_manager/res/components/widgets/statCard.dart';
-// import 'package:dmj_stock_manager/res/components/widgets/stock_button_row.dart';
-// import 'package:dmj_stock_manager/view/home_screen/low_stock_screen.dart';
-// import 'package:dmj_stock_manager/view/home_screen/total_stock_screen.dart';
-// import 'package:dmj_stock_manager/view/stock/stock_screen.dart';
-// import 'package:dmj_stock_manager/view_models/controller/home_controller.dart';
-// import 'package:dmj_stock_manager/view_models/controller/stock_controller.dart';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-//
-// import '../../res/components/widgets/channel_dialog_widget.dart';
-// import '../../res/components/widgets/iamge_share_dialog.dart';
-// import '../../view_models/controller/item_controller.dart';
-// import '../items/items_screen.dart';
-//
-// class HomeScreen extends StatelessWidget {
-//   HomeScreen({super.key});
-//   final HomeController homeController = Get.put(HomeController());
-//   final ItemController itemController = Get.find<ItemController>();
-//   final StockController stockController = Get.find<StockController>();
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: Colors.white,
-//       body: SafeArea(
-//         child: RefreshIndicator(
-//           onRefresh: () async {
-//             homeController.fetchStats();
-//             homeController.getChannels();
-//             homeController.getStockDetail();
-//             itemController.getProducts();
-//           },
-//           child: SingleChildScrollView(
-//             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Row(
-//                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                   children: [
-//                     const Text(
-//                       "Dashboard",
-//                       style: TextStyle(
-//                         fontSize: 20,
-//                         fontWeight: FontWeight.bold,
-//                       ),
-//                     ),
-//                     TextButton(
-//                       style: TextButton.styleFrom(
-//                         fixedSize: Size(130, 40),
-//                         shape: RoundedRectangleBorder(
-//                           side: BorderSide(
-//                             width: 1.0,
-//                             color: Color(0xFF1A1A4F),
-//                           ),
-//                           borderRadius: BorderRadius.circular(12),
-//                         ),
-//                       ),
-//                       onPressed: () {
-//                         Get.dialog(ChannelDialogWidget());
-//                       },
-//                       child: Text(
-//                         "Add Channels",
-//                         style: TextStyle(
-//                           fontSize: 15,
-//                           fontWeight: FontWeight.bold,
-//                           color: Color(0xFF1A1A4F),
-//                         ),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//                 SizedBox(height: 10),
-//                 StockButtonRow(),
-//                 SizedBox(height: 10),
-//
-//                 Padding(
-//                   padding: const EdgeInsets.only(top: 10),
-//                   child: Obx(() {
-//                     return SizedBox(
-//                       height: 160, // card की height
-//                       child: ListView(
-//                         scrollDirection: Axis.horizontal,
-//                         children: [
-//                           SizedBox(
-//                             width: 180,
-//                             child: InkWell(
-//                               onTap: () {
-//                                 // 👇 Yahan baad me tum ek page banaoge jahan total stock dikhana hai
-//                                 Get.to(TotalStockScreen());
-//                               },
-//                               child: StatCard(
-//                                 title: "Total Stock",
-//                                 value: homeController.totalStock.value
-//                                     .toString(),
-//                                 subtitle: "Active inventory items",
-//                                 icon: Icons.inventory_2_rounded,
-//                               ),
-//                             ),
-//                           ),
-//                           const SizedBox(width: 12),
-//                           SizedBox(
-//                             width: 180,
-//                             child: InkWell(
-//                               onTap: () {
-//                                 Get.to(LowStockScreen());
-//                               },
-//                               child: StatCard(
-//                                 title: "Low Stock",
-//                                 value: homeController.lowStock.value.toString(),
-//                                 subtitle: "Need restocking",
-//                                 icon: Icons.show_chart_rounded,
-//                               ),
-//                             ),
-//                           ),
-//                           // const SizedBox(width: 12),
-//                           // SizedBox(
-//                           //   width: 180,
-//                           //   child: InkWell(
-//                           //     onTap: () {
-//                           //
-//                           //     },
-//                           //     child: StatCard(
-//                           //       title: "Out of Stock",
-//                           //       value: homeController.outOfStock.value.toString(),
-//                           //       subtitle: "Urgent restock needed",
-//                           //       icon: Icons.inventory_outlined,
-//                           //     ),
-//                           //   ),
-//                           // ),
-//                           const SizedBox(width: 12),
-//                           SizedBox(
-//                             width: 180,
-//                             child: InkWell(
-//                               onTap: () {
-//                                 // Get.to(() => PlaceholderScreen(title: "Total Stock Value"));
-//                               },
-//                               child: StatCard(
-//                                 title: "Total Stock Value",
-//                                 value: homeController.totalStockValue.value
-//                                     .toString(),
-//                                 subtitle: "Total stock worth",
-//                                 icon: Icons.currency_rupee,
-//                               ),
-//                             ),
-//                           ),
-//                         ],
-//                       ),
-//                     );
-//                   }),
-//                 ),
-//
-//                 const SizedBox(height: 15),
-//                 const Text(
-//                   "Recent Activity",
-//                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-//                 ),
-//                 const Text(
-//                   "Items requiring attention",
-//                   style: TextStyle(fontSize: 12),
-//                 ),
-//                 const SizedBox(height: 15),
-//                 Obx(() {
-//                   if (itemController.isLoading.value) {
-//                     return const Center(child: CircularProgressIndicator());
-//                   }
-//
-//                   if (itemController.products.isEmpty) {
-//                     return const Center(child: Text("No products found"));
-//                   }
-//
-//                   final displayCount = itemController.products.length > 5
-//                       ? 5
-//                       : itemController.products.length;
-//                   return ListView.builder(
-//                     itemCount: displayCount,
-//                     shrinkWrap: true, // 👈 yeh important hai
-//                     physics:
-//                         const NeverScrollableScrollPhysics(), // scroll ka clash avoid karega
-//                     // padding: const EdgeInsets.symmetric(horizontal: 12),
-//                     itemBuilder: (context, index) {
-//                       final product = itemController.products[index];
-//
-//                       return InkWell(
-//                         onTap: (){
-//                           handleInventoryAction(product);
-//                           // showAddInventoryDialog(product, (qty){
-//                           //   stockController.addInventory(productId: product.id, quantity: qty);
-//                           // });
-//                         },
-//                         child: ProductCard(
-//                           count: index + 1,
-//                           product: product, // 👈 pass full ProductModel
-//                           onShare: () {
-//                             showDialog(
-//                               context: context,
-//                               builder: (_)=> ImageShareDialog( product: product,),
-//                             );
-//                           },
-//                           onView: () {
-//                             showBarcodeDialog(
-//                               context,
-//                               product.barcode,
-//                               product.barcodeImage,
-//                             );
-//                           },
-//                         ),
-//                       );
-//                     },
-//                   );
-//                 }),
-//               ],
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
+class ActivityLogItem extends StatefulWidget {
+  final ActivityLog log;
+  final IconData icon;
+  const ActivityLogItem({super.key, required this.log, required this.icon});
+
+  @override
+  State<ActivityLogItem> createState() => _ActivityLogItemState();
+}
+
+class _ActivityLogItemState extends State<ActivityLogItem> {
+  bool isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final dateStr = widget.log.createdAt != null
+        ? DateFormat('dd MMM, hh:mm a').format(widget.log.createdAt!)
+        : "";
+
+    final bool hasLongDescription = (widget.log.description?.length ?? 0) > 90;
+
+    return InkWell(
+      onTap: hasLongDescription ? () => setState(() => isExpanded = !isExpanded) : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 10.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: const Color(0xFF1A1A4F).withOpacity(0.1),
+              child: Icon(widget.icon, color: const Color(0xFF1A1A4F), size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.log.event ?? "Activity",
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1A1A4F),
+                          ),
+                        ),
+                      ),
+                      if (widget.log.screen != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            widget.log.screen!,
+                            style: TextStyle(
+                              fontSize: 9,
+                              color: Colors.grey.shade700,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    "By ${widget.log.username ?? 'System'} • $dateStr",
+                    style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    widget.log.description ?? "",
+                    maxLines: isExpanded ? null : 2,
+                    overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: Colors.grey.shade700,
+                      height: 1.4,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                  if (hasLongDescription)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4.0),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            isExpanded ? "Show Less" : "Read More",
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: Color(0xFF1A1A4F),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Icon(
+                            isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                            size: 14,
+                            color: const Color(0xFF1A1A4F),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
