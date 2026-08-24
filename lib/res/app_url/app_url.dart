@@ -4,6 +4,8 @@ class AppUrl {
   static const String baseUrl = "$serverBaseUrl/api";
   // static const String baseUrl = "https://traders.testwebs.in/api";
   static const String localUrl = "http://127.0.0.1:8000/api";
+  static const String baseUrl2 = "https://stms.testwebs.in/api/app";
+
   static const String imageBaseUrl = serverBaseUrl;
   static const String addVendor = "$baseUrl/vendors/";
   static const String product = "$baseUrl/products/";
@@ -57,7 +59,6 @@ class AppUrl {
   static const String appUsers = "$baseUrl/app/users/";
   static const String appPurchases = "$baseUrl/app/purchases/";
   static const String appOrders = "$baseUrl/app/orders/";
-
   static const String appActivityLog = "$baseUrl/app/activity/";
 
   static String mediaUrl(String path) {
@@ -66,6 +67,11 @@ class AppUrl {
     if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
     return "$imageBaseUrl${raw.startsWith("/") ? raw : "/$raw"}";
   }
+
+  static const String createQuotation = "$baseUrl2/quotations/";
+  static const String company = "$baseUrl2/quotations/companies/";
+  static const String bank  = "$baseUrl2/quotations/banks/";
+
 }
 
 //

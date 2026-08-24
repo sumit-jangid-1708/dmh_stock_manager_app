@@ -98,6 +98,37 @@ class NetworkApiServices extends BaseApiServices {
     }
   }
 
+
+  @override
+  Future<dynamic> patchApi(
+      dynamic data,
+      String url, {
+        Map<String, String>? headers,
+      }) async {
+    if (kDebugMode) {
+      print('🌐 PATCH → $url');
+      print('🌐 Body  → $data');
+    }
+    try {
+      final mergedHeaders = await _getHeaders(url, extra: headers,);
+      final uri = Uri.parse(url);
+      final body = jsonEncode(data);
+      final response = await _sendWithRetry(
+            () => http.patch(
+          uri,
+          body: body,
+          headers: mergedHeaders,
+        ),
+        timeout: const Duration(seconds: 40),
+      );
+      return _returnResponse(response);
+    } on SocketException {
+      throw InternetExceptions();
+    } on TimeoutException {
+      throw RequestTimeOut();
+    }
+  }
+
   @override
   Future<dynamic> deleteApi(String url, {Map<String, String>? headers}) async {
     if (kDebugMode) print('🌐 DELETE → $url');

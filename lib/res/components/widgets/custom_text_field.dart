@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 class AppTextField extends StatelessWidget {
   final TextEditingController controller;
   final String hintText;
-  final String? labelText; // Optional floating label
+  final String? labelText;
   final IconData prefixIcon;
-  final IconData? suffixIcon; // Optional (e.g., clear, eye)
-  final VoidCallback? onSuffixTap; // For suffix action (clear, show password)
+  final IconData? suffixIcon;
+  final VoidCallback? onSuffixTap;
   final String? Function(String?)? validator;
   final TextInputType keyboardType;
   final int maxLines;
@@ -14,6 +14,8 @@ class AppTextField extends StatelessWidget {
   final bool obscureText;
   final bool enabled;
   final bool isSearch;
+  final bool readOnly;
+  final VoidCallback? onTap;
 
   const AppTextField({
     super.key,
@@ -30,6 +32,8 @@ class AppTextField extends StatelessWidget {
     this.obscureText = false,
     this.enabled = true,
     this.isSearch = false,
+    this.readOnly = false,
+    this.onTap,
   });
 
   @override
@@ -38,9 +42,15 @@ class AppTextField extends StatelessWidget {
       controller: controller,
       keyboardType: maxLines > 1 ? TextInputType.multiline : keyboardType,
       maxLines: maxLines,
-      textInputAction: maxLines > 1 ? TextInputAction.newline : TextInputAction.done,
+      textInputAction:
+          maxLines > 1 ? TextInputAction.newline : TextInputAction.done,
       obscureText: obscureText,
       enabled: enabled,
+      readOnly: readOnly,
+      showCursor: !readOnly,
+      // ✅ Disable selection for date/picker fields to prevent the "purple drop"
+      enableInteractiveSelection: !readOnly,
+      onTap: onTap,
       onChanged: onChanged,
       validator: validator,
       style: const TextStyle(
@@ -49,13 +59,12 @@ class AppTextField extends StatelessWidget {
         fontWeight: FontWeight.w500,
       ),
       decoration: InputDecoration(
-        labelText: isSearch ? null : labelText ?? hintText, // Floating label support
+        labelText: isSearch ? null : labelText ?? hintText,
         labelStyle: TextStyle(
           color: Colors.grey.shade600,
           fontSize: 14,
         ),
         hintText: hintText,
-        // hintText: labelText != null ? hintText : null,
         hintStyle: TextStyle(
           color: Colors.grey.shade400,
           fontSize: 14,
@@ -67,14 +76,20 @@ class AppTextField extends StatelessWidget {
         ),
         suffixIcon: suffixIcon != null
             ? IconButton(
-          icon: Icon(
-            suffixIcon,
-            color: const Color(0xFF1A1A4F),
-            size: 22,
-          ),
-          onPressed: onSuffixTap,
-        )
-            : null,
+                icon: Icon(
+                  suffixIcon,
+                  color: const Color(0xFF1A1A4F),
+                  size: 22,
+                ),
+                onPressed: onSuffixTap,
+              )
+            : (readOnly && !isSearch
+                ? const Icon(
+                    Icons.calendar_month_outlined,
+                    color: Color(0xFF1A1A4F),
+                    size: 20,
+                  )
+                : null),
         filled: true,
         fillColor: enabled ? Colors.grey.shade50 : Colors.grey.shade100,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -101,14 +116,12 @@ class AppTextField extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: Colors.redAccent, width: 2),
         ),
-        // Subtle shadow on focus
         errorStyle: const TextStyle(
           color: Colors.redAccent,
           fontSize: 12,
         ),
-        // Floating label behavior
         floatingLabelBehavior:
-        isSearch ? FloatingLabelBehavior.never : FloatingLabelBehavior.auto,
+            isSearch ? FloatingLabelBehavior.never : FloatingLabelBehavior.auto,
       ),
       cursorColor: const Color(0xFF1A1A4F),
     );

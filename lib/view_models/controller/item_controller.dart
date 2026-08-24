@@ -30,6 +30,7 @@ class ItemController extends GetxController with BaseController {
   final ItemService itemService = ItemService();
   final products = <ProductModel>[].obs;
   var isLoading = false.obs;
+  final isUpdatingSku = false.obs;
   final RxList<File> selectedImage = <File>[].obs;
   final ImagePicker picker = ImagePicker();
 
@@ -43,7 +44,7 @@ class ItemController extends GetxController with BaseController {
   final skuCode = TextEditingController().obs;
   var purchasePrice = TextEditingController().obs;
   var wholesalePrice = TextEditingController().obs; // New
-  var retailerPrice = TextEditingController().obs;  // New
+  var retailerPrice = TextEditingController().obs; // New
   var lowStockLimit = TextEditingController().obs;
   final hsnCode = TextEditingController().obs;
   final description = TextEditingController().obs;
@@ -57,7 +58,7 @@ class ItemController extends GetxController with BaseController {
 
   var filteredProducts = <ProductModel>[].obs;
   final searchBar = TextEditingController();
-  
+
   // ✅ Price Range Filters
   final minPriceFilter = TextEditingController();
   final maxPriceFilter = TextEditingController();
@@ -98,9 +99,10 @@ class ItemController extends GetxController with BaseController {
 
     filteredProducts.assignAll(
       products.where((product) {
-        final matchesSearch = product.name.toLowerCase().contains(query) ||
+        final matchesSearch =
+            product.name.toLowerCase().contains(query) ||
             product.sku.toLowerCase().contains(query);
-        
+
         bool matchesPrice = true;
         if (min != null) {
           matchesPrice = matchesPrice && product.unitPurchasePrice >= min;
@@ -108,7 +110,7 @@ class ItemController extends GetxController with BaseController {
         if (max != null) {
           matchesPrice = matchesPrice && product.unitPurchasePrice <= max;
         }
-        
+
         return matchesSearch && matchesPrice;
       }).toList(),
     );
@@ -152,7 +154,8 @@ class ItemController extends GetxController with BaseController {
     if (status.isPermanentlyDenied) {
       AppAlerts.permissionAlert(
         title: "Camera Permission",
-        message: "Camera access is needed to take product photos. Please enable it in settings.",
+        message:
+            "Camera access is needed to take product photos. Please enable it in settings.",
       );
     }
     return false;
@@ -176,7 +179,8 @@ class ItemController extends GetxController with BaseController {
     if (status.isPermanentlyDenied) {
       AppAlerts.permissionAlert(
         title: "Gallery Permission",
-        message: "Gallery access is needed to select product photos. Please enable it in settings.",
+        message:
+            "Gallery access is needed to select product photos. Please enable it in settings.",
       );
     }
     return false;
@@ -289,6 +293,30 @@ class ItemController extends GetxController with BaseController {
     }
   }
 
+  Future<bool> updateProductSku(int productId, String newSku) async {
+    final sku = newSku.trim();
+    if (sku.isEmpty) {
+      AppAlerts.error("SKU is required");
+      return false;
+    }
+
+    isUpdatingSku.value = true;
+    try {
+      final response = await itemService.updateProductSku(productId, sku);
+      await getProducts();
+      final message = response is Map<String, dynamic>
+          ? response['detail']?.toString()
+          : null;
+      AppAlerts.success(message ?? "Product SKU updated successfully");
+      return true;
+    } catch (e) {
+      handleError(e);
+      return false;
+    } finally {
+      isUpdatingSku.value = false;
+    }
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
   // ✅ Add product
   //    isMultiLabelSize: true → send unit/length/width/height + computed size
@@ -303,7 +331,7 @@ class ItemController extends GetxController with BaseController {
     int? hsn,
     String? description, {
     String? wholesalePrice, // New
-    String? retailerPrice,  // New
+    String? retailerPrice, // New
     bool isMultiLabelSize = false,
     String? unit,
     String? length,
@@ -315,16 +343,18 @@ class ItemController extends GetxController with BaseController {
       return;
     }
 
-    final List<String> validPaths =
-        uploadedImagePaths.where((p) => p.isNotEmpty).toList();
+    final List<String> validPaths = uploadedImagePaths
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (validPaths.isEmpty) {
       AppAlerts.error("Please select at least one product image");
       return;
     }
 
     // ✅ Compute final size string for backend
-    final String finalSize =
-        isMultiLabelSize ? _buildSizeString(length, width, height, unit) : size;
+    final String finalSize = isMultiLabelSize
+        ? _buildSizeString(length, width, height, unit)
+        : size;
 
     Map<String, dynamic> fields = {
       "vendor": vendorId,
@@ -335,7 +365,7 @@ class ItemController extends GetxController with BaseController {
       "material": material,
       "unit_purchase_price": purchasePrice,
       "wholesale_price": wholesalePrice, // New
-      "retailer_price": retailerPrice,   // New
+      "retailer_price": retailerPrice, // New
       "hsn": hsn,
       "desc": description,
       "weight_before": weightBefore.value.text.trim().isEmpty
@@ -362,7 +392,9 @@ class ItemController extends GetxController with BaseController {
       }
 
       final response = await itemService.addProductApi(
-          fields: fields, imagePaths: validPaths);
+        fields: fields,
+        imagePaths: validPaths,
+      );
       ProductModel.fromJson(response);
       await getProducts();
       AppAlerts.success("Product added successfully");
@@ -387,7 +419,7 @@ class ItemController extends GetxController with BaseController {
     required String material,
     required String purchasePrice,
     String? wholesalePrice, // New
-    String? retailerPrice,  // New
+    String? retailerPrice, // New
     int? hsnId,
     String? description,
     bool isMultiLabelSize = false,
@@ -402,14 +434,17 @@ class ItemController extends GetxController with BaseController {
     }
 
     // ✅ Determine image paths to send
-    final List<String> newPaths =
-        uploadedImagePaths.where((p) => p.isNotEmpty).toList();
-    final List<String> pathsToSend =
-        newPaths.isNotEmpty ? newPaths : existingImageUrls.toList();
+    final List<String> newPaths = uploadedImagePaths
+        .where((p) => p.isNotEmpty)
+        .toList();
+    final List<String> pathsToSend = newPaths.isNotEmpty
+        ? newPaths
+        : existingImageUrls.toList();
 
     // ✅ Compute final size
-    final String finalSize =
-        isMultiLabelSize ? _buildSizeString(length, width, height, unit) : size;
+    final String finalSize = isMultiLabelSize
+        ? _buildSizeString(length, width, height, unit)
+        : size;
 
     Map<String, dynamic> fields = {
       "vendor": vendorId,
@@ -420,7 +455,7 @@ class ItemController extends GetxController with BaseController {
       "material": material,
       "unit_purchase_price": purchasePrice,
       "wholesale_price": wholesalePrice, // New
-      "retailer_price": retailerPrice,   // New
+      "retailer_price": retailerPrice, // New
       "hsn": hsnId,
       "desc": description,
       "weight_before": weightBefore.value.text.trim().isEmpty
@@ -471,10 +506,16 @@ class ItemController extends GetxController with BaseController {
 
   // ✅ Build size string from dimensions: "10X5X3CM"
   String _buildSizeString(
-      String? length, String? width, String? height, String? unit) {
-    final parts = [length, width, height]
-        .where((v) => v != null && v.isNotEmpty)
-        .toList();
+    String? length,
+    String? width,
+    String? height,
+    String? unit,
+  ) {
+    final parts = [
+      length,
+      width,
+      height,
+    ].where((v) => v != null && v.isNotEmpty).toList();
     if (parts.isEmpty) return '';
     final dims = parts.join('X');
     final u = (unit != null && unit.isNotEmpty) ? unit : '';
@@ -505,7 +546,7 @@ class ItemController extends GetxController with BaseController {
     skuCode.value.clear();
     purchasePrice.value.clear();
     wholesalePrice.value.clear(); // New
-    retailerPrice.value.clear();  // New
+    retailerPrice.value.clear(); // New
     lowStockLimit.value.clear();
     hsnCode.value.clear();
     description.value.clear();
@@ -635,7 +676,8 @@ class ItemController extends GetxController with BaseController {
       final response = await itemService.hsnCodeList();
       if (response is! List) throw Exception("Invalid HSN response format");
       hsnList.assignAll(
-          response.map<HsnGstModel>((e) => HsnGstModel.fromJson(e)).toList());
+        response.map<HsnGstModel>((e) => HsnGstModel.fromJson(e)).toList(),
+      );
       if (kDebugMode) print("✅ HSN List fetched: ${hsnList.length}");
     } catch (e) {
       if (kDebugMode) print("❌ HSN Error: $e");
@@ -653,8 +695,10 @@ class ItemController extends GetxController with BaseController {
     }
     try {
       isLoading.value = true;
-      final response = await itemService
-          .addHsn({"hsn_code": hsnCode, "gst_percentage": gstPercentage});
+      final response = await itemService.addHsn({
+        "hsn_code": hsnCode,
+        "gst_percentage": gstPercentage,
+      });
       final newHsn = HsnGstModel.fromJson(response);
       hsnList.add(newHsn);
       AppAlerts.success("Hsn added successfully");

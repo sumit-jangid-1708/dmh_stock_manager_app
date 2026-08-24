@@ -10,6 +10,7 @@ import 'package:dmj_stock_manager/view/vendors/vendor_screen.dart';
 import 'package:dmj_stock_manager/view_models/controller/dashboard_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../view/quotation/quotation_screen.dart';
 import '../../../view_models/controller/auth/auth_controller.dart';
 
 class Sidebar extends StatelessWidget {
@@ -114,6 +115,11 @@ class Sidebar extends StatelessWidget {
                         icon: Icons.assignment_return_outlined,
                         title: "Returns",
                         onTap: () => Get.to(() => ReturnOrderHistoryScreen()),
+                      ),
+                    _buildMenuItem(
+                        icon: Icons.document_scanner_outlined,
+                        title: "Quotation",
+                        onTap: () => Get.to(() => const QuotationScreen()),
                       ),
                     _buildMenuItem(
                       icon: Icons.settings_outlined,

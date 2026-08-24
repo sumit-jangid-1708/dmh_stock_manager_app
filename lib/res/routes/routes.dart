@@ -20,6 +20,7 @@ import '../../bindings/order_binding.dart';
 import '../../bindings/stock_binding.dart';
 import '../../bindings/vendor_binding.dart';
 import '../../view/billings/bill_detail_screen.dart';
+import '../../view/quotation/quotation_screen.dart';
 
 class AppRoutes {
   static List<GetPage> appRoute() => [
@@ -70,8 +71,12 @@ class AppRoutes {
       page: () => OrderDetailScreen(),
       binding: OrderBinding(),
     ),
-    GetPage(name: RouteName.settings, page: ()=> SettingsScreen()),
-    GetPage(name: RouteName.returnScreen, page: ()=> ReturnOrderHistoryScreen()),
-    GetPage(name: RouteName.shippingScreen, page: ()=> ShippingScreen())
+    GetPage(name: RouteName.settings, page: () => SettingsScreen()),
+    GetPage(
+      name: RouteName.returnScreen,
+      page: () => ReturnOrderHistoryScreen(),
+    ),
+    GetPage(name: RouteName.shippingScreen, page: () => ShippingScreen()),
+    GetPage(name: RouteName.quotationScreen, page: () => QuotationScreen()),
   ];
 }

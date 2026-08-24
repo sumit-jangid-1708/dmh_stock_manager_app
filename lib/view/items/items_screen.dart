@@ -79,10 +79,10 @@ class ItemsScreen extends StatelessWidget {
                       ),
                       onPressed: () =>
                           ProductShareService.shareProductsAsWhatsappCatalogue(
-                        context,
-                        itemController.shareSelectedProducts,
-                        itemController.exitSelectionMode,
-                      ),
+                            context,
+                            itemController.shareSelectedProducts,
+                            itemController.exitSelectionMode,
+                          ),
                     ),
                   ],
                 )
@@ -132,7 +132,10 @@ class ItemsScreen extends StatelessWidget {
                                 width: 48,
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
-                                    colors: [Color(0xFF1A1A4F), Color(0xFF4A4ABF)],
+                                    colors: [
+                                      Color(0xFF1A1A4F),
+                                      Color(0xFF4A4ABF),
+                                    ],
                                   ),
                                   borderRadius: BorderRadius.circular(15),
                                 ),
@@ -164,7 +167,10 @@ class ItemsScreen extends StatelessWidget {
                               const SizedBox(width: 10),
                               IconButton(
                                 onPressed: itemController.clearFilters,
-                                icon: const Icon(Icons.filter_alt_off, color: Color(0xFF1A1A4F)),
+                                icon: const Icon(
+                                  Icons.filter_alt_off,
+                                  color: Color(0xFF1A1A4F),
+                                ),
                                 tooltip: "Clear All Filters",
                               ),
                             ],
@@ -210,7 +216,10 @@ class ItemsScreen extends StatelessWidget {
     });
   }
 
-  Widget _priceTextField({required TextEditingController controller, required String hint}) {
+  Widget _priceTextField({
+    required TextEditingController controller,
+    required String hint,
+  }) {
     return TextFormField(
       controller: controller,
       keyboardType: TextInputType.number,
@@ -368,11 +377,11 @@ class ItemsScreen extends StatelessWidget {
   }
 
   Widget _imagePlaceholder() => Container(
-        width: 70,
-        height: 70,
-        color: Colors.grey.shade200,
-        child: const Icon(Icons.image_not_supported, color: Colors.grey),
-      );
+    width: 70,
+    height: 70,
+    color: Colors.grey.shade200,
+    child: const Icon(Icons.image_not_supported, color: Colors.grey),
+  );
 
   Widget _actionButton({
     required IconData icon,

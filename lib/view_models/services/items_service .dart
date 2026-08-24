@@ -15,6 +15,15 @@ class ItemService {
     return response;
   }
 
+  /// PATCH /api/app/products/{product_id}/sku/
+  Future<dynamic> updateProductSku(int productId, String sku) async {
+    String url = AppUrl.appProducts;
+    if (!url.endsWith('/')) {
+      url = "$url/";
+    }
+    return _apiServices.patchApi({"sku": sku}, "$url$productId/sku/");
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
   // ✅ Upload single image → returns relative path string
   //    POST /upload-image/
@@ -24,10 +33,7 @@ class ItemService {
     final storage = GetStorage();
     final token = storage.read("access_token");
 
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse(AppUrl.uploadImage),
-    );
+    var request = http.MultipartRequest('POST', Uri.parse(AppUrl.uploadImage));
     request.headers['Authorization'] = 'Bearer $token';
 
     if (!await image.exists()) {
@@ -38,9 +44,7 @@ class ItemService {
       throw Exception("Image file too large (max 10MB): ${image.path}");
     }
 
-    request.files.add(
-      await http.MultipartFile.fromPath('image', image.path),
-    );
+    request.files.add(await http.MultipartFile.fromPath('image', image.path));
 
     if (kDebugMode) print("📤 Uploading: ${image.path}");
 
@@ -89,10 +93,7 @@ class ItemService {
     final storage = GetStorage();
     final token = storage.read("access_token");
 
-    var request = http.MultipartRequest(
-      'POST',
-      Uri.parse(AppUrl.product),
-    );
+    var request = http.MultipartRequest('POST', Uri.parse(AppUrl.product));
     request.headers['Authorization'] = 'Bearer $token';
 
     // Add text fields

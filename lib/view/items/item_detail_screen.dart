@@ -54,8 +54,8 @@ class ItemDetailScreen extends StatelessWidget {
 
     final bool hasMultiLabel =
         (product.length != null && product.length!.isNotEmpty) ||
-            (product.width != null && product.width!.isNotEmpty) ||
-            (product.height != null && product.height!.isNotEmpty);
+        (product.width != null && product.width!.isNotEmpty) ||
+        (product.height != null && product.height!.isNotEmpty);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
@@ -169,12 +169,12 @@ class ItemDetailScreen extends StatelessWidget {
                               color: Color(0xFF1A1A4F),
                               size: 20,
                             ),
-                            onPressed: () => ProductShareService
-                                .shareProductsAsWhatsappCatalogue(
-                              context,
-                              [product],
-                              () {},
-                            ),
+                            onPressed: () =>
+                                ProductShareService.shareProductsAsWhatsappCatalogue(
+                                  context,
+                                  [product],
+                                  () {},
+                                ),
                           ),
                         ),
                       ),
@@ -214,13 +214,35 @@ class ItemDetailScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          "SKU: ${product.baseSku}",
-                          style: TextStyle(
-                            color: Colors.grey.shade500,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 1,
-                          ),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              "SKU: ${product.baseSku}",
+                              style: TextStyle(
+                                color: Colors.grey.shade500,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Material(
+                              color: const Color(0xFF1A1A4F).withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(8),
+                              child: InkWell(
+                                onTap: _editSku,
+                                borderRadius: BorderRadius.circular(8),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(7),
+                                  child: Icon(
+                                    Icons.edit_outlined,
+                                    size: 16,
+                                    color: Color(0xFF1A1A4F),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 30),
 
@@ -252,7 +274,10 @@ class ItemDetailScreen extends StatelessWidget {
                               if (product.wholesalePrice != null) ...[
                                 const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 12),
-                                  child: Divider(height: 1, color: Color(0xFFF5F5F5)),
+                                  child: Divider(
+                                    height: 1,
+                                    color: Color(0xFFF5F5F5),
+                                  ),
                                 ),
                                 _buildPriceRow(
                                   "Wholesale Price",
@@ -264,7 +289,10 @@ class ItemDetailScreen extends StatelessWidget {
                               if (product.retailerPrice != null) ...[
                                 const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 12),
-                                  child: Divider(height: 1, color: Color(0xFFF5F5F5)),
+                                  child: Divider(
+                                    height: 1,
+                                    color: Color(0xFFF5F5F5),
+                                  ),
                                 ),
                                 _buildPriceRow(
                                   "Retailer Price",
@@ -469,7 +497,27 @@ class ItemDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPriceRow(String label, double price, Color color, IconData icon) {
+  Future<void> _editSku() async {
+    final updated = await Get.dialog<bool>(
+      _SkuEditDialog(product: product),
+      barrierDismissible: false,
+    );
+    if (updated != true) return;
+
+    final refreshed = itemController.products.firstWhereOrNull(
+      (item) => item.id == product.id,
+    );
+    if (refreshed != null) {
+      Get.off(() => ItemDetailScreen(product: refreshed));
+    }
+  }
+
+  Widget _buildPriceRow(
+    String label,
+    double price,
+    Color color,
+    IconData icon,
+  ) {
     return Row(
       children: [
         Container(
@@ -546,6 +594,203 @@ class ItemDetailScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SkuEditDialog extends StatefulWidget {
+  const _SkuEditDialog({required this.product});
+
+  final ProductModel product;
+
+  @override
+  State<_SkuEditDialog> createState() => _SkuEditDialogState();
+}
+
+class _SkuEditDialogState extends State<_SkuEditDialog> {
+  final ItemController _controller = Get.find<ItemController>();
+  late final TextEditingController _skuController;
+
+  @override
+  void initState() {
+    super.initState();
+    _skuController = TextEditingController(text: widget.product.sku);
+  }
+
+  @override
+  void dispose() {
+    _skuController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_controller.isUpdatingSku.value) return;
+    final updated = await _controller.updateProductSku(
+      widget.product.id,
+      _skuController.text,
+    );
+    if (updated && mounted) Navigator.of(context).pop(true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const primary = Color(0xFF1A1A4F);
+
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOut,
+      padding: EdgeInsets.fromLTRB(
+        20,
+        24,
+        20,
+        MediaQuery.viewInsetsOf(context).bottom + 24,
+      ),
+      child: Center(
+        child: SingleChildScrollView(
+          child: Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            clipBehavior: Clip.antiAlias,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: primary.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(
+                            Icons.qr_code_2_rounded,
+                            color: primary,
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Edit Product SKU",
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: primary,
+                                ),
+                              ),
+                              SizedBox(height: 3),
+                              Text(
+                                "Use a unique code for this product",
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 22),
+                    Text(
+                      widget.product.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: primary,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "Current SKU: ${widget.product.sku}",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    TextField(
+                      controller: _skuController,
+                      autofocus: true,
+                      textCapitalization: TextCapitalization.characters,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _submit(),
+                      decoration: InputDecoration(
+                        labelText: "New SKU",
+                        hintText: "NEW-SKU-001",
+                        prefixIcon: const Icon(Icons.tag_rounded),
+                        filled: true,
+                        fillColor: const Color(0xFFF7F7FB),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: Colors.grey.shade200),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          borderSide: const BorderSide(
+                            color: primary,
+                            width: 1.4,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: primary,
+                              minimumSize: const Size.fromHeight(50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: const Text("CANCEL"),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Obx(
+                            () => AppGradientButton(
+                              height: 50,
+                              text: _controller.isUpdatingSku.value
+                                  ? "UPDATING..."
+                                  : "UPDATE SKU",
+                              onPressed: _controller.isUpdatingSku.value
+                                  ? null
+                                  : _submit,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

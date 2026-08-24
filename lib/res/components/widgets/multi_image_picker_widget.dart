@@ -15,62 +15,77 @@ class MultiImagePickerWidget extends StatelessWidget {
   MultiImagePickerWidget({super.key, this.onImagesSelected});
 
   void _showImageSourceDialog(BuildContext context) {
+    // Use scroll-controlled bottom sheet + SafeArea so options aren't clipped on short screens
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (_) {
-        return Wrap(
-          children: [
-            const SizedBox(height: 10),
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(10),
-                ),
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 8,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 12,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 6),
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ListTile(
+                    leading: const Icon(Icons.camera_alt, color: Color(0xFF1A1A4F)),
+                    title: const Text("Take Photo"),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await itemController.pickFromCamera();
+
+                      // ✅ Notify parent with updated list
+                      if (onImagesSelected != null) {
+                        onImagesSelected!(itemController.selectedImage.toList());
+                      }
+
+                      if (kDebugMode) {
+                        print("📸 Camera image added. Total: ${itemController.selectedImage.length}");
+                      }
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.photo_library, color: Color(0xFF1A1A4F)),
+                    title: const Text("Select from Gallery"),
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await itemController.pickFromGalleryMultiple();
+
+                      // ✅ Notify parent with updated list
+                      if (onImagesSelected != null) {
+                        onImagesSelected!(itemController.selectedImage.toList());
+                      }
+
+                      if (kDebugMode) {
+                        print("🖼️ Gallery images added. Total: ${itemController.selectedImage.length}");
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                ],
               ),
             ),
-            const SizedBox(height: 20),
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Color(0xFF1A1A4F)),
-              title: const Text("Take Photo"),
-              onTap: () async {
-                Navigator.pop(context);
-                await itemController.pickFromCamera();
-
-                // ✅ Notify parent with updated list
-                if (onImagesSelected != null) {
-                  onImagesSelected!(itemController.selectedImage.toList());
-                }
-
-                if (kDebugMode) {
-                  print("📸 Camera image added. Total: ${itemController.selectedImage.length}");
-                }
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library, color: Color(0xFF1A1A4F)),
-              title: const Text("Select from Gallery"),
-              onTap: () async {
-                Navigator.pop(context);
-                await itemController.pickFromGalleryMultiple();
-
-                // ✅ Notify parent with updated list
-                if (onImagesSelected != null) {
-                  onImagesSelected!(itemController.selectedImage.toList());
-                }
-
-                if (kDebugMode) {
-                  print("🖼️ Gallery images added. Total: ${itemController.selectedImage.length}");
-                }
-              },
-            ),
-            const SizedBox(height: 10),
-          ],
+          ),
         );
       },
     );
