@@ -98,27 +98,22 @@ class NetworkApiServices extends BaseApiServices {
     }
   }
 
-
   @override
   Future<dynamic> patchApi(
-      dynamic data,
-      String url, {
-        Map<String, String>? headers,
-      }) async {
+    dynamic data,
+    String url, {
+    Map<String, String>? headers,
+  }) async {
     if (kDebugMode) {
       print('🌐 PATCH → $url');
       print('🌐 Body  → $data');
     }
     try {
-      final mergedHeaders = await _getHeaders(url, extra: headers,);
+      final mergedHeaders = await _getHeaders(url, extra: headers);
       final uri = Uri.parse(url);
       final body = jsonEncode(data);
       final response = await _sendWithRetry(
-            () => http.patch(
-          uri,
-          body: body,
-          headers: mergedHeaders,
-        ),
+        () => http.patch(uri, body: body, headers: mergedHeaders),
         timeout: const Duration(seconds: 40),
       );
       return _returnResponse(response);
@@ -202,7 +197,8 @@ class NetworkApiServices extends BaseApiServices {
       return response.bodyBytes;
     }
 
-    final isJson = contentType.contains('application/json') ||
+    final isJson =
+        contentType.contains('application/json') ||
         contentType.contains('text/json');
 
     dynamic safeDecodeBody() {

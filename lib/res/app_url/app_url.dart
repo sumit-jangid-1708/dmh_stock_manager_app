@@ -1,9 +1,10 @@
 class AppUrl {
-  static const String serverBaseUrl = "http://69.62.75.208:8000";
+  static const String serverBaseUrl = "https://stms.testwebs.in";
   // static const String serverBaseUrl = "https://ffa3-103-87-58-83.ngrok-free.app";
   static const String baseUrl = "$serverBaseUrl/api";
   // static const String baseUrl = "https://traders.testwebs.in/api";
-  static const String localUrl = "http://127.0.0.1:8000/api";
+  static const String localUrl =
+      "https://425b049331930a5e-103-87-58-47.serveousercontent.com/api";
   static const String baseUrl2 = "https://stms.testwebs.in/api/app";
 
   static const String imageBaseUrl = serverBaseUrl;
@@ -70,8 +71,13 @@ class AppUrl {
 
   static const String createQuotation = "$baseUrl2/quotations/";
   static const String company = "$baseUrl2/quotations/companies/";
-  static const String bank  = "$baseUrl2/quotations/banks/";
+  static const String bank = "$baseUrl2/quotations/banks/";
 
+  static const String leadOptions = "$baseUrl/leads/options/";
+  static const String leadsStats = "$baseUrl/leads/stats/";
+  static const String getLeads = "$baseUrl/leads/";
+  static const String addLeads = "$baseUrl/leads/";
+  static const String importLeads = "$baseUrl/leads/import/";
 }
 
 //

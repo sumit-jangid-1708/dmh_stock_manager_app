@@ -1,5 +1,5 @@
-class RouteName{
-  static const String auth = "/auth"; 
+class RouteName {
+  static const String auth = "/auth";
   static const String dashboard = "/dashboard";
   static const String homeScreen = "/homeScreen";
   static const String itemScreen = "/itemScreen";
@@ -14,4 +14,5 @@ class RouteName{
   static const String returnScreen = "/returnScreen";
   static const String shippingScreen = "/shippingScreen";
   static const String quotationScreen = "/quotationScreen";
+  static const String leadScreen = "/leadScreen";
 }

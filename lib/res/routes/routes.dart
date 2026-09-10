@@ -19,7 +19,9 @@ import '../../bindings/item_binding.dart';
 import '../../bindings/order_binding.dart';
 import '../../bindings/stock_binding.dart';
 import '../../bindings/vendor_binding.dart';
+import '../../bindings/lead_binding.dart';
 import '../../view/billings/bill_detail_screen.dart';
+import '../../view/leads/lead_screen.dart';
 import '../../view/quotation/quotation_screen.dart';
 
 class AppRoutes {
@@ -78,5 +80,10 @@ class AppRoutes {
     ),
     GetPage(name: RouteName.shippingScreen, page: () => ShippingScreen()),
     GetPage(name: RouteName.quotationScreen, page: () => QuotationScreen()),
+    GetPage(
+      name: RouteName.leadScreen,
+      page: () => LeadScreen(),
+      binding: LeadBinding(),
+    ),
   ];
 }

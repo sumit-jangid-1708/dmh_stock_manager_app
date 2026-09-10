@@ -29,7 +29,9 @@ class Sidebar extends StatelessWidget {
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
-            topRight: Radius.circular(25), bottomRight: Radius.circular(25)),
+          topRight: Radius.circular(25),
+          bottomRight: Radius.circular(25),
+        ),
       ),
       child: SafeArea(
         child: Column(
@@ -92,6 +94,12 @@ class Sidebar extends StatelessWidget {
                         title: "Orders",
                         onTap: () => Get.to(() => OrderScreen()),
                       ),
+                    if (authController.canView("leads"))
+                      _buildMenuItem(
+                        icon: Icons.support_agent_outlined,
+                        title: "Lead Management",
+                        onTap: () => Get.toNamed(RouteName.leadScreen),
+                      ),
                     if (authController.canView("billing"))
                       _buildMenuItem(
                         icon: Icons.receipt_long_outlined,
@@ -117,10 +125,10 @@ class Sidebar extends StatelessWidget {
                         onTap: () => Get.to(() => ReturnOrderHistoryScreen()),
                       ),
                     _buildMenuItem(
-                        icon: Icons.document_scanner_outlined,
-                        title: "Quotation",
-                        onTap: () => Get.to(() => const QuotationScreen()),
-                      ),
+                      icon: Icons.document_scanner_outlined,
+                      title: "Quotation",
+                      onTap: () => Get.to(() => const QuotationScreen()),
+                    ),
                     _buildMenuItem(
                       icon: Icons.settings_outlined,
                       title: "Setting",
@@ -176,11 +184,7 @@ class Sidebar extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(
-                icon,
-                color: iconColor ?? primaryColor,
-                size: 24,
-              ),
+              Icon(icon, color: iconColor ?? primaryColor, size: 24),
               const SizedBox(width: 16),
               Text(
                 title,
