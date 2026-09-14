@@ -20,34 +20,41 @@ class LeadScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FC),
       appBar: AppBar(
-        title: const Text('Lead Management', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Lead Management',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         backgroundColor: const Color(0xFF1A1A4F),
         foregroundColor: Colors.white,
         actions: [
-          IconButton(onPressed: leadController.loadInitial, icon: const Icon(Icons.refresh_rounded)),
+          IconButton(
+            onPressed: leadController.loadInitial,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
         ],
       ),
       floatingActionButton: _addLeadButton(),
       body: Obx(() {
-        if (leadController.isLoading.value && leadController.leadStats.value == null) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        return RefreshIndicator(
-          onRefresh: leadController.loadInitial,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(14, 16, 14, 90),
-            children: [
-              const LeadQuickActions(),
-              const SizedBox(height: 16),
-              LeadStatsCards(),
-              const SizedBox(height: 20),
-              LeadFilters(),
-              const SizedBox(height: 20),
-              LeadList(),
-            ],
-          ),
-        );
-      }),
+          if (leadController.isLoading.value &&
+              leadController.leadStats.value == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return RefreshIndicator(
+            onRefresh: leadController.loadInitial,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(14, 16, 14, 90),
+              children: [
+                const LeadQuickActions(),
+                const SizedBox(height: 16),
+                LeadStatsCards(),
+                const SizedBox(height: 20),
+                LeadFilters(),
+                const SizedBox(height: 20),
+                LeadList(),
+              ],
+            ),
+          );
+        }),
     );
   }
 

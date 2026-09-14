@@ -1,11 +1,10 @@
-import 'package:dmj_stock_manager/res/components/barcode_dialog.dart';
 import 'package:dmj_stock_manager/res/components/widgets/app_gradient _button.dart';
-import 'package:dmj_stock_manager/res/components/widgets/product_list_card_widget.dart';
 import 'package:dmj_stock_manager/res/components/widgets/statCard.dart';
-import 'package:dmj_stock_manager/res/components/widgets/stock_button_row.dart';
+// import 'package:dmj_stock_manager/res/components/widgets/stock_button_row.dart';
 import 'package:dmj_stock_manager/view/billings/billing_screen.dart';
 import 'package:dmj_stock_manager/view/home_screen/low_stock_screen.dart';
 import 'package:dmj_stock_manager/view/home_screen/total_stock_screen.dart';
+import 'package:dmj_stock_manager/view/home_screen/widgets/home_service_shortcuts.dart';
 import 'package:dmj_stock_manager/view/orders/order_screen.dart';
 import 'package:dmj_stock_manager/view/orders/return_order_screen.dart';
 import 'package:dmj_stock_manager/view/orders/shipping_screen.dart';
@@ -23,7 +22,6 @@ import 'package:intl/intl.dart';
 
 import '../../model/activity_model.dart';
 import '../../res/components/widgets/channel_dialog_widget.dart';
-import '../../res/components/widgets/iamge_share_dialog.dart';
 import '../../view_models/controller/item_controller.dart';
 import '../items/items_screen.dart';
 
@@ -343,8 +341,8 @@ class HomeScreen extends StatelessWidget {
                 ),
 
                 SizedBox(height: 10),
-                StockButtonRow(),
-                SizedBox(height: 20),
+                // StockButtonRow(),
+                SizedBox(height: 10),
 
                 // 📊 Stats Cards Section
                 Container(
@@ -519,6 +517,15 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
 
+                const SizedBox(height: 22),
+
+                _sectionTitle(
+                  icon: Icons.apps_rounded,
+                  title: "Quick Access",
+                  subtitle: "Frequently used services",
+                ),
+                HomeServiceShortcuts(),
+
                 const SizedBox(height: 28),
 
                 _sectionTitle(
@@ -579,8 +586,8 @@ class HomeScreen extends StatelessWidget {
                         _moduleTile(
                           icon: Icons.local_shipping_rounded,
                           title: "Shipping",
-                          value:
-                              homeController.recentOrdersCount.value.toString(),
+                          value: homeController.recentOrdersCount.value
+                              .toString(),
                           color: Colors.indigo.shade600,
                           onTap: () => Get.to(() => ShippingScreen()),
                         ),
@@ -696,11 +703,8 @@ class HomeScreen extends StatelessWidget {
                     itemCount: homeController.activityLogs.length,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    separatorBuilder: (context, index) => const Divider(
-                      height: 1,
-                      indent: 70,
-                      endIndent: 10,
-                    ),
+                    separatorBuilder: (context, index) =>
+                        const Divider(height: 1, indent: 70, endIndent: 10),
                     itemBuilder: (context, index) {
                       final log = homeController.activityLogs[index];
                       return ActivityLogItem(
@@ -723,9 +727,12 @@ class HomeScreen extends StatelessWidget {
   IconData _getActivityIcon(String? event) {
     if (event == null) return Icons.notifications_none_rounded;
     final e = event.toLowerCase();
-    if (e.contains('add') || e.contains('create')) return Icons.add_circle_outline_rounded;
-    if (e.contains('update') || e.contains('edit')) return Icons.edit_note_rounded;
-    if (e.contains('delete') || e.contains('remove')) return Icons.delete_outline_rounded;
+    if (e.contains('add') || e.contains('create'))
+      return Icons.add_circle_outline_rounded;
+    if (e.contains('update') || e.contains('edit'))
+      return Icons.edit_note_rounded;
+    if (e.contains('delete') || e.contains('remove'))
+      return Icons.delete_outline_rounded;
     if (e.contains('order')) return Icons.shopping_bag_outlined;
     if (e.contains('stock')) return Icons.inventory_2_outlined;
     if (e.contains('login')) return Icons.login_rounded;
@@ -754,7 +761,9 @@ class _ActivityLogItemState extends State<ActivityLogItem> {
     final bool hasLongDescription = (widget.log.description?.length ?? 0) > 90;
 
     return InkWell(
-      onTap: hasLongDescription ? () => setState(() => isExpanded = !isExpanded) : null,
+      onTap: hasLongDescription
+          ? () => setState(() => isExpanded = !isExpanded)
+          : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 10.0),
         child: Row(
@@ -763,7 +772,11 @@ class _ActivityLogItemState extends State<ActivityLogItem> {
             CircleAvatar(
               radius: 18,
               backgroundColor: const Color(0xFF1A1A4F).withOpacity(0.1),
-              child: Icon(widget.icon, color: const Color(0xFF1A1A4F), size: 18),
+              child: Icon(
+                widget.icon,
+                color: const Color(0xFF1A1A4F),
+                size: 18,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -785,7 +798,10 @@ class _ActivityLogItemState extends State<ActivityLogItem> {
                       ),
                       if (widget.log.screen != null)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.grey.shade100,
                             borderRadius: BorderRadius.circular(4),
@@ -810,7 +826,9 @@ class _ActivityLogItemState extends State<ActivityLogItem> {
                   Text(
                     widget.log.description ?? "",
                     maxLines: isExpanded ? null : 2,
-                    overflow: isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                    overflow: isExpanded
+                        ? TextOverflow.visible
+                        : TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 11.5,
                       color: Colors.grey.shade700,
@@ -833,7 +851,9 @@ class _ActivityLogItemState extends State<ActivityLogItem> {
                             ),
                           ),
                           Icon(
-                            isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                            isExpanded
+                                ? Icons.keyboard_arrow_up
+                                : Icons.keyboard_arrow_down,
                             size: 14,
                             color: const Color(0xFF1A1A4F),
                           ),

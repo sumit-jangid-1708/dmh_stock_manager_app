@@ -31,18 +31,18 @@ class LeadFollowUpsScreen extends StatelessWidget {
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => leadController.getFollowUps(refresh: true),
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _sectionTabs(),
-            const SizedBox(height: 14),
-            _filters(context),
-            const SizedBox(height: 16),
-            _followUpList(context),
-          ],
+          onRefresh: () => leadController.getFollowUps(refresh: true),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _sectionTabs(),
+              const SizedBox(height: 14),
+              _filters(context),
+              const SizedBox(height: 16),
+              _followUpList(context),
+            ],
+          ),
         ),
-      ),
     );
   }
 

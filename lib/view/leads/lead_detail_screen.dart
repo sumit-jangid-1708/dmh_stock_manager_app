@@ -71,155 +71,165 @@ class LeadDetailScreen extends GetView<LeadController> {
       ],
     ),
     body: Obx(() {
-      if (controller.isDetailLoading.value ||
-          controller.leadDetail.value == null) {
-        return const Center(
-          child: CircularProgressIndicator(color: Color(0xFF1A1A4F)),
-        );
-      }
-      final lead = controller.leadDetail.value!;
-      return RefreshIndicator(
-        onRefresh: () => controller.loadLead(leadId),
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _header(lead),
-            const SizedBox(height: 14),
-            if (authController.canAction('leads', 'edit'))
-              Row(
-                children: [
-                  Expanded(
-                    child: _action(
-                      'STATUS',
-                      Icons.swap_horiz_rounded,
-                      Colors.blue,
-                      () => _statusDialog(context, lead),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _action(
-                      'NOTE',
-                      Icons.note_add_outlined,
-                      Colors.indigo,
-                      () => _noteDialog(context, lead),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _action(
-                      'FOLLOW-UP',
-                      Icons.event_available_outlined,
-                      Colors.orange,
-                      () => _followUpDialog(context, lead),
-                    ),
-                  ),
-                ],
-              ),
-            const SizedBox(height: 14),
-            _section('Contact & Shipping', [
-              _row(Icons.phone_outlined, '${lead.countryCode} ${lead.phone}'),
-              if (lead.shippingPhone.isNotEmpty)
-                _row(Icons.phone_android_outlined, lead.shippingPhone),
-              if (lead.whatsappNumber.isNotEmpty)
-                _row(Icons.chat_outlined, lead.whatsappNumber),
-              if (lead.email.isNotEmpty) _row(Icons.email_outlined, lead.email),
-              if (lead.companyName.isNotEmpty)
-                _row(Icons.business_outlined, lead.companyName),
-              if (lead.designation.isNotEmpty)
-                _row(Icons.work_outline, lead.designation),
-              if ([
-                lead.shippingAddress1,
-                lead.shippingAddress2,
-                lead.shippingCity,
-                lead.shippingProvinceName,
-                lead.shippingZip,
-                lead.shippingCountry,
-              ].any((e) => e.isNotEmpty))
-                _row(
-                  Icons.location_on_outlined,
-                  [
-                    lead.shippingAddress1,
-                    lead.shippingAddress2,
-                    lead.shippingCity,
-                    lead.shippingProvinceName,
-                    lead.shippingZip,
-                    lead.shippingCountry,
-                  ].where((e) => e.isNotEmpty).join(', '),
-                ),
-              if ((lead.assignedToName ?? '').isNotEmpty)
-                _row(
-                  Icons.badge_outlined,
-                  'Assigned to ${lead.assignedToName!}',
-                ),
-            ]),
-            _section('Lead Information', [
-              if (lead.sourceDisplay.isNotEmpty)
-                _row(Icons.campaign_outlined, lead.sourceDisplay),
-              if (lead.priorityDisplay.isNotEmpty)
-                _row(Icons.flag_outlined, lead.priorityDisplay),
-              if (lead.nextFollowUp != null)
-                _row(Icons.event_outlined, lead.nextFollowUp!),
-              if (lead.notes.isNotEmpty) _row(Icons.notes_outlined, lead.notes),
-              if (lead.lostReasonDisplay.isNotEmpty)
-                _row(Icons.cancel_outlined, lead.lostReasonDisplay),
-            ]),
-            if (lead.products.isNotEmpty)
-              _section(
-                'Interested Products',
-                lead.products
-                    .map(
-                      (p) => _row(Icons.inventory_2_outlined, _productText(p)),
-                    )
-                    .toList(),
-              ),
-            if (controller.leadFollowUps.isNotEmpty)
-              _section(
-                'Follow-ups',
-                controller.leadFollowUps
-                    .map(
-                      (e) => _timeline(e, Icons.event_outlined, Colors.orange),
-                    )
-                    .toList(),
-              ),
-            if (controller.leadNotes.isNotEmpty)
-              _section(
-                'Notes',
-                controller.leadNotes
-                    .map(
-                      (e) => _timeline(
-                        e,
-                        Icons.sticky_note_2_outlined,
-                        Colors.indigo,
+        if (controller.isDetailLoading.value ||
+            controller.leadDetail.value == null) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF1A1A4F)),
+          );
+        }
+        final lead = controller.leadDetail.value!;
+        return RefreshIndicator(
+          onRefresh: () => controller.loadLead(leadId),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              _header(lead),
+              const SizedBox(height: 14),
+              if (authController.canAction('leads', 'edit'))
+                Row(
+                  children: [
+                    Expanded(
+                      child: _action(
+                        'STATUS',
+                        Icons.swap_horiz_rounded,
+                        Colors.blue,
+                        () => _statusDialog(context, lead),
                       ),
-                    )
-                    .toList(),
-              ),
-            if (controller.leadStatusHistory.isNotEmpty)
-              _section(
-                'Status History',
-                controller.leadStatusHistory
-                    .map(
-                      (e) =>
-                          _timeline(e, Icons.swap_horiz_rounded, Colors.purple),
-                    )
-                    .toList(),
-              ),
-            if (controller.leadActivities.isNotEmpty)
-              _section(
-                'Activity Timeline',
-                controller.leadActivities
-                    .map(
-                      (e) =>
-                          _timeline(e, Icons.history_rounded, Colors.blueGrey),
-                    )
-                    .toList(),
-              ),
-            const SizedBox(height: 30),
-          ],
-        ),
-      );
-    }),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _action(
+                        'NOTE',
+                        Icons.note_add_outlined,
+                        Colors.indigo,
+                        () => _noteDialog(context, lead),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _action(
+                        'FOLLOW-UP',
+                        Icons.event_available_outlined,
+                        Colors.orange,
+                        () => _followUpDialog(context, lead),
+                      ),
+                    ),
+                  ],
+                ),
+              const SizedBox(height: 14),
+              _section('Contact & Shipping', [
+                _row(Icons.phone_outlined, '${lead.countryCode} ${lead.phone}'),
+                if (lead.shippingPhone.isNotEmpty)
+                  _row(Icons.phone_android_outlined, lead.shippingPhone),
+                if (lead.whatsappNumber.isNotEmpty)
+                  _row(Icons.chat_outlined, lead.whatsappNumber),
+                if (lead.email.isNotEmpty)
+                  _row(Icons.email_outlined, lead.email),
+                if (lead.companyName.isNotEmpty)
+                  _row(Icons.business_outlined, lead.companyName),
+                if (lead.designation.isNotEmpty)
+                  _row(Icons.work_outline, lead.designation),
+                if ([
+                  lead.shippingAddress1,
+                  lead.shippingAddress2,
+                  lead.shippingCity,
+                  lead.shippingProvinceName,
+                  lead.shippingZip,
+                  lead.shippingCountry,
+                ].any((e) => e.isNotEmpty))
+                  _row(
+                    Icons.location_on_outlined,
+                    [
+                      lead.shippingAddress1,
+                      lead.shippingAddress2,
+                      lead.shippingCity,
+                      lead.shippingProvinceName,
+                      lead.shippingZip,
+                      lead.shippingCountry,
+                    ].where((e) => e.isNotEmpty).join(', '),
+                  ),
+                if ((lead.assignedToName ?? '').isNotEmpty)
+                  _row(
+                    Icons.badge_outlined,
+                    'Assigned to ${lead.assignedToName!}',
+                  ),
+              ]),
+              _section('Lead Information', [
+                if (lead.sourceDisplay.isNotEmpty)
+                  _row(Icons.campaign_outlined, lead.sourceDisplay),
+                if (lead.priorityDisplay.isNotEmpty)
+                  _row(Icons.flag_outlined, lead.priorityDisplay),
+                if (lead.nextFollowUp != null)
+                  _row(Icons.event_outlined, lead.nextFollowUp!),
+                if (lead.notes.isNotEmpty)
+                  _row(Icons.notes_outlined, lead.notes),
+                if (lead.lostReasonDisplay.isNotEmpty)
+                  _row(Icons.cancel_outlined, lead.lostReasonDisplay),
+              ]),
+              if (lead.products.isNotEmpty)
+                _section(
+                  'Interested Products',
+                  lead.products
+                      .map(
+                        (p) =>
+                            _row(Icons.inventory_2_outlined, _productText(p)),
+                      )
+                      .toList(),
+                ),
+              if (controller.leadFollowUps.isNotEmpty)
+                _section(
+                  'Follow-ups',
+                  controller.leadFollowUps
+                      .map(
+                        (e) =>
+                            _timeline(e, Icons.event_outlined, Colors.orange),
+                      )
+                      .toList(),
+                ),
+              if (controller.leadNotes.isNotEmpty)
+                _section(
+                  'Notes',
+                  controller.leadNotes
+                      .map(
+                        (e) => _timeline(
+                          e,
+                          Icons.sticky_note_2_outlined,
+                          Colors.indigo,
+                        ),
+                      )
+                      .toList(),
+                ),
+              if (controller.leadStatusHistory.isNotEmpty)
+                _section(
+                  'Status History',
+                  controller.leadStatusHistory
+                      .map(
+                        (e) => _timeline(
+                          e,
+                          Icons.swap_horiz_rounded,
+                          Colors.purple,
+                        ),
+                      )
+                      .toList(),
+                ),
+              if (controller.leadActivities.isNotEmpty)
+                _section(
+                  'Activity Timeline',
+                  controller.leadActivities
+                      .map(
+                        (e) => _timeline(
+                          e,
+                          Icons.history_rounded,
+                          Colors.blueGrey,
+                        ),
+                      )
+                      .toList(),
+                ),
+              const SizedBox(height: 30),
+            ],
+          ),
+        );
+      }),
   );
 
   Widget _header(LeadDetailModel lead) => Container(

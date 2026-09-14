@@ -29,10 +29,8 @@ class LeadStatsCards extends StatelessWidget {
           scrollDirection: Axis.horizontal,
           itemCount: cards.length,
           separatorBuilder: (_, __) => const SizedBox(width: 12),
-          itemBuilder: (_, index) => _StatCard(
-            label: cards[index][0],
-            value: cards[index][1],
-          ),
+          itemBuilder: (_, index) =>
+              _StatCard(label: cards[index][0], value: cards[index][1]),
         ),
       );
     });
@@ -59,7 +57,10 @@ class _StatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+          Text(
+            label,
+            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+          ),
           Text(
             value,
             style: const TextStyle(
