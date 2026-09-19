@@ -32,6 +32,55 @@ class CreateQuotationScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (!isEdit)
+                Obx(
+                  () => controller.hasDraft.value
+                      ? Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1A1A4F).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFF1A1A4F).withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.drafts_outlined,
+                              color: Color(0xFF1A1A4F),
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Text(
+                                "You have a saved draft",
+                                style: TextStyle(
+                                  color: Color(0xFF1A1A4F),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => controller.restoreDraft(),
+                              child: const Text(
+                                "RESTORE",
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => controller.clearDraft(),
+                              icon: const Icon(Icons.close, color: Colors.red),
+                              tooltip: "Discard Draft",
+                            ),
+                          ],
+                        ),
+                      )
+                      : const SizedBox.shrink(),
+                ),
               _buildSectionHeader("Quotation Information"),
               _buildCard([
                 CustomSearchableDropdown<CompanyModel>(
@@ -388,6 +437,30 @@ class CreateQuotationScreen extends StatelessWidget {
               ]),
 
               const SizedBox(height: 32),
+              if (!isEdit) ...[
+                OutlinedButton(
+                  onPressed: () {
+                    controller.saveDraft();
+                    Get.back();
+                  },
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 56),
+                    side: const BorderSide(color: Color(0xFF1A1A4F), width: 2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    "SAVE AS DRAFT",
+                    style: TextStyle(
+                      color: Color(0xFF1A1A4F),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               Obx(
                 () => AppGradientButton(
                   onPressed: controller.isLoading.value

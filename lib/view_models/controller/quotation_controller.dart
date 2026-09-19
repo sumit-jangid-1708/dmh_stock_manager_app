@@ -14,6 +14,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_file/open_file.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:get_storage/get_storage.dart';
 
 import '../../model/quotation_models/bank_model.dart';
 import '../../model/quotation_models/company_model.dart';
@@ -59,7 +60,8 @@ class QuotationController extends GetxController with BaseController {
   final ItemController itemController = Get.find<ItemController>();
   final QuotationService _quotationService = QuotationService();
   final FlutterNativeContactPicker _contactPicker = FlutterNativeContactPicker();
-
+  final _storage = GetStorage();
+  final String _draftKey = 'quotation_draft';
 
   final formKey = GlobalKey<FormState>();
   final isLoading = false.obs;
@@ -68,6 +70,7 @@ class QuotationController extends GetxController with BaseController {
   final isDownloading = false.obs; // ✅ Loading for PDF actions
   final isSavingCompany = false.obs;
   final isSavingBank = false.obs;
+  final hasDraft = false.obs;
 
   // Quotation List State
   var quotationsList = <QuotationDetailsModel>[].obs;
@@ -205,6 +208,7 @@ class QuotationController extends GetxController with BaseController {
     getQuotationList();
     getCompanyList();
     getBankList();
+    checkDraft();
   }
 
   void _syncOnBillingChange() {
@@ -344,6 +348,7 @@ class QuotationController extends GetxController with BaseController {
         await _quotationService.createQuotationApi(data);
         AppAlerts.success("Quotation Created Successfully");
         getQuotationList(isRefresh: true);
+        clearDraft();
         resetForm(); // ✅ add this
         Get.back();
       } catch (e) {
@@ -387,7 +392,7 @@ class QuotationController extends GetxController with BaseController {
       "items": itemControllersList
           .map(
             (item) => {
-              "product_id": item.selectedProduct.value!.id,
+              "product_id": item.selectedProduct.value?.id,
               "due_on": item.dueOn.text,
               "quantity": item.quantity.text,
               "unit": item.unit.value,
@@ -440,6 +445,132 @@ class QuotationController extends GetxController with BaseController {
     }
     itemControllersList.clear();
     addItem(); // ✅ start with one blank item row
+  }
+
+  // ✅ Draft Features
+  void checkDraft() {
+    hasDraft.value = _storage.hasData(_draftKey);
+  }
+
+  void saveDraft() {
+    final Map<String, dynamic> draftData = {
+      "number": quotationNumberController.text,
+      "company_profile_id": selectedCompany.value?.id,
+      "bank_account_id": selectedBankAccount.value?.id,
+      "quote_date": quoteDateController.text,
+      "valid_until": validUntilController.text,
+      "customer_name": customerNameController.text,
+      "customer_phone": customerPhoneController.text,
+      "customer_email": customerEmailController.text,
+      "customer_address": customerAddressController.text,
+      "customer_gstin": customerGstinController.text,
+      "customer_state": selectedCustomerState.value,
+      "customer_state_code": customerStateCodeController.text,
+      "consignee_name": consigneeNameController.text,
+      "consignee_address": consigneeAddressController.text,
+      "consignee_gstin": consigneeGstinController.text,
+      "consignee_state": selectedConsigneeState.value,
+      "consignee_state_code": consigneeStateCodeController.text,
+      "is_same_as_billing": isSameAsBilling.value,
+      "payment_terms": selectedPaymentTerms.value,
+      "buyer_reference": buyerReferenceController.text,
+      "other_references": otherReferencesController.text,
+      "dispatched_through": selectedDispatchedThrough.value,
+      "destination": destinationController.text,
+      "delivery_terms": selectedDeliveryTerms.value,
+      "shipment_details": shipmentDetailsController.text,
+      "shipping_amount": shippingAmountController.text,
+      "notes": notesController.text,
+      "items": itemControllersList
+          .map(
+            (item) => {
+              "product_id": item.selectedProduct.value?.id,
+              "due_on": item.dueOn.text,
+              "quantity": item.quantity.text,
+              "unit": item.unit.value,
+              "unit_price": item.unitPrice.text,
+              "discount_percentage": item.discountPercentage.text,
+              "gst_percentage": item.gstPercentage.value,
+            },
+          )
+          .toList(),
+    };
+    _storage.write(_draftKey, draftData);
+    checkDraft();
+    resetForm();
+    AppAlerts.success("Draft Saved Successfully");
+  }
+
+  void restoreDraft() {
+    final draftData = _storage.read(_draftKey);
+    if (draftData != null) {
+      quotationNumberController.text = draftData["number"] ?? "";
+      selectedCompany.value = companiesList.firstWhereOrNull(
+        (c) => c.id == draftData["company_profile_id"],
+      );
+      selectedBankAccount.value = banksList.firstWhereOrNull(
+        (b) => b.id == draftData["bank_account_id"],
+      );
+      quoteDateController.text = draftData["quote_date"] ?? "";
+      validUntilController.text = draftData["valid_until"] ?? "";
+      customerNameController.text = draftData["customer_name"] ?? "";
+      customerPhoneController.text = draftData["customer_phone"] ?? "";
+      customerEmailController.text = draftData["customer_email"] ?? "";
+      customerAddressController.text = draftData["customer_address"] ?? "";
+      customerGstinController.text = draftData["customer_gstin"] ?? "";
+      selectedCustomerState.value = draftData["customer_state"];
+      customerStateCodeController.text = draftData["customer_state_code"] ?? "";
+      consigneeNameController.text = draftData["consignee_name"] ?? "";
+      consigneeAddressController.text = draftData["consignee_address"] ?? "";
+      consigneeGstinController.text = draftData["consignee_gstin"] ?? "";
+      selectedConsigneeState.value = draftData["consignee_state"];
+      consigneeStateCodeController.text =
+          draftData["consignee_state_code"] ?? "";
+      isSameAsBilling.value = draftData["is_same_as_billing"] ?? false;
+      selectedPaymentTerms.value = draftData["payment_terms"];
+      buyerReferenceController.text = draftData["buyer_reference"] ?? "";
+      otherReferencesController.text = draftData["other_references"] ?? "";
+      selectedDispatchedThrough.value = draftData["dispatched_through"];
+      destinationController.text = draftData["destination"] ?? "";
+      selectedDeliveryTerms.value = draftData["delivery_terms"];
+      shipmentDetailsController.text = draftData["shipment_details"] ?? "";
+      shippingAmountController.text = draftData["shipping_amount"] ?? "";
+      notesController.text = draftData["notes"] ?? "";
+
+      // Restore Items
+      for (var controller in itemControllersList) {
+        controller.dispose();
+      }
+      itemControllersList.clear();
+
+      if (draftData["items"] != null) {
+        for (var itemData in draftData["items"]) {
+          ProductModel? product = itemController.products.firstWhereOrNull(
+            (p) => p.id == itemData["product_id"],
+          );
+          itemControllersList.add(
+            QuotationItemControllers(
+              product: product,
+              dueOnText: itemData["due_on"],
+              quantityText: itemData["quantity"],
+              unitText: itemData["unit"],
+              unitPriceText: itemData["unit_price"],
+              discountPercentageText: itemData["discount_percentage"],
+              gstPercentageText: itemData["gst_percentage"],
+            ),
+          );
+        }
+      }
+      if (itemControllersList.isEmpty) addItem();
+
+      clearDraft();
+      AppAlerts.success("Draft Restored Successfully");
+    }
+  }
+
+  void clearDraft() {
+    _storage.remove(_draftKey);
+    hasDraft.value = false;
   }
 
   // ✅ Clear Company details fields
