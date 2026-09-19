@@ -17,6 +17,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../model/quotation_models/bank_model.dart';
 import '../../model/quotation_models/company_model.dart';
+import 'package:flutter_native_contact_picker/flutter_native_contact_picker.dart';
 
 class QuotationItemControllers extends GetxController with BaseController {
   final selectedProduct = Rx<ProductModel?>(null);
@@ -57,6 +58,8 @@ class QuotationItemControllers extends GetxController with BaseController {
 class QuotationController extends GetxController with BaseController {
   final ItemController itemController = Get.find<ItemController>();
   final QuotationService _quotationService = QuotationService();
+  final FlutterNativeContactPicker _contactPicker = FlutterNativeContactPicker();
+
 
   final formKey = GlobalKey<FormState>();
   final isLoading = false.obs;
@@ -791,6 +794,42 @@ class QuotationController extends GetxController with BaseController {
       handleError(e, onRetry: () => getBankList());
     } finally {
       isBankListLoading.value = false;
+    }
+  }
+
+  Future<void> pickContactNumber() async {
+    try {
+      final contact = await _contactPicker.selectContact();
+      if (contact == null) return; // user ne cancel kar diya
+
+      final numbers = contact.phoneNumbers;
+      if (numbers == null || numbers.isEmpty) {
+        AppAlerts.error("Is contact me phone number nahi hai");
+        return;
+      }
+
+      // spaces, dashes, brackets hatao
+      String number = numbers.first.replaceAll(RegExp(r'[^0-9+]'), '');
+
+      // India country code / leading zero hatao
+      if (number.startsWith('+91')) {
+        number = number.substring(3);
+      } else if (number.startsWith('91') && number.length == 12) {
+        number = number.substring(2);
+      } else if (number.startsWith('0') && number.length == 11) {
+        number = number.substring(1);
+      }
+
+      customerPhoneController.text = number;
+
+      // Customer name khali ho to contact ka naam bhar do
+      final name = contact.fullName ?? "";
+      if (customerNameController.text.trim().isEmpty && name.isNotEmpty) {
+        customerNameController.text = name;
+      }
+    } catch (e) {
+      print(e);
+      AppAlerts.error("Contacts open nahi ho paye");
     }
   }
 }

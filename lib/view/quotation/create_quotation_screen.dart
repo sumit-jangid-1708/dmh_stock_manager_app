@@ -119,6 +119,8 @@ class CreateQuotationScreen extends StatelessWidget {
                         controller: controller.customerPhoneController,
                         hintText: "Phone",
                         prefixIcon: Icons.phone,
+                        suffixIcon: Icons.contacts_outlined,
+                        onSuffixTap: controller.pickContactNumber,
                         keyboardType: TextInputType.phone,
                         validator: (value) =>
                             value!.isEmpty ? "Required" : null,
