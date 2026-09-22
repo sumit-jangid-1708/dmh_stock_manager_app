@@ -43,7 +43,6 @@ class _QuotationDetailScreenState extends State<QuotationDetailScreen> {
             
             return Row(
               children: [
-                // ✅ Edit Button
                 IconButton(
                   icon: const Icon(Icons.edit_outlined),
                   onPressed: () {
@@ -52,7 +51,6 @@ class _QuotationDetailScreenState extends State<QuotationDetailScreen> {
                   },
                   tooltip: 'Edit Quotation',
                 ),
-                // ✅ Delete Button
                 IconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                   onPressed: () => _confirmDelete(context, data.id!),
@@ -107,11 +105,8 @@ class _QuotationDetailScreenState extends State<QuotationDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Summary Header
               _buildSummaryHeader(data),
               const SizedBox(height: 24),
-
-              // 2. Billing & Shipping Addresses
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -139,18 +134,12 @@ class _QuotationDetailScreenState extends State<QuotationDetailScreen> {
                 ],
               ),
               const SizedBox(height: 24),
-
-              // 3. Items Section
               _buildSectionHeader("QUOTED ITEMS"),
               const SizedBox(height: 12),
               _buildItemsTable(data.items ?? []),
               const SizedBox(height: 24),
-
-              // 4. Footer: Terms and Totals
               _buildFooterSection(data),
               const SizedBox(height: 30),
-
-              // ✅ Prominent Preview & Print Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -184,9 +173,9 @@ class _QuotationDetailScreenState extends State<QuotationDetailScreen> {
           TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
           TextButton(
             onPressed: () async {
-              Get.back(); // Close dialog
-              await controller.deleteQuotation(id); // Call API
-              Get.back(); // Return to Quotation History Screen
+              Get.back();
+              await controller.deleteQuotation(id);
+              Get.back();
             },
             child: const Text("Delete", style: TextStyle(color: Colors.red)),
           ),
@@ -378,63 +367,55 @@ class _QuotationDetailScreenState extends State<QuotationDetailScreen> {
 
   Widget _buildFooterSection(QuotationDetailModel data) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Terms and Notes
-            Expanded(
-              flex: 3,
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade100),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildTermRow("Payment Terms", data.paymentTerms),
-                    _buildTermRow("Dispatch Via", data.dispatchedThrough),
-                    _buildTermRow("Destination", data.destination),
-                    _buildTermRow("Delivery Terms", data.deliveryTerms),
-                    if (data.notes != null && data.notes!.isNotEmpty) ...[
-                      const Divider(height: 24),
-                      const Text("Notes:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                      const SizedBox(height: 4),
-                      Text(data.notes!, style: const TextStyle(color: Colors.black54, fontSize: 12)),
-                    ],
-                  ],
-                ),
+        // Totals Card on top
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: primaryColor.withOpacity(0.03),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: primaryColor.withOpacity(0.1)),
+          ),
+          child: Column(
+            children: [
+              _buildAmountRow("Subtotal", data.subtotal),
+              _buildAmountRow("Tax Total", data.taxTotal),
+              _buildAmountRow("Shipping", data.shippingAmount),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Divider(),
               ),
-            ),
-            const SizedBox(width: 12),
-            // Totals
-            Expanded(
-              flex: 2,
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.03),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: primaryColor.withOpacity(0.1)),
-                ),
-                child: Column(
-                  children: [
-                    _buildAmountRow("Subtotal", data.subtotal),
-                    _buildAmountRow("Tax Total", data.taxTotal),
-                    _buildAmountRow("Shipping", data.shippingAmount),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Divider(),
-                    ),
-                    _buildAmountRow("Grand Total", data.grandTotal, isBold: true),
-                  ],
-                ),
-              ),
-            ),
-          ],
+              _buildAmountRow("Grand Total", data.grandTotal, isBold: true),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Terms and Notes Card below
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade100),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTermRow("Payment Terms", data.paymentTerms),
+              _buildTermRow("Dispatch Via", data.dispatchedThrough),
+              _buildTermRow("Destination", data.destination),
+              _buildTermRow("Delivery Terms", data.deliveryTerms),
+              if (data.notes != null && data.notes!.isNotEmpty) ...[
+                const Divider(height: 24),
+                const Text("Notes:", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                const SizedBox(height: 4),
+                Text(data.notes!, style: const TextStyle(color: Colors.black54, fontSize: 12)),
+              ],
+            ],
+          ),
         ),
       ],
     );
@@ -460,16 +441,31 @@ class _QuotationDetailScreenState extends State<QuotationDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                   color: isBold ? primaryColor : Colors.black54,
                   fontSize: isBold ? 13 : 12,
-                  fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
-          Text("₹${value ?? '0.00'}",
-              style: TextStyle(
-                  color: isBold ? primaryColor : Colors.black87,
-                  fontSize: isBold ? 15 : 13,
-                  fontWeight: isBold ? FontWeight.bold : FontWeight.w600)),
+                  fontWeight: isBold ? FontWeight.bold : FontWeight.normal),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(
+                "₹${value ?? '0.00'}",
+                style: TextStyle(
+                    color: isBold ? primaryColor : Colors.black87,
+                    fontSize: isBold ? 15 : 13,
+                    fontWeight: isBold ? FontWeight.bold : FontWeight.w600),
+              ),
+            ),
+          ),
         ],
       ),
     );

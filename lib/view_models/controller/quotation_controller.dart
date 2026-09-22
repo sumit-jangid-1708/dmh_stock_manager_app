@@ -59,7 +59,8 @@ class QuotationItemControllers extends GetxController with BaseController {
 class QuotationController extends GetxController with BaseController {
   final ItemController itemController = Get.find<ItemController>();
   final QuotationService _quotationService = QuotationService();
-  final FlutterNativeContactPicker _contactPicker = FlutterNativeContactPicker();
+  final FlutterNativeContactPicker _contactPicker =
+      FlutterNativeContactPicker();
   final _storage = GetStorage();
   final String _draftKey = 'quotation_draft';
 
